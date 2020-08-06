@@ -185,6 +185,7 @@
       case 'what':
       case 'whatisthis':
       case 'who':
+      case 'whodis':
         if (lastPlayed === null) {
           return "MTV: I have no idea what's playing.";
         }
