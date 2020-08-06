@@ -22,6 +22,11 @@ onPlayerStateChange = (event) ->
     clearTimeout(endedTimer)
     endedTimer = null
 
+  videoData = player.getVideoData()
+  if videoData? and videoData.title?
+    console.log "Title: #{videoData.title}"
+    window.document.title = "#{videoData.title} - [[MTV]]"
+
   if event.data == 0
     console.log "ENDED"
     endedTimer = setTimeout( ->
