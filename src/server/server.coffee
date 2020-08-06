@@ -80,7 +80,15 @@ run = (args) ->
       play(id)
       return "MTV: Playing #{id}"
 
-    when 'add', 'queue', 'q'
+    when 'add'
+      id = idFromArg(args[1])
+      if not id?
+        return "MTV: add: invalid argument"
+      playlist[id] = true
+      savePlaylist()
+      return "MTV: Added to pool: #{id}"
+
+    when 'queue', 'q'
       id = idFromArg(args[1])
       if not id?
         return "MTV: queue: invalid argument"
@@ -152,7 +160,7 @@ main = ->
 
   app.use(express.static('web'))
 
-  http.listen 3000, ->
-    console.log('listening on *:3000')
+  http.listen 3003, ->
+    console.log('listening on *:3003')
 
 module.exports = main

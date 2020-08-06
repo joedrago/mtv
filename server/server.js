@@ -103,6 +103,13 @@
         play(id);
         return `MTV: Playing ${id}`;
       case 'add':
+        id = idFromArg(args[1]);
+        if (id == null) {
+          return "MTV: add: invalid argument";
+        }
+        playlist[id] = true;
+        savePlaylist();
+        return `MTV: Added to pool: ${id}`;
       case 'queue':
       case 'q':
         id = idFromArg(args[1]);
@@ -183,8 +190,8 @@
       return res.send("MTV: wat");
     });
     app.use(express.static('web'));
-    return http.listen(3000, function() {
-      return console.log('listening on *:3000');
+    return http.listen(3003, function() {
+      return console.log('listening on *:3003');
     });
   };
 
