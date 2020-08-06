@@ -70,7 +70,7 @@ void OnLobbyConnect(void * data, enum EDiscordResult result, struct DiscordLobby
     printf("LobbyConnect returned %d\n", (int)result);
 }
 
-BOOL CALLBACK findYoutubeWindowTitle(_In_ HWND hwnd, _In_ LPARAM lParam)
+BOOL CALLBACK findMTVWindowTitle(_In_ HWND hwnd, _In_ LPARAM lParam)
 {
     char * title = (char *)lParam;
 
@@ -78,9 +78,9 @@ BOOL CALLBACK findYoutubeWindowTitle(_In_ HWND hwnd, _In_ LPARAM lParam)
     GetWindowText(hwnd, temp, 128);
     temp[127] = 0;
 
-    char * youtubeStringStart = strstr(temp, " - YouTube");
-    if (youtubeStringStart) {
-        *youtubeStringStart = 0;
+    char * mtvStringStart = strstr(temp, " - [[MTV]]");
+    if (mtvStringStart) {
+        *mtvStringStart = 0;
         strcpy(title, temp);
         return FALSE;
     }
@@ -91,7 +91,7 @@ void UpdatePresence(struct Application * app)
 {
     char title[128];
     title[0] = 0;
-    EnumWindows(findYoutubeWindowTitle, (LPARAM)title);
+    EnumWindows(findMTVWindowTitle, (LPARAM)title);
 
     if (*title && (strcmp(app->lastTitle, title) != 0)) {
         printf("New title: %s\n", title);
