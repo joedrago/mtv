@@ -153,7 +153,7 @@ run = (args, user) ->
 
   switch args[0]
 
-    when 'what', 'whatisthis', 'who'
+    when 'what', 'whatisthis', 'who', 'whodis'
       if lastPlayed == null
         return "MTV: I have no idea what's playing."
       url = "https://youtu.be/#{lastPlayed.id}"
