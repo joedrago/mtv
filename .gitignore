@@ -1,2 +1,4 @@
 node_modules/
 rp/super_secret.h
+/playlist.json
+/secrets.json

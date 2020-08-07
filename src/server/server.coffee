@@ -1,13 +1,20 @@
+Bottleneck = require 'bottleneck'
 express = require 'express'
 bodyParser = require 'body-parser'
 fs = require 'fs'
+https = require 'https'
 
+limiter = new Bottleneck {
+  maxConcurrent: 5
+}
 
 DEBUG_HACKS = false
 
+secrets = null
 sockets = {}
 playlist = {}
 queue = []
+history = []
 lastPlayed = null
 
 loadPlaylist = ->
@@ -36,7 +43,42 @@ play = (e) ->
       end: e.end
     }
   lastPlayed = e
+  history.unshift(e)
+  while history.length > 20
+    history.pop()
   return
+
+getTitle = (e) ->
+  limiter.schedule ->
+    console.log "Looking up: #{e.id}"
+    return new Promise (resolve, reject) ->
+      url = "https://www.googleapis.com/youtube/v3/videos?part=snippet&key=#{secrets.youtube}&id=#{e.id}"
+      req = https.request url, (res) ->
+        rawJSON = ""
+        res.on 'data', (chunk) ->
+          rawJSON += chunk
+        res.on 'error', ->
+          console.log "Error [#{e.id}]"
+          resolve()
+        res.on 'end', ->
+          data = null
+          try
+            data = JSON.parse(rawJSON)
+          catch
+            console.log "ERROR: Failed to talk to parse JSON: #{rawJSON}"
+            return
+          console.log "looking up #{e.id}"
+          saved = false
+          if data.items? and (data.items.length > 0)
+            if data.items[0].snippet? and data.items[0].snippet.title?
+              e.title = data.items[0].snippet.title
+              console.log "Found title [#{e.id}]: #{e.title}"
+              savePlaylist()
+              saved = true
+          if not saved
+            console.log "Nope [#{e.id}]"
+          resolve()
+      req.end()
 
 playNext = ->
   if queue.length < 1
@@ -164,7 +206,11 @@ run = (args, user) ->
       if lastPlayed.end >= 0
         params += if params.length == 0 then "?" else "&"
         params += "end=#{lastPlayed.end}"
-      return "MTV: Currently playing one of #{lastPlayed.user}'s songs: #{url}#{params}"
+      if lastPlayed.title?
+        title = "#{lastPlayed.title} "
+      else
+        title = " "
+      return "MTV: Currently playing one of #{lastPlayed.user}'s songs: #{title} `#{url}#{params}`"
 
     when 'play'
       e = entryFromArg(args[1])
@@ -181,6 +227,7 @@ run = (args, user) ->
         return "MTV: Already in pool: #{e.id}"
       e.user = user
       playlist[e.id] = e
+      getTitle(e)
       savePlaylist()
       return "MTV: Added to pool: #{e.id}"
 
@@ -190,17 +237,24 @@ run = (args, user) ->
         return "MTV: queue: invalid argument"
       queue.unshift(e)
       if playlist[e.id]?
-        return "MTV: Queued next (already in pool): #{e.id}"
+        title = e.title
+        if not title?
+          title = e.id
+        return "MTV: Queued next (already in pool): #{title}"
       else
         e.user = user
         playlist[e.id] = e
+        getTitle(e)
         savePlaylist()
         return "MTV: Queued next and added to pool: #{e.id}"
 
     when 'shuffle'
       queue = []
       e = playNext()
-      return "MTV: Shuffled and playing a fresh song: #{e.id}"
+      title = e.title
+      if not title?
+        title = e.id
+      return "MTV: Shuffled and playing a fresh song: #{title}"
 
     when 'remove', 'delete', 'del'
       e = entryFromArg(args[1])
@@ -209,13 +263,19 @@ run = (args, user) ->
       if playlist[e.id]?
         delete playlist[e.id]
         savePlaylist()
-        return "MTV: Deleted #{e.id} from shuffled pool."
+        title = e.title
+        if not title?
+          title = e.id
+        return "MTV: Deleted #{title} from shuffled pool."
       else
         return "MTV: #{e.id} is already not in the shuffled pool."
 
     when 'next', 'skip'
       e = playNext()
-      return "MTV: Playing #{e.id}"
+      title = e.title
+      if not title?
+        title = e.id
+      return "MTV: Playing: #{title}"
 
   return "MTV: unknown command #{args[0]}"
 
@@ -225,7 +285,25 @@ main = ->
     console.log "Debug hacks enabled."
     DEBUG_HACKS = true
 
+  secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'))
+  if not secrets.stream? or not secrets.youtube?
+    console.error "Bad secrets: " + JSON.stringify(secrets)
+    return
+
+  console.log "Secrets:"
+  console.log JSON.stringify(secrets, null, 2)
+
   loadPlaylist()
+
+  setInterval( ->
+    console.log "Checking for missing titles..."
+    missingTitleCount = 0
+    for k,v of playlist
+      if not v.title?
+        getTitle(v)
+        missingTitleCount += 1
+    console.log "Found #{missingTitleCount} missing a title."
+  , 60 * 1000)
 
   app = express()
   http = require('http').createServer(app)
@@ -242,10 +320,27 @@ main = ->
         delete sockets[socket.id]
 
   app.get '/', (req, res) ->
-    html = fs.readFileSync("#{__dirname}/../web/client.html", "utf8")
-    # html = html.replace(/!PLAYERID!/, pid)
-    # html = html.replace(/!TABLEID!/, tid)
+    html = fs.readFileSync("#{__dirname}/../web/dashboard.html", "utf8")
     res.send(html)
+
+  app.get '/stream', (req, res) ->
+    if not req.query.secret? or (req.query.secret != secrets.stream)
+      res.send("bad secret")
+      return
+    html = fs.readFileSync("#{__dirname}/../web/client.html", "utf8")
+    res.send(html)
+
+  app.get '/info/playlist', (req, res) ->
+    res.type('application/json')
+    res.send(JSON.stringify(playlist, null, 2))
+
+  app.get '/info/queue', (req, res) ->
+    res.type('application/json')
+    res.send(JSON.stringify(queue, null, 2))
+
+  app.get '/info/history', (req, res) ->
+    res.type('application/json')
+    res.send(JSON.stringify(history, null, 2))
 
   app.use(bodyParser.json())
   app.post '/cmd', (req, res) ->
