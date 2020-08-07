@@ -259,7 +259,7 @@
     return {
       title: title,
       url: url,
-      description: `\`[${e.user}, ${url}]\`: ${title}`
+      description: `\`[${e.user}, ${url}]\`: **${title}**`
     };
   };
 
