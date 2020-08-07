@@ -279,6 +279,15 @@ run = (args, user) ->
 
   return "MTV: unknown command #{args[0]}"
 
+findMissingTitles = ->
+  console.log "Checking for missing titles..."
+  missingTitleCount = 0
+  for k,v of playlist
+    if not v.title?
+      getTitle(v)
+      missingTitleCount += 1
+  console.log "Found #{missingTitleCount} missing a title."
+
 main = ->
   argv = process.argv.slice(2)
   if argv.length > 0
@@ -295,14 +304,9 @@ main = ->
 
   loadPlaylist()
 
+  findMissingTitles()
   setInterval( ->
-    console.log "Checking for missing titles..."
-    missingTitleCount = 0
-    for k,v of playlist
-      if not v.title?
-        getTitle(v)
-        missingTitleCount += 1
-    console.log "Found #{missingTitleCount} missing a title."
+    findMissingTitles()
   , 60 * 1000)
 
   app = express()
