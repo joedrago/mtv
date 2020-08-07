@@ -1,0 +1,40 @@
+<html>
+<style>
+body, html {
+    background-color: #000022;
+    color: white;
+
+    font-family: monospace;
+    font-size: 1.2em;
+}
+
+a {
+    text-decoration: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    cursor: pointer;
+
+    color: #aaffaa;
+}
+
+.user {
+    font-size: 0.7em;
+    font-style: italic;
+}
+
+</style>
+<body>
+
+[<a onclick="showHistory()">Show History</a>] [<a onclick="showQueue()">Show Queue</a>] [<a onclick="showPlaylist()">Show All</a>]
+<br><br>
+
+<div id="main"></div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>

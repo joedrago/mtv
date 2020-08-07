@@ -29,15 +29,16 @@ buildBundle = (uiSrc, uiDst, callback) ->
     if not err
       fs.writeFile uiDst, result, (err) ->
         if not err
-          util.log "Client compilation finished: #{uiDst}"
+          util.log "#{uiDst} compilation finished: #{uiDst}"
           callback?()
         else
-          util.log "Client bundle write failed: " + err
+          util.log "#{uiDst} bundle write failed: " + err
     else
-      util.log "Client compilation failed: " + err
+      util.log "#{uiDst} compilation failed: " + err
 
 buildClient = (callback) ->
-  buildBundle('./src/client/client.coffee', "web/client.js", callback)
+  buildBundle './src/client/client.coffee', "web/client.js", ->
+    buildBundle('./src/client/dashboard.coffee', "web/dashboard.js", callback)
 
 buildServer = (callback) ->
   coffee = spawn coffeeName, ['-c', '-o', 'server', 'src/server']
