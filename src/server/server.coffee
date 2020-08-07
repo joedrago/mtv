@@ -189,6 +189,26 @@ entryFromArg = (arg) ->
     end: endTime
   }
 
+calcEntryStrings = (e) ->
+  url = "https://youtu.be/#{lastPlayed.id}"
+  params = ""
+  if e.start >= 0
+    params += if params.length == 0 then "?" else "&"
+    params += "start=#{e.start}"
+  if e.end >= 0
+    params += if params.length == 0 then "?" else "&"
+    params += "end=#{e.end}"
+  if e.title?
+    title = "#{e.title} "
+  else
+    title = " "
+  url = "#{url}#{params}"
+  return {
+    title: title
+    url: url
+    description: "[ `#{e.user}, #{url}` ]: \"#{title}\""
+  }
+
 run = (args, user) ->
   if args.length < 1
     return "MTV: No command given."
@@ -198,19 +218,8 @@ run = (args, user) ->
     when 'what', 'whatisthis', 'who', 'whodis'
       if lastPlayed == null
         return "MTV: I have no idea what's playing."
-      url = "https://youtu.be/#{lastPlayed.id}"
-      params = ""
-      if lastPlayed.start >= 0
-        params += if params.length == 0 then "?" else "&"
-        params += "start=#{lastPlayed.start}"
-      if lastPlayed.end >= 0
-        params += if params.length == 0 then "?" else "&"
-        params += "end=#{lastPlayed.end}"
-      if lastPlayed.title?
-        title = "#{lastPlayed.title} "
-      else
-        title = " "
-      return "MTV: Currently playing one of #{lastPlayed.user}'s songs: #{title} `#{url}#{params}`"
+      strs = calcEntryStrings(lastPlayed)
+      return "MTV: Playing #{strs.description}"
 
     when 'play'
       e = entryFromArg(args[1])
@@ -237,10 +246,8 @@ run = (args, user) ->
         return "MTV: queue: invalid argument"
       queue.unshift(e)
       if playlist[e.id]?
-        title = e.title
-        if not title?
-          title = e.id
-        return "MTV: Queued next (already in pool): #{title}"
+        strs = calcEntryStrings(playlist[e.id])
+        return "MTV: Queued next (already in pool) #{strs.description}"
       else
         e.user = user
         playlist[e.id] = e
@@ -251,10 +258,8 @@ run = (args, user) ->
     when 'shuffle'
       queue = []
       e = playNext()
-      title = e.title
-      if not title?
-        title = e.id
-      return "MTV: Shuffled and playing a fresh song: #{title}"
+      strs = calcEntryStrings(e)
+      return "MTV: Shuffled and playing a fresh song #{strs.description}"
 
     when 'remove', 'delete', 'del'
       e = entryFromArg(args[1])
@@ -272,10 +277,8 @@ run = (args, user) ->
 
     when 'next', 'skip'
       e = playNext()
-      title = e.title
-      if not title?
-        title = e.id
-      return "MTV: Playing: #{title}"
+      strs = calcEntryStrings(e)
+      return "MTV: Playing #{strs.description}"
 
   return "MTV: unknown command #{args[0]}"
 
