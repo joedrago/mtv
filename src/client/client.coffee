@@ -57,7 +57,7 @@ window.onYouTubePlayerAPIReady = ->
     width: '100%'
     height: '100%'
     videoId: 'xpmQK_uPDpg' # nyan cat, this will be replaced almost immediately
-    playerVars: { 'autoplay': 1, 'controls': 1 }
+    playerVars: { 'autoplay': 1, 'controls': 0 }
     events: {
       onReady: onPlayerReady
       onStateChange: onPlayerStateChange
