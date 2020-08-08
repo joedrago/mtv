@@ -27,14 +27,25 @@ a {
     font-style: italic;
 }
 
+#castbox {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    width: 50px;
+    height: 50px;
+}
+
 </style>
 <body>
 
+<div id="castbox"><google-cast-launcher id="castbutton"></google-cast-launcher></div>
 [<a onclick="showHistory()">Show History</a>] [<a onclick="showQueue()">Show Queue</a>] [<a onclick="showPlaylist()">Show All</a>]
 <br><br>
 
 <div id="main"></div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script src="dashboard.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 </body>
 </html>
