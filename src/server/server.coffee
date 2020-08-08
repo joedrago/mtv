@@ -3,6 +3,7 @@ express = require 'express'
 bodyParser = require 'body-parser'
 fs = require 'fs'
 https = require 'https'
+ytdl = require 'ytdl-core'
 
 limiter = new Bottleneck {
   maxConcurrent: 5
@@ -35,6 +36,23 @@ loadPlaylist = ->
 savePlaylist = ->
   fs.writeFileSync("playlist.json", JSON.stringify(playlist, null, 2))
 
+updateCasts = (id = null) ->
+  if lastPlayed == null
+    return
+
+  ytdl.getInfo(lastPlayed.id).then (info) ->
+    available = ytdl.filterFormats(info.formats, 'audioandvideo')
+    if available.length > 0
+      url = available[0].url
+      for sid, soc of sockets
+        if (id != null) and (id != sid)
+          continue
+
+        soc.emit 'cast', {
+          url: url
+          start: lastPlayed.start
+        }
+
 play = (e) ->
   for socketId, socket of sockets
     socket.emit 'play', {
@@ -46,6 +64,7 @@ play = (e) ->
   history.unshift(e)
   while history.length > 20
     history.pop()
+  updateCasts()
   return
 
 getTitle = (e) ->
@@ -325,6 +344,11 @@ main = ->
     socket.on 'disconnect', ->
       if sockets[socket.id]?
         delete sockets[socket.id]
+
+    socket.on 'castready', (msg) ->
+      console.log "castready!"
+      if msg.id?
+        updateCasts(msg.id)
 
   app.get '/', (req, res) ->
     html = fs.readFileSync("#{__dirname}/../web/dashboard.html", "utf8")

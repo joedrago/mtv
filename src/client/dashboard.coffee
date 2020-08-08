@@ -1,3 +1,5 @@
+socket = null
+
 renderEntries = (entries, isMap) ->
   html = ""
 
@@ -36,7 +38,7 @@ renderEntries = (entries, isMap) ->
 
 
 showList = (url, isMap = false) ->
-  document.getElementById('main').innerHTML = "history"
+  document.getElementById('main').innerHTML = ""
   xhttp = new XMLHttpRequest()
   xhttp.onreadystatechange = ->
       if (@readyState == 4) and (@status == 200)
@@ -53,12 +55,61 @@ showHistory = -> showList("/info/history")
 showQueue = -> showList("/info/queue")
 showPlaylist = -> showList("/info/playlist", true)
 
+class CastPlayer
+  constructor: ->
+    @remotePlayer = null
+    @remotePlayerController = null
+
+  initializeCastPlayer: ->
+    options =
+      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+      receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID
+    cast.framework.CastContext.getInstance().setOptions(options)
+    @remotePlayer = new cast.framework.RemotePlayer()
+    @remotePlayerController = new cast.framework.RemotePlayerController(@remotePlayer)
+    @remotePlayerController.addEventListener(cast.framework.RemotePlayerEventType.IS_CONNECTED_CHANGED, @switchPlayer.bind(this))
+
+  switchPlayer: ->
+    sessionState = cast.framework.CastContext.getInstance().getSessionState()
+    if sessionState != cast.framework.SessionState.SESSION_STARTED
+      console.log "Session ended!"
+      return
+
+    console.log "Session starting!"
+    socket.emit 'castready', { id: socket.id }
+
+beginCast = (pkt) ->
+  console.log "CAST:", pkt
+
+  sessionState = cast.framework.CastContext.getInstance().getSessionState()
+  if sessionState != cast.framework.SessionState.SESSION_STARTED
+    console.log "No session; skipping beginCast"
+    return
+
+  console.log "Starting cast!"
+  castSession = cast.framework.CastContext.getInstance().getCurrentSession()
+  mediaInfo = new chrome.cast.media.MediaInfo(pkt.url, 'video/mp4')
+  request = new chrome.cast.media.LoadRequest(mediaInfo)
+  if pkt.start > 0
+    request.currentTime = pkt.start
+  castSession.loadMedia(request)
+
 init = ->
   window.showHistory = showHistory
   window.showQueue = showQueue
   window.showPlaylist = showPlaylist
 
   showHistory()
+
+  socket = io()
+  socket.on 'cast', (pkt) ->
+    beginCast(pkt)
+
+  window.__onGCastApiAvailable = (isAvailable) ->
+    console.log "__onGCastApiAvailable fired: #{isAvailable}"
+    castPlayer = new CastPlayer
+    if isAvailable
+      castPlayer.initializeCastPlayer()
 
   console.log "initialized!"
 
