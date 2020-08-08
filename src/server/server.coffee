@@ -364,7 +364,7 @@ main = ->
 
   app.use(express.static('web'))
 
-  http.listen 3003, ->
-    console.log('listening on *:3003')
+  http.listen 3003, '127.0.0.1', ->
+    console.log('listening on 127.0.0.1:3003')
 
 module.exports = main
