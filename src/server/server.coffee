@@ -209,7 +209,7 @@ entryFromArg = (arg) ->
   }
 
 calcEntryStrings = (e) ->
-  url = "https://youtu.be/#{lastPlayed.id}"
+  url = "https://youtu.be/#{e.id}"
   params = ""
   if e.start >= 0
     params += if params.length == 0 then "?" else "&"

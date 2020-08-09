@@ -268,7 +268,7 @@
 
   calcEntryStrings = function(e) {
     var params, title, url;
-    url = `https://youtu.be/${lastPlayed.id}`;
+    url = `https://youtu.be/${e.id}`;
     params = "";
     if (e.start >= 0) {
       params += params.length === 0 ? "?" : "&";
