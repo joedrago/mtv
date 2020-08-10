@@ -209,6 +209,10 @@ init = ->
     if lastClicked?
       lastClicked()
 
+  socket.on 'refresh', (pkt) ->
+    if lastClicked?
+      lastClicked()
+
   window.__onGCastApiAvailable = (isAvailable) ->
     console.log "__onGCastApiAvailable fired: #{isAvailable}"
     castPlayer = new CastPlayer
