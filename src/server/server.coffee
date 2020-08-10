@@ -83,6 +83,8 @@ play = (e) ->
       end: e.end
     }
   lastPlayed = e
+  lastPlayed.countPlay ?= 0
+  lastPlayed.countPlay += 1
   history.unshift(e)
   while history.length > 20
     history.pop()
@@ -319,6 +321,9 @@ run = (args, user) ->
         return "MTV: #{e.id} is already not in the shuffled pool."
 
     when 'next', 'skip'
+      if lastPlayed?
+        lastPlayed.countSkip ?= 0
+        lastPlayed.countSkip += 1
       e = playNext()
       strs = calcEntryStrings(e)
       return "MTV: Playing #{strs.description}"
@@ -363,7 +368,17 @@ main = ->
     sockets[socket.id] = socket
 
     socket.on 'ready', (msg) ->
-      playNext()
+      console.log "ready: #{JSON.stringify(msg)}"
+      if msg.secret == secrets.stream
+        # Only the client with the secret gets to control the queue
+        playNext()
+      else if lastPlayed? and msg.fresh
+        # Give fresh watchers something to watch until the next song hits
+        socket.emit 'play', {
+          id: lastPlayed.id
+          start: lastPlayed.start
+          end: lastPlayed.end
+        }
 
     socket.on 'disconnect', ->
       if sockets[socket.id]?
@@ -379,9 +394,10 @@ main = ->
     res.send(html)
 
   app.get '/stream', (req, res) ->
-    if not req.query.secret? or (req.query.secret != secrets.stream)
-      res.send("bad secret")
-      return
+    html = fs.readFileSync("#{__dirname}/../web/client.html", "utf8")
+    res.send(html)
+
+  app.get '/watch', (req, res) ->
     html = fs.readFileSync("#{__dirname}/../web/client.html", "utf8")
     res.send(html)
 
