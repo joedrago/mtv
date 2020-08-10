@@ -42,7 +42,7 @@ renderEntries = (firstTitle, restTitle, entries, isMap) ->
       if (entryIndex == 0)
         html += """
           <div class="firstTitle">#{firstTitle}</div>
-          <div class="preview"><img src="#{e.thumb}"></div>
+          <div class="previewContainer"><img class="preview" src="#{e.thumb}"></div>
         """
       else if (entryIndex == 1)
         html += """
