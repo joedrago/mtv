@@ -6,7 +6,7 @@ renderEntries = (domID, firstTitle, restTitle, entries, isMap) ->
   html = ""
 
   if isMap
-    console.log entries
+    # console.log entries
     m = entries
     entries = []
     for k, v of m
@@ -37,6 +37,10 @@ renderEntries = (domID, firstTitle, restTitle, entries, isMap) ->
       extraInfo += ", #{e.countPlay} play#{if e.countPlay == 1 then "" else "s"}"
     if e.countSkip?
       extraInfo += ", #{e.countSkip} skip#{if e.countSkip == 1 then "" else "s"}"
+
+    if e.opinions?
+      for feeling, count of e.opinions
+        extraInfo += ", #{count} #{feeling}"
 
     if firstTitle?
       if (entryIndex == 0)

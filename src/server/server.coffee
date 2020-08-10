@@ -18,6 +18,7 @@ queue = []
 history = []
 lastPlayed = null
 isCasting = {}
+opinions = {}
 
 load = ->
   if fs.existsSync("playlist.json")
@@ -41,10 +42,15 @@ load = ->
     for id in state.history
       if playlist[id]?
         history.push playlist[id]
+  if fs.existsSync("opinions.json")
+    opinions = JSON.parse(fs.readFileSync("opinions.json", 'utf8'))
   return
 
 savePlaylist = ->
   fs.writeFileSync("playlist.json", JSON.stringify(playlist, null, 2))
+
+saveOpinions = ->
+  fs.writeFileSync("opinions.json", JSON.stringify(opinions, null, 2))
 
 saveState = ->
   savedQueue = []
@@ -279,11 +285,33 @@ calcEntryStrings = (e) ->
   else
     title = " "
   url = "#{url}#{params}"
+
+  opinionString = ""
+  for feeling, count of e.opinions
+    opinionString += ", #{count} #{feeling}"
   return {
     title: title
     url: url
-    description: "`[#{e.user}, #{url}]`: **#{title}**"
+    description: "`[#{e.user}, #{url}]#{opinionString}`: **#{title}**"
   }
+
+updateOpinion = (e) ->
+  o = {}
+  if opinions[e.id]?
+    for user, feeling of opinions[e.id]
+      o[feeling] ?= 0
+      o[feeling] += 1
+  e.opinions = o
+  return
+
+updateOpinions = (entries, isMap) ->
+  if isMap
+    for k, v of entries
+      updateOpinion(v)
+  else
+    for e in entries
+      updateOpinion(e)
+  return
 
 run = (args, user) ->
   if args.length < 1
@@ -291,10 +319,27 @@ run = (args, user) ->
 
   switch args[0]
 
+    when 'help', 'commands'
+      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`"
+
     when 'what', 'whatisthis', 'who', 'whodis', 'why'
       if lastPlayed == null
         return "MTV: I have no idea what's playing."
       strs = calcEntryStrings(lastPlayed)
+      return "MTV: Playing #{strs.description}"
+
+    when 'like', 'meh', 'hate', 'none'
+      if lastPlayed == null
+        return "MTV: I have no idea what's playing."
+      opinions[lastPlayed.id] ?= {}
+      if args[0] == 'none'
+        if opinions[lastPlayed.id][user]?
+          delete opinions[lastPlayed.id][user]
+      else
+        opinions[lastPlayed.id][user] = args[0]
+      updateOpinion(lastPlayed)
+      strs = calcEntryStrings(lastPlayed)
+      saveOpinions()
       return "MTV: Playing #{strs.description}"
 
     when 'add'
@@ -430,14 +475,17 @@ main = ->
     res.send(html)
 
   app.get '/info/playlist', (req, res) ->
+    updateOpinions(playlist, true)
     res.type('application/json')
     res.send(JSON.stringify(playlist, null, 2))
 
   app.get '/info/queue', (req, res) ->
+    updateOpinions(queue)
     res.type('application/json')
     res.send(JSON.stringify(queue, null, 2))
 
   app.get '/info/history', (req, res) ->
+    updateOpinions(history)
     res.type('application/json')
     res.send(JSON.stringify(history, null, 2))
 
