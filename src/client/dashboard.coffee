@@ -56,7 +56,7 @@ renderEntries = (firstTitle, restTitle, entries, isMap) ->
 
 
 showList = (firstTitle, restTitle, url, isMap = false) ->
-  document.getElementById('main').innerHTML = ""
+  # document.getElementById('main').innerHTML = ""
   xhttp = new XMLHttpRequest()
   xhttp.onreadystatechange = ->
       if (@readyState == 4) and (@status == 200)
