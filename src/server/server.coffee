@@ -52,6 +52,10 @@ savePlaylist = ->
 saveOpinions = ->
   fs.writeFileSync("opinions.json", JSON.stringify(opinions, null, 2))
 
+refreshDashboards = ->
+  for sid, soc of sockets
+    soc.emit 'refresh', {}
+
 saveState = ->
   savedQueue = []
   for e in queue
@@ -340,6 +344,7 @@ run = (args, user) ->
       updateOpinion(lastPlayed)
       strs = calcEntryStrings(lastPlayed)
       saveOpinions()
+      refreshDashboards()
       return "MTV: Playing #{strs.description}"
 
     when 'add'
