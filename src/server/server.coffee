@@ -18,7 +18,7 @@ queue = []
 history = []
 lastPlayed = null
 
-loadPlaylist = ->
+load = ->
   if fs.existsSync("playlist.json")
     loadedList = JSON.parse(fs.readFileSync("playlist.json", 'utf8'))
 
@@ -31,10 +31,31 @@ loadPlaylist = ->
           start: -1
           end: -1
       playlist[id] = p
+
+  if fs.existsSync("state.json")
+    state = JSON.parse(fs.readFileSync("state.json", 'utf8'))
+    for id in state.queue
+      if playlist[id]?
+        queue.push playlist[id]
+    for id in state.history
+      if playlist[id]?
+        history.push playlist[id]
   return
 
 savePlaylist = ->
   fs.writeFileSync("playlist.json", JSON.stringify(playlist, null, 2))
+
+saveState = ->
+  savedQueue = []
+  for e in queue
+    savedQueue.push e.id
+  savedHistory = []
+  for e in history
+    savedHistory.push e.id
+  state =
+    history: savedHistory
+    queue: savedQueue
+  fs.writeFileSync("state.json", JSON.stringify(state, null, 2))
 
 updateCasts = (id = null) ->
   if lastPlayed == null
@@ -65,6 +86,7 @@ play = (e) ->
   while history.length > 20
     history.pop()
   updateCasts()
+  saveState()
   return
 
 getTitle = (e) ->
@@ -273,6 +295,7 @@ run = (args, user) ->
         getTitle(e)
         savePlaylist()
         return "MTV: Queued next and added to pool: #{e.id}"
+      saveState()
 
     when 'shuffle'
       queue = []
@@ -324,7 +347,7 @@ main = ->
   console.log "Secrets:"
   console.log JSON.stringify(secrets, null, 2)
 
-  loadPlaylist()
+  load()
 
   findMissingTitles()
   setInterval( ->
