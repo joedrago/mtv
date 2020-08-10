@@ -2,7 +2,7 @@ socket = null
 
 lastClicked = null
 
-renderEntries = (entries, isMap) ->
+renderEntries = (firstTitle, restTitle, entries, isMap) ->
   html = ""
 
   if isMap
@@ -20,7 +20,7 @@ renderEntries = (entries, isMap) ->
         return 1
       return 0
 
-  for e in entries
+  for e, entryIndex in entries
     title = e.title
     if not title?
       title = e.id
@@ -37,6 +37,17 @@ renderEntries = (entries, isMap) ->
       extraInfo += ", #{e.countPlay} play#{if e.countPlay == 1 then "" else "s"}"
     if e.countSkip?
       extraInfo += ", #{e.countSkip} skip#{if e.countSkip == 1 then "" else "s"}"
+
+    if firstTitle?
+      if (entryIndex == 0)
+        html += """
+          <div class="firstTitle">#{firstTitle}</div>
+          <div class="preview"><img src="#{e.thumb}"></div>
+        """
+      else if (entryIndex == 1)
+        html += """
+          <div class="restTitle">#{restTitle}</div>
+        """
     html += """
       <div> * <a target="_blank" href="#{url}">#{title}</a> <span class="user">(#{e.user}#{extraInfo})</span></div>
 
@@ -44,7 +55,7 @@ renderEntries = (entries, isMap) ->
   document.getElementById("main").innerHTML = html
 
 
-showList = (url, isMap = false) ->
+showList = (firstTitle, restTitle, url, isMap = false) ->
   document.getElementById('main').innerHTML = ""
   xhttp = new XMLHttpRequest()
   xhttp.onreadystatechange = ->
@@ -52,22 +63,22 @@ showList = (url, isMap = false) ->
          # Typical action to be performed when the document is ready:
          try
            entries = JSON.parse(xhttp.responseText)
-           renderEntries(entries, isMap)
+           renderEntries(firstTitle, restTitle, entries, isMap)
          catch
            document.getElementById("main").innerHTML = "Error!"
   xhttp.open("GET", url, true)
   xhttp.send()
 
 showHistory = ->
-  showList("/info/history")
+  showList("Now Playing:", "History:", "/info/history")
   lastClicked = showHistory
 
 showQueue = ->
-  showList("/info/queue")
+  showList("Up Next:", "Queue:", "/info/queue")
   lastClicked = showQueue
 
 showPlaylist = ->
-  showList("/info/playlist", true)
+  showList(null, null, "/info/playlist", true)
   lastClicked = showPlaylist
 
 class CastPlayer
@@ -109,12 +120,23 @@ beginCast = (pkt) ->
     request.currentTime = pkt.start
   castSession.loadMedia(request)
 
+processHash = ->
+  currentHash = window.location.hash
+  switch currentHash
+    when '#queue'
+      showQueue()
+    when '#all'
+      showPlaylist()
+    else
+      showHistory()
+
 init = ->
   window.showHistory = showHistory
   window.showQueue = showQueue
   window.showPlaylist = showPlaylist
+  window.onhashchange = processHash
 
-  showHistory()
+  processHash()
 
   socket = io()
   socket.on 'cast', (pkt) ->

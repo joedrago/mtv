@@ -114,8 +114,26 @@ getTitle = (e) ->
           console.log "looking up #{e.id}"
           saved = false
           if data.items? and (data.items.length > 0)
-            if data.items[0].snippet? and data.items[0].snippet.title?
+            # console.log JSON.stringify(data, null, 2)
+            if data.items[0].snippet? and data.items[0].snippet.title? and data.items[0].snippet.thumbnails?
+              chosenThumb = null
+              for thumbType, thumb of data.items[0].snippet.thumbnails
+                if not chosenThumb?
+                  chosenThumb = thumb
+                  continue
+                if thumbType == 'medium'
+                  chosenThumb = thumb
+                  break
+                if chosenThumb.height < thumb.height
+                  chosenThumb = thumb
+              thumbUrl = null
+              if chosenThumb?
+                thumbUrl = chosenThumb.url
+              if not thumbUrl?
+                thumbUrl = '/unknown.png'
+
               e.title = data.items[0].snippet.title
+              e.thumb = thumbUrl
               console.log "Found title [#{e.id}]: #{e.title}"
               savePlaylist()
               saved = true
@@ -259,18 +277,11 @@ run = (args, user) ->
 
   switch args[0]
 
-    when 'what', 'whatisthis', 'who', 'whodis'
+    when 'what', 'whatisthis', 'who', 'whodis', 'why'
       if lastPlayed == null
         return "MTV: I have no idea what's playing."
       strs = calcEntryStrings(lastPlayed)
       return "MTV: Playing #{strs.description}"
-
-    when 'play'
-      e = entryFromArg(args[1])
-      if not e?
-        return "MTV: play: invalid argument"
-      play(e)
-      return "MTV: Playing #{e.id}"
 
     when 'add'
       e = entryFromArg(args[1])
@@ -334,7 +345,7 @@ findMissingTitles = ->
   console.log "Checking for missing titles..."
   missingTitleCount = 0
   for k,v of playlist
-    if not v.title?
+    if not v.title? or not v.thumb?
       getTitle(v)
       missingTitleCount += 1
   console.log "Found #{missingTitleCount} missing a title."
