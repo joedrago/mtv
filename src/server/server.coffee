@@ -56,6 +56,7 @@ saveState = ->
     history: savedHistory
     queue: savedQueue
   fs.writeFileSync("state.json", JSON.stringify(state, null, 2))
+  console.log "Saved State: (#{savedQueue.length} in queue, #{savedHistory.length} in history)"
 
 updateCasts = (id = null) ->
   if lastPlayed == null

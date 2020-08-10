@@ -89,7 +89,8 @@
       history: savedHistory,
       queue: savedQueue
     };
-    return fs.writeFileSync("state.json", JSON.stringify(state, null, 2));
+    fs.writeFileSync("state.json", JSON.stringify(state, null, 2));
+    return console.log(`Saved State: (${savedQueue.length} in queue, ${savedHistory.length} in history)`);
   };
 
   updateCasts = function(id = null) {
