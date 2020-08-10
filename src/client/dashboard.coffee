@@ -1,5 +1,7 @@
 socket = null
 
+lastClicked = null
+
 renderEntries = (entries, isMap) ->
   html = ""
 
@@ -56,9 +58,17 @@ showList = (url, isMap = false) ->
   xhttp.open("GET", url, true)
   xhttp.send()
 
-showHistory = -> showList("/info/history")
-showQueue = -> showList("/info/queue")
-showPlaylist = -> showList("/info/playlist", true)
+showHistory = ->
+  showList("/info/history")
+  lastClicked = showHistory
+
+showQueue = ->
+  showList("/info/queue")
+  lastClicked = showQueue
+
+showPlaylist = ->
+  showList("/info/playlist", true)
+  lastClicked = showPlaylist
 
 class CastPlayer
   constructor: ->
@@ -109,6 +119,8 @@ init = ->
   socket = io()
   socket.on 'cast', (pkt) ->
     beginCast(pkt)
+    if lastClicked?
+      lastClicked()
 
   window.__onGCastApiAvailable = (isAvailable) ->
     console.log "__onGCastApiAvailable fired: #{isAvailable}"
