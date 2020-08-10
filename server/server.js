@@ -343,6 +343,9 @@
     if (id == null) {
       return null;
     }
+    if (id.match(/\?/)) {
+      return null;
+    }
     return {
       id: id,
       start: startTime,
