@@ -30,8 +30,13 @@ renderEntries = (entries, isMap) ->
       params += if params.length == 0 then "?" else "&"
       params += "end=#{e.end}"
     url = "https://youtu.be/#{e.id}#{params}"
+    extraInfo = ""
+    if e.countPlay?
+      extraInfo += ", #{e.countPlay} play#{if e.countPlay == 1 then "" else "s"}"
+    if e.countSkip?
+      extraInfo += ", #{e.countSkip} skip#{if e.countSkip == 1 then "" else "s"}"
     html += """
-      <div> * <a target="_blank" href="#{url}">#{title}</a> <span class="user">(#{e.user})</span></div>
+      <div> * <a target="_blank" href="#{url}">#{title}</a> <span class="user">(#{e.user}#{extraInfo})</span></div>
 
     """
   document.getElementById("main").innerHTML = html
