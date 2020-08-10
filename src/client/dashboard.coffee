@@ -2,7 +2,7 @@ socket = null
 
 lastClicked = null
 
-renderEntries = (firstTitle, restTitle, entries, isMap) ->
+renderEntries = (domID, firstTitle, restTitle, entries, isMap) ->
   html = ""
 
   if isMap
@@ -52,10 +52,10 @@ renderEntries = (firstTitle, restTitle, entries, isMap) ->
       <div> * <a target="_blank" href="#{url}">#{title}</a> <span class="user">(#{e.user}#{extraInfo})</span></div>
 
     """
-  document.getElementById("main").innerHTML = html
+  document.getElementById(domID).innerHTML = html
 
 
-showList = (firstTitle, restTitle, url, isMap = false) ->
+showList = (domID, firstTitle, restTitle, url, isMap = false) ->
   # document.getElementById('main').innerHTML = ""
   xhttp = new XMLHttpRequest()
   xhttp.onreadystatechange = ->
@@ -63,22 +63,31 @@ showList = (firstTitle, restTitle, url, isMap = false) ->
          # Typical action to be performed when the document is ready:
          try
            entries = JSON.parse(xhttp.responseText)
-           renderEntries(firstTitle, restTitle, entries, isMap)
+           renderEntries(domID, firstTitle, restTitle, entries, isMap)
          catch
            document.getElementById("main").innerHTML = "Error!"
   xhttp.open("GET", url, true)
   xhttp.send()
 
 showHistory = ->
-  showList("Now Playing:", "History:", "/info/history")
+  showList('main', "Now Playing:", "History:", "/info/history")
   lastClicked = showHistory
 
 showQueue = ->
-  showList("Up Next:", "Queue:", "/info/queue")
+  showList('main', "Up Next:", "Queue:", "/info/queue")
   lastClicked = showQueue
 
+showBoth = ->
+  document.getElementById('main').innerHTML = """
+    <div id="mainl"></div>
+    <div id="mainr"></div>
+  """
+  showList('mainl', "Now Playing:", "History:", "/info/history")
+  showList('mainr', "Up Next:", "Queue:", "/info/queue")
+  lastClicked = showBoth
+
 showPlaylist = ->
-  showList(null, null, "/info/playlist", true)
+  showList('main', null, null, "/info/playlist", true)
   lastClicked = showPlaylist
 
 class CastPlayer
@@ -127,6 +136,8 @@ processHash = ->
       showQueue()
     when '#all'
       showPlaylist()
+    when '#both'
+      showBoth()
     else
       showHistory()
 

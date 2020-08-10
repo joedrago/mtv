@@ -56,11 +56,23 @@ a {
     font-style: italic;
 }
 
+#mainl {
+    display: inline-block;
+    width: 45%;
+    vertical-align: top;
+}
+
+#mainr {
+    display: inline-block;
+    width: 45%;
+    vertical-align: top;
+}
+
 </style>
 <body>
 
 <div id="castbox"><google-cast-launcher id="castbutton"></google-cast-launcher></div>
-[<a href="#history" onclick="showHistory()">Show History</a>] [<a href="#queue" onclick="showQueue()">Show Queue</a>] [<a href="#all" onclick="showPlaylist()">Show All</a>] [<a target="_blank" href="/watch">Watch</a>]
+[<a href="#history" onclick="showHistory()">History</a>] [<a href="#queue" onclick="showQueue()">Queue</a>] [<a href="#both" onclick="showBoth()">Both</a>] [<a href="#all" onclick="showPlaylist()">All</a>] [<a target="_blank" href="/watch">Watch</a>]
 <br><br>
 
 <div id="main"></div>

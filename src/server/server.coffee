@@ -17,6 +17,7 @@ playlist = {}
 queue = []
 history = []
 lastPlayed = null
+isCasting = {}
 
 load = ->
   if fs.existsSync("playlist.json")
@@ -58,8 +59,17 @@ saveState = ->
   fs.writeFileSync("state.json", JSON.stringify(state, null, 2))
   console.log "Saved State: (#{savedQueue.length} in queue, #{savedHistory.length} in history)"
 
+isAnyoneCasting = ->
+  for sid, soc of sockets
+    if isCasting[sid]
+      return true
+  return false
+
 updateCasts = (id = null) ->
   if lastPlayed == null
+    return
+
+  if not isAnyoneCasting()
     return
 
   ytdl.getInfo(lastPlayed.id).then (info) ->
@@ -94,6 +104,7 @@ play = (e) ->
 
 getTitle = (e) ->
   limiter.schedule ->
+    e.id = e.id.replace(/\?.+$/, "")
     console.log "Looking up: #{e.id}"
     return new Promise (resolve, reject) ->
       url = "https://www.googleapis.com/youtube/v3/videos?part=snippet&key=#{secrets.youtube}&id=#{e.id}"
@@ -394,10 +405,13 @@ main = ->
     socket.on 'disconnect', ->
       if sockets[socket.id]?
         delete sockets[socket.id]
+      if isCasting[socket.id]?
+        delete isCasting[socket.id]
 
     socket.on 'castready', (msg) ->
       console.log "castready!"
       if msg.id?
+        isCasting[msg.id] = true
         updateCasts(msg.id)
 
   app.get '/', (req, res) ->
