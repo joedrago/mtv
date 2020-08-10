@@ -35,11 +35,28 @@ a {
     height: 50px;
 }
 
+.preview {
+    margin: 20px;
+    border: 1px solid #000000;
+}
+
+.firstTitle {
+    font-weight: 900;
+    font-style: italic;
+}
+
+.restTitle {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-weight: 900;
+    font-style: italic;
+}
+
 </style>
 <body>
 
 <div id="castbox"><google-cast-launcher id="castbutton"></google-cast-launcher></div>
-[<a onclick="showHistory()">Show History</a>] [<a onclick="showQueue()">Show Queue</a>] [<a onclick="showPlaylist()">Show All</a>] [<a target="_blank" href="/watch">Watch</a>]
+[<a href="#history" onclick="showHistory()">Show History</a>] [<a href="#queue" onclick="showQueue()">Show Queue</a>] [<a href="#all" onclick="showPlaylist()">Show All</a>] [<a target="_blank" href="/watch">Watch</a>]
 <br><br>
 
 <div id="main"></div>

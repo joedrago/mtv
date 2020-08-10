@@ -158,7 +158,7 @@
             return resolve();
           });
           return res.on('end', function() {
-            var data, saved;
+            var chosenThumb, data, ref, saved, thumb, thumbType, thumbUrl;
             data = null;
             try {
               data = JSON.parse(rawJSON);
@@ -169,8 +169,33 @@
             console.log(`looking up ${e.id}`);
             saved = false;
             if ((data.items != null) && (data.items.length > 0)) {
-              if ((data.items[0].snippet != null) && (data.items[0].snippet.title != null)) {
+              // console.log JSON.stringify(data, null, 2)
+              if ((data.items[0].snippet != null) && (data.items[0].snippet.title != null) && (data.items[0].snippet.thumbnails != null)) {
+                chosenThumb = null;
+                ref = data.items[0].snippet.thumbnails;
+                for (thumbType in ref) {
+                  thumb = ref[thumbType];
+                  if (chosenThumb == null) {
+                    chosenThumb = thumb;
+                    continue;
+                  }
+                  if (thumbType === 'medium') {
+                    chosenThumb = thumb;
+                    break;
+                  }
+                  if (chosenThumb.height < thumb.height) {
+                    chosenThumb = thumb;
+                  }
+                }
+                thumbUrl = null;
+                if (chosenThumb != null) {
+                  thumbUrl = chosenThumb.url;
+                }
+                if (thumbUrl == null) {
+                  thumbUrl = '/unknown.png';
+                }
                 e.title = data.items[0].snippet.title;
+                e.thumb = thumbUrl;
                 console.log(`Found title [${e.id}]: ${e.title}`);
                 savePlaylist();
                 saved = true;
@@ -343,18 +368,12 @@
       case 'whatisthis':
       case 'who':
       case 'whodis':
+      case 'why':
         if (lastPlayed === null) {
           return "MTV: I have no idea what's playing.";
         }
         strs = calcEntryStrings(lastPlayed);
         return `MTV: Playing ${strs.description}`;
-      case 'play':
-        e = entryFromArg(args[1]);
-        if (e == null) {
-          return "MTV: play: invalid argument";
-        }
-        play(e);
-        return `MTV: Playing ${e.id}`;
       case 'add':
         e = entryFromArg(args[1]);
         if (e == null) {
@@ -432,7 +451,7 @@
     missingTitleCount = 0;
     for (k in playlist) {
       v = playlist[k];
-      if (v.title == null) {
+      if ((v.title == null) || (v.thumb == null)) {
         getTitle(v);
         missingTitleCount += 1;
       }
