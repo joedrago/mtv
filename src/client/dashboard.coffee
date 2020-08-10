@@ -152,6 +152,8 @@ init = ->
   socket = io()
   socket.on 'cast', (pkt) ->
     beginCast(pkt)
+
+  socket.on 'play', (pkt) ->
     if lastClicked?
       lastClicked()
 
