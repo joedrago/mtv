@@ -90,6 +90,50 @@ showPlaylist = ->
   showList('main', null, null, "/info/playlist", true)
   lastClicked = showPlaylist
 
+showStats = ->
+  html = ""
+  xhttp = new XMLHttpRequest()
+  xhttp.onreadystatechange = ->
+    if (@readyState == 4) and (@status == 200)
+       # Typical action to be performed when the document is ready:
+       try
+          entries = JSON.parse(xhttp.responseText)
+          m = entries
+          entries = []
+          for k, v of m
+            entries.push v
+
+          userCounts = {}
+          for e in entries
+            userCounts[e.user] ?= 0
+            userCounts[e.user] += 1
+
+          userList = Object.keys(userCounts)
+          userList.sort (a, b) ->
+            if userCounts[a] < userCounts[b]
+              return 1
+            if userCounts[a] > userCounts[b]
+              return -1
+            return 0
+
+          html += """
+            <div class="statsheader">Songs by User:</div>
+          """
+          for user in userList
+            html += """
+              <div> * #{user}: #{userCounts[user]}</div>
+            """
+
+          # html = "<pre>" + JSON.stringify(userCounts, null, 2) + "</pre>"
+
+       catch
+         html = "Error!"
+    document.getElementById("main").innerHTML = html
+  xhttp.open("GET", "/info/playlist", true)
+  xhttp.send()
+
+  lastClicked = showStats
+
 class CastPlayer
   constructor: ->
     @remotePlayer = null
@@ -138,6 +182,8 @@ processHash = ->
       showPlaylist()
     when '#both'
       showBoth()
+    when '#stats'
+      showStats()
     else
       showHistory()
 
@@ -145,6 +191,8 @@ init = ->
   window.showHistory = showHistory
   window.showQueue = showQueue
   window.showPlaylist = showPlaylist
+  window.showBoth = showBoth
+  window.showStats = showStats
   window.onhashchange = processHash
 
   processHash()
