@@ -40,7 +40,7 @@ renderEntries = (domID, firstTitle, restTitle, entries, isMap) ->
 
     if e.opinions?
       for feeling, count of e.opinions
-        extraInfo += ", #{count} #{feeling}"
+        extraInfo += ", #{count} #{feeling}#{if count == 1 then "" else "s"}"
 
     if firstTitle?
       if (entryIndex == 0)

@@ -293,11 +293,11 @@ calcEntryStrings = (e) ->
 
   opinionString = ""
   for feeling, count of e.opinions
-    opinionString += ", #{count} #{feeling}"
+    opinionString += ", #{count} #{feeling}#{if count == 1 then "" else "s"}"
   return {
     title: title
     url: url
-    description: "`[#{e.user}, #{url}]#{opinionString}`: **#{title}**"
+    description: "**#{title}** `[#{e.user}, #{url}#{opinionString}]`"
   }
 
 updateOpinion = (e) ->

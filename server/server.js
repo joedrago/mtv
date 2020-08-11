@@ -395,12 +395,12 @@
     ref = e.opinions;
     for (feeling in ref) {
       count = ref[feeling];
-      opinionString += `, ${count} ${feeling}`;
+      opinionString += `, ${count} ${feeling}${count === 1 ? "" : "s"}`;
     }
     return {
       title: title,
       url: url,
-      description: `\`[${e.user}, ${url}]${opinionString}\`: **${title}**`
+      description: `**${title}** \`[${e.user}, ${url}${opinionString}]\``
     };
   };
 
