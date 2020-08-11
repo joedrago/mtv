@@ -110,6 +110,7 @@ play = (e) ->
     history.pop()
   updateCasts()
   saveState()
+  savePlaylist()
   return
 
 getTitle = (e) ->
