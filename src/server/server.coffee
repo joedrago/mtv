@@ -375,11 +375,13 @@ run = (args, user) ->
         savePlaylist()
         return "MTV: Queued next and added to pool: #{e.id}"
       saveState()
+      refreshDashboards()
 
     when 'shuffle'
       queue = []
       e = playNext()
       strs = calcEntryStrings(e)
+      refreshDashboards()
       return "MTV: Shuffled and playing a fresh song #{strs.description}"
 
     when 'remove', 'delete', 'del'

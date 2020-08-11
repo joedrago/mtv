@@ -174,6 +174,7 @@
     }
     updateCasts();
     saveState();
+    savePlaylist();
   };
 
   getTitle = function(e) {
@@ -506,11 +507,13 @@
           return `MTV: Queued next and added to pool: ${e.id}`;
         }
         saveState();
+        refreshDashboards();
         break;
       case 'shuffle':
         queue = [];
         e = playNext();
         strs = calcEntryStrings(e);
+        refreshDashboards();
         return `MTV: Shuffled and playing a fresh song ${strs.description}`;
       case 'remove':
       case 'delete':
