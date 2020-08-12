@@ -1,6 +1,7 @@
 Bottleneck = require 'bottleneck'
 express = require 'express'
 bodyParser = require 'body-parser'
+iso8601 = require 'iso8601-duration'
 fs = require 'fs'
 https = require 'https'
 ytdl = require 'ytdl-core'
@@ -9,13 +10,18 @@ limiter = new Bottleneck {
   maxConcurrent: 5
 }
 
-DEBUG_HACKS = false
+now = ->
+  return Math.floor(Date.now() / 1000)
 
+serverEpoch = now()
 secrets = null
 sockets = {}
 playlist = {}
 queue = []
 history = []
+lastPlayedTimeout = null
+lastPlayedTime = now()
+lastPlayedDuration = 1
 lastPlayed = null
 isCasting = {}
 opinions = {}
@@ -95,7 +101,12 @@ updateCasts = (id = null) ->
           start: lastPlayed.start
         }
 
+autoPlayNext = ->
+  e = playNext()
+  console.log "autoPlayNext: #{JSON.stringify(e, null, 2)}"
+
 play = (e) ->
+  lastPlayedTime = now()
   for socketId, socket of sockets
     socket.emit 'play', {
       id: e.id
@@ -111,14 +122,37 @@ play = (e) ->
   updateCasts()
   saveState()
   savePlaylist()
+
+  console.log "Playing: #{e.title} [#{e.id}]"
+  startTime = e.start
+  if startTime < 0
+    startTime = 0
+  endTime = e.end
+  if endTime < 0
+    endTime = e.duration
+  lastPlayedDuration = endTime - startTime
+  if lastPlayedDuration > e.duration
+    lastPlayedDuration = e.duration - startTime
+  # sanity check?
+  if lastPlayedDuration < 20
+    lastPlayedDuration = e.duration
+
+  if lastPlayedTimeout?
+    clearTimeout(lastPlayedTimeout)
+    lastPlayedTimeout = null
+  lastPlayedTimeout = setTimeout(autoPlayNext, (lastPlayedDuration + 3) * 1000)
+  console.log "Play: [#{e.title}] [#{lastPlayedDuration} seconds]"
   return
 
-getTitle = (e) ->
+parseDuration = (s) ->
+  return iso8601.toSeconds(iso8601.parse(s))
+
+getYoutubeData = (e) ->
   limiter.schedule ->
     e.id = e.id.replace(/\?.+$/, "")
     console.log "Looking up: #{e.id}"
     return new Promise (resolve, reject) ->
-      url = "https://www.googleapis.com/youtube/v3/videos?part=snippet&key=#{secrets.youtube}&id=#{e.id}"
+      url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&key=#{secrets.youtube}&id=#{e.id}"
       req = https.request url, (res) ->
         rawJSON = ""
         res.on 'data', (chunk) ->
@@ -137,7 +171,7 @@ getTitle = (e) ->
           saved = false
           if data.items? and (data.items.length > 0)
             # console.log JSON.stringify(data, null, 2)
-            if data.items[0].snippet? and data.items[0].snippet.title? and data.items[0].snippet.thumbnails?
+            if data.items[0].snippet? and data.items[0].snippet.title? and data.items[0].snippet.thumbnails? and data.items[0].contentDetails.duration?
               chosenThumb = null
               for thumbType, thumb of data.items[0].snippet.thumbnails
                 if not chosenThumb?
@@ -156,6 +190,7 @@ getTitle = (e) ->
 
               e.title = data.items[0].snippet.title
               e.thumb = thumbUrl
+              e.duration = parseDuration(data.items[0].contentDetails.duration)
               console.log "Found title [#{e.id}]: #{e.title}"
               savePlaylist()
               saved = true
@@ -356,7 +391,7 @@ run = (args, user) ->
         return "MTV: Already in pool: #{e.id}"
       e.user = user
       playlist[e.id] = e
-      getTitle(e)
+      getYoutubeData(e)
       savePlaylist()
       return "MTV: Added to pool: #{e.id}"
 
@@ -371,7 +406,7 @@ run = (args, user) ->
       else
         e.user = user
         playlist[e.id] = e
-        getTitle(e)
+        getYoutubeData(e)
         savePlaylist()
         return "MTV: Queued next and added to pool: #{e.id}"
       saveState()
@@ -408,23 +443,18 @@ run = (args, user) ->
 
   return "MTV: unknown command #{args[0]}"
 
-findMissingTitles = ->
-  console.log "Checking for missing titles..."
+findMissingYoutubeInfo = ->
+  console.log "Checking for missing Youtube info..."
   missingTitleCount = 0
   for k,v of playlist
-    if not v.title? or not v.thumb?
-      getTitle(v)
+    if not v.title? or not v.thumb? or not v.duration?
+      getYoutubeData(v)
       missingTitleCount += 1
-  console.log "Found #{missingTitleCount} missing a title."
+  console.log "Found #{missingTitleCount} missing Youtube info."
 
 main = ->
-  argv = process.argv.slice(2)
-  if argv.length > 0
-    console.log "Debug hacks enabled."
-    DEBUG_HACKS = true
-
   secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'))
-  if not secrets.stream? or not secrets.youtube?
+  if not secrets.youtube?
     console.error "Bad secrets: " + JSON.stringify(secrets)
     return
 
@@ -433,10 +463,15 @@ main = ->
 
   load()
 
-  findMissingTitles()
+  await findMissingYoutubeInfo()
   setInterval( ->
-    findMissingTitles()
+    findMissingYoutubeInfo()
   , 60 * 1000)
+
+  # attempt to restart whatever was just playing
+  if history.length > 0
+    queue.unshift(history.shift())
+  playNext()
 
   app = express()
   http = require('http').createServer(app)
@@ -445,18 +480,24 @@ main = ->
   io.on 'connection', (socket) ->
     sockets[socket.id] = socket
 
+    socket.emit('server', { epoch: serverEpoch })
+
     socket.on 'ready', (msg) ->
-      console.log "ready: #{JSON.stringify(msg)}"
-      if msg.secret == secrets.stream
-        # Only the client with the secret gets to control the queue
-        playNext()
-      else if lastPlayed? and msg.fresh
+      # console.log "received ready"
+      if lastPlayed?
         # Give fresh watchers something to watch until the next song hits
-        socket.emit 'play', {
-          id: lastPlayed.id
-          start: lastPlayed.start
-          end: lastPlayed.end
-        }
+        startTime = lastPlayed.start + (now() - lastPlayedTime)
+        endTime = lastPlayed.end
+        if endTime == -1
+          endTime = lastPlayed.duration
+
+        # console.log "endTime #{endTime} startTime #{startTime}"
+        if (endTime - startTime) > 5
+          socket.emit 'play', {
+            id: lastPlayed.id
+            start: startTime
+            end: endTime
+          }
 
     socket.on 'disconnect', ->
       if sockets[socket.id]?
