@@ -1,27 +1,9 @@
 player = null
 socket = null
 playing = false
-fresh = true
+serverEpoch = null
 
 endedTimer = null
-streamSecret = null
-
-qs = (name) ->
-  url = window.location.href
-  name = name.replace(/[\[\]]/g, '\\$&')
-  regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)')
-  results = regex.exec(url);
-  if not results or not results[2]
-    return null
-  return decodeURIComponent(results[2].replace(/\+/g, ' '))
-
-escapeHtml = (t) ->
-    return t
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;")
 
 # autoplay video
 onPlayerReady = (event) ->
@@ -55,15 +37,11 @@ play = (id, startSeconds = null, endSeconds = null) ->
     opts.endSeconds = endSeconds
   player.loadVideoById(opts)
   playing = true
-  fresh = false
 
 tick = ->
   if not playing and player?
     console.log "Ready"
-    socket.emit 'ready', {
-      secret: streamSecret
-      fresh: fresh
-    }
+    socket.emit 'ready', {}
 
 window.onYouTubePlayerAPIReady = ->
   console.log "onYouTubePlayerAPIReady"
@@ -79,12 +57,15 @@ window.onYouTubePlayerAPIReady = ->
     }
   }
 
-  streamSecret = qs("secret")
-  console.log "Stream Secret: #{streamSecret}"
-
   socket = io()
   socket.on 'play', (pkt) ->
     console.log pkt
     play(pkt.id, pkt.start, pkt.end)
+
+  socket.on 'server', (server) ->
+    if serverEpoch? and (serverEpoch != server.epoch)
+      console.log "Server epoch changed! The server must have rebooted. Requesting fresh video..."
+      socket.emit 'ready', {}
+    serverEpoch = server.epoch
 
   setInterval(tick, 5000)
