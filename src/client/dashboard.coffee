@@ -107,10 +107,20 @@ showStats = ->
           for k, v of m
             entries.push v
 
+          totalDuration = 0
+
           userCounts = {}
           for e in entries
             userCounts[e.user] ?= 0
             userCounts[e.user] += 1
+            startTime = e.start
+            if startTime < 0
+              startTime = 0
+            endTime = e.end
+            if endTime < 0
+              endTime = e.duration
+            duration = endTime - startTime
+            totalDuration += duration
 
           userList = Object.keys(userCounts)
           userList.sort (a, b) ->
@@ -120,7 +130,27 @@ showStats = ->
               return -1
             return 0
 
+          totalDurationString = ""
+          timeUnits = [
+            { name: 'day', factor: 3600 * 24 }
+            { name: 'hour', factor: 3600 }
+            { name: 'min', factor: 60 }
+            { name: 'second', factor: 1 }
+          ]
+          for unit in timeUnits
+            if totalDuration >= unit.factor
+              amt = Math.floor(totalDuration / unit.factor)
+              totalDuration -= amt * unit.factor
+              if totalDurationString.length != 0
+                totalDurationString += ", "
+              totalDurationString += "#{amt} #{unit.name}#{if amt == 1 then "" else "s"}"
+
           html += """
+            <div class="statsheader">Basic Stats:</div>
+            <div>Total Songs: #{entries.length}</div>
+            <div>Total Duration: #{totalDurationString}</div>
+
+            <div>&nbsp;</div>
             <div class="statsheader">Songs by User:</div>
           """
           for user in userList
