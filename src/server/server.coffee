@@ -406,7 +406,7 @@ run = (args, user) ->
       else
         e.user = user
         playlist[e.id] = e
-        getYoutubeData(e)
+        await getYoutubeData(e)
         savePlaylist()
         ret = "MTV: Queued next and added to pool: #{e.id}"
       saveState()

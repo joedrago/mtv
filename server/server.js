@@ -482,7 +482,7 @@
     }
   };
 
-  run = function(args, user) {
+  run = async function(args, user) {
     var e, name, ret, strs, title;
     if (args.length < 1) {
       return "MTV: No command given.";
@@ -549,7 +549,7 @@
         } else {
           e.user = user;
           playlist[e.id] = e;
-          getYoutubeData(e);
+          await getYoutubeData(e);
           savePlaylist();
           ret = `MTV: Queued next and added to pool: ${e.id}`;
         }
