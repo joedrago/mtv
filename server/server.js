@@ -482,7 +482,7 @@
     }
   };
 
-  run = async function(args, user) {
+  run = function(args, user) {
     var e, name, ret, strs, title;
     if (args.length < 1) {
       return "MTV: No command given.";
@@ -549,12 +549,14 @@
         } else {
           e.user = user;
           playlist[e.id] = e;
-          await getYoutubeData(e);
+          getYoutubeData(e);
           savePlaylist();
           ret = `MTV: Queued next and added to pool: ${e.id}`;
         }
         saveState();
-        refreshDashboards();
+        setTimeout(function() {
+          return refreshDashboards();
+        }, 3000);
         return ret;
       case 'shuffle':
         queue = [];

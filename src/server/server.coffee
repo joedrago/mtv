@@ -406,11 +406,13 @@ run = (args, user) ->
       else
         e.user = user
         playlist[e.id] = e
-        await getYoutubeData(e)
+        getYoutubeData(e)
         savePlaylist()
         ret = "MTV: Queued next and added to pool: #{e.id}"
       saveState()
-      refreshDashboards()
+      setTimeout(->
+        refreshDashboards()
+      , 3000)
       return ret
 
     when 'shuffle'
