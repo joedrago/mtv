@@ -402,15 +402,16 @@ run = (args, user) ->
       queue.unshift(e)
       if playlist[e.id]?
         strs = calcEntryStrings(playlist[e.id])
-        return "MTV: Queued next (already in pool) #{strs.description}"
+        ret = "MTV: Queued next (already in pool) #{strs.description}"
       else
         e.user = user
         playlist[e.id] = e
         getYoutubeData(e)
         savePlaylist()
-        return "MTV: Queued next and added to pool: #{e.id}"
+        ret = "MTV: Queued next and added to pool: #{e.id}"
       saveState()
       refreshDashboards()
+      return ret
 
     when 'shuffle'
       queue = []
