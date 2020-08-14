@@ -483,7 +483,7 @@
   };
 
   run = function(args, user) {
-    var e, name, strs, title;
+    var e, name, ret, strs, title;
     if (args.length < 1) {
       return "MTV: No command given.";
     }
@@ -545,17 +545,17 @@
         queue.unshift(e);
         if (playlist[e.id] != null) {
           strs = calcEntryStrings(playlist[e.id]);
-          return `MTV: Queued next (already in pool) ${strs.description}`;
+          ret = `MTV: Queued next (already in pool) ${strs.description}`;
         } else {
           e.user = user;
           playlist[e.id] = e;
           getYoutubeData(e);
           savePlaylist();
-          return `MTV: Queued next and added to pool: ${e.id}`;
+          ret = `MTV: Queued next and added to pool: ${e.id}`;
         }
         saveState();
         refreshDashboards();
-        break;
+        return ret;
       case 'shuffle':
         queue = [];
         e = playNext();
