@@ -82,9 +82,6 @@ isAnyoneCasting = ->
   return false
 
 updateCasts = (id = null) ->
-  # This shouldn't be necessary anymore?
-  return # remove this to go back to the old casting code
-
   if lastPlayed == null
     return
 
@@ -526,10 +523,6 @@ main = ->
     res.send(html)
 
   app.get '/watch', (req, res) ->
-    html = fs.readFileSync("#{__dirname}/../web/client.html", "utf8")
-    res.send(html)
-
-  app.get '/cast', (req, res) ->
     html = fs.readFileSync("#{__dirname}/../web/client.html", "utf8")
     res.send(html)
 

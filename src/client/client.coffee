@@ -5,15 +5,6 @@ serverEpoch = null
 
 endedTimer = null
 
-fatal = (reason) ->
-  d = document.getElementById('pleasewait')
-  d.style.display = 'block'
-  d.innerHTML = reason
-
-doneWaiting = ->
-  d = document.getElementById('pleasewait')
-  d.style.display = 'none'
-
 # autoplay video
 onPlayerReady = (event) ->
   event.target.playVideo()
@@ -53,7 +44,6 @@ tick = ->
     socket.emit 'ready', {}
 
 window.onYouTubePlayerAPIReady = ->
-  doneWaiting()
   console.log "onYouTubePlayerAPIReady"
 
   player = new YT.Player 'player', {
@@ -79,20 +69,3 @@ window.onYouTubePlayerAPIReady = ->
     serverEpoch = server.epoch
 
   setInterval(tick, 5000)
-
-context = cast.framework.CastReceiverContext.getInstance()
-playerManager = context.getPlayerManager()
-
-playerManager.setMessageInterceptor cast.framework.messages.MessageType.LOAD, ->
-  return new Promise (resolve, reject) ->
-    metadata = new cast.framework.messages.GenericMediaMetadata()
-    metadata.title = "Yee Title"
-    metadata.subtitle = "Yee Author"
-    request.media.metadata = metadata
-    resolve(request)
-
-context.start()
-
-setTimeout(->
-  window.onYouTubePlayerAPIReady()
-, 5000)
