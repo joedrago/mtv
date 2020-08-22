@@ -137,9 +137,7 @@
     return false;
   };
 
-  updateCasts = function(id = null) { // remove this to go back to the old casting code
-    return;
-    // This shouldn't be necessary anymore?
+  updateCasts = function(id = null) {
     if (lastPlayed === null) {
       return;
     }
@@ -688,11 +686,6 @@
       return res.send(html);
     });
     app.get('/watch', function(req, res) {
-      var html;
-      html = fs.readFileSync(`${__dirname}/../web/client.html`, "utf8");
-      return res.send(html);
-    });
-    app.get('/cast', function(req, res) {
       var html;
       html = fs.readFileSync(`${__dirname}/../web/client.html`, "utf8");
       return res.send(html);
