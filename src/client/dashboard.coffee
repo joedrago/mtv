@@ -175,8 +175,9 @@ class CastPlayer
 
   initializeCastPlayer: ->
     options =
-      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-      receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID
+      autoJoinPolicy: chrome.cast.AutoJoinPolicy.PAGE_SCOPED# ORIGIN_SCOPED
+      receiverApplicationId: 'CD690041'
+      # receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID
     cast.framework.CastContext.getInstance().setOptions(options)
     @remotePlayer = new cast.framework.RemotePlayer()
     @remotePlayerController = new cast.framework.RemotePlayerController(@remotePlayer)
@@ -184,12 +185,13 @@ class CastPlayer
 
   switchPlayer: ->
     sessionState = cast.framework.CastContext.getInstance().getSessionState()
+    console.log "sessionState: #{sessionState}"
     if sessionState != cast.framework.SessionState.SESSION_STARTED
       console.log "Session ended!"
       return
 
     console.log "Session starting!"
-    socket.emit 'castready', { id: socket.id }
+    # socket.emit 'castready', { id: socket.id }
 
 beginCast = (pkt) ->
   console.log "CAST:", pkt
@@ -232,8 +234,8 @@ init = ->
   processHash()
 
   socket = io()
-  socket.on 'cast', (pkt) ->
-    beginCast(pkt)
+  # socket.on 'cast', (pkt) ->
+  #   beginCast(pkt)
 
   socket.on 'play', (pkt) ->
     if lastClicked?
