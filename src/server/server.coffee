@@ -399,13 +399,14 @@ run = (args, user) ->
       e = entryFromArg(args[1])
       if not e?
         return "MTV: queue: invalid argument"
-      queue.unshift(e)
       if playlist[e.id]?
+        queue.unshift(playlist[e.id])
         strs = calcEntryStrings(playlist[e.id])
         ret = "MTV: Queued next (already in pool) #{strs.description}"
       else
         e.user = user
         playlist[e.id] = e
+        queue.unshift(playlist[e.id])
         getYoutubeData(e)
         savePlaylist()
         ret = "MTV: Queued next and added to pool: #{e.id}"
