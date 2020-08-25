@@ -24,6 +24,7 @@ lastPlayedTime = now()
 lastPlayedDuration = 1
 lastPlayed = null
 isCasting = {}
+isPlaying = {}
 opinions = {}
 
 load = ->
@@ -80,6 +81,13 @@ isAnyoneCasting = ->
     if isCasting[sid]
       return true
   return false
+
+playingCount = ->
+  count = 0
+  for sid, soc of sockets
+    if isPlaying[sid]
+      count += 1
+  return count
 
 updateCasts = (id = null) ->
   if lastPlayed == null
@@ -489,6 +497,9 @@ main = ->
 
     socket.on 'ready', (msg) ->
       # console.log "received ready"
+      if not isPlaying[socket.id]
+        refreshDashboards()
+      isPlaying[socket.id] = true
       if lastPlayed?
         # Give fresh watchers something to watch until the next song hits
         startTime = lastPlayed.start + (now() - lastPlayedTime)
@@ -509,6 +520,9 @@ main = ->
         delete sockets[socket.id]
       if isCasting[socket.id]?
         delete isCasting[socket.id]
+      if isPlaying[socket.id]?
+        delete isPlaying[socket.id]
+        refreshDashboards()
 
     socket.on 'castready', (msg) ->
       console.log "castready!"
@@ -542,6 +556,12 @@ main = ->
     updateOpinions(history)
     res.type('application/json')
     res.send(JSON.stringify(history, null, 2))
+
+  app.get '/info/other', (req, res) ->
+    other =
+      playing: playingCount()
+    res.type('application/json')
+    res.send(JSON.stringify(other, null, 2))
 
   app.use(bodyParser.json())
   app.post '/cmd', (req, res) ->
