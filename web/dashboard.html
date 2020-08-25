@@ -78,11 +78,16 @@ a {
     font-style: italic;
 }
 
+#playing {
+    font-size: 0.7em;
+    color: #888888;
+}
+
 </style>
 <body>
 
 <div id="castbox"><google-cast-launcher id="castbutton"></google-cast-launcher></div>
-[<a href="#history" onclick="showHistory()">History</a>] [<a href="#queue" onclick="showQueue()">Queue</a>] [<a href="#both" onclick="showBoth()">Both</a>] [<a href="#all" onclick="showPlaylist()">All</a>] [<a href="#stats" onclick="showStats()">Stats</a>] [<a class="watchlink" target="_blank" href="/watch">Watch</a>]
+[<a href="#history" onclick="showHistory()">History</a>] [<a href="#queue" onclick="showQueue()">Queue</a>] [<a href="#both" onclick="showBoth()">Both</a>] [<a href="#all" onclick="showPlaylist()">All</a>] [<a href="#stats" onclick="showStats()">Stats</a>] [<a class="watchlink" target="_blank" href="/watch">Watch</a>] <span id="playing"></span>
 <br><br>
 
 <div id="main"></div>

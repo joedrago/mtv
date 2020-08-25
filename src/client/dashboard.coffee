@@ -73,12 +73,27 @@ showList = (domID, firstTitle, restTitle, url, isMap = false) ->
   xhttp.open("GET", url, true)
   xhttp.send()
 
+updateOther = ->
+  xhttp = new XMLHttpRequest()
+  xhttp.onreadystatechange = ->
+      if (@readyState == 4) and (@status == 200)
+         # Typical action to be performed when the document is ready:
+         try
+           other = JSON.parse(xhttp.responseText)
+           document.getElementById("playing").innerHTML = "(#{other.playing} Watching)"
+         catch
+           # nothing?
+  xhttp.open("GET", "/info/other", true)
+  xhttp.send()
+
 showHistory = ->
   showList('main', "Now Playing:", "History:", "/info/history")
+  updateOther()
   lastClicked = showHistory
 
 showQueue = ->
   showList('main', "Up Next:", "Queue:", "/info/queue")
+  updateOther()
   lastClicked = showQueue
 
 showBoth = ->
@@ -88,10 +103,12 @@ showBoth = ->
   """
   showList('mainl', "Now Playing:", "History:", "/info/history")
   showList('mainr', "Up Next:", "Queue:", "/info/queue")
+  updateOther()
   lastClicked = showBoth
 
 showPlaylist = ->
   showList('main', null, null, "/info/playlist", true)
+  updateOther()
   lastClicked = showPlaylist
 
 showStats = ->
@@ -166,6 +183,7 @@ showStats = ->
   xhttp.open("GET", "/info/playlist", true)
   xhttp.send()
 
+  updateOther()
   lastClicked = showStats
 
 class CastPlayer
