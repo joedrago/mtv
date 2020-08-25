@@ -388,7 +388,8 @@ run = (args, user) ->
       if not e?
         return "MTV: add: invalid argument"
       if playlist[e.id]?
-        return "MTV: Already in pool: #{e.id}"
+        strs = calcEntryStrings(playlist[e.id])
+        return "MTV: Already in pool: #{strs.description}"
       e.user = user
       playlist[e.id] = e
       getYoutubeData(e)
