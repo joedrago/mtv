@@ -482,7 +482,7 @@ sanitizeUsername = (name) ->
     name = name.replace(/ *$/, "")
     if name.length == 0
       return undefined
-  name = name.substring(0, 16)
+    name = name.substring(0, 16)
   return name
 
 main = (argv) ->
