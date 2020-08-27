@@ -465,7 +465,7 @@ findMissingYoutubeInfo = ->
       missingTitleCount += 1
   console.log "Found #{missingTitleCount} missing Youtube info."
 
-main = ->
+main = (argv) ->
   secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'))
   if not secrets.youtube? or not secrets.cmd?
     console.error "Bad secrets: " + JSON.stringify(secrets)

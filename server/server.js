@@ -628,7 +628,7 @@
     return console.log(`Found ${missingTitleCount} missing Youtube info.`);
   };
 
-  main = async function() {
+  main = async function(argv) {
     var app, http, io;
     secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'));
     if ((secrets.youtube == null) || (secrets.cmd == null)) {
