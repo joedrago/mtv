@@ -328,6 +328,20 @@ entryFromArg = (arg) ->
     end: endTime
   }
 
+prettyDuration = (duration) ->
+  str = ""
+  hours = Math.floor(duration / 3600)
+  if hours > 0
+    duration -= hours * 3600
+    str += "#{hours}h"
+  minutes = Math.floor(duration / 60)
+  if minutes > 0
+    duration -= minutes * 60
+    str += "#{minutes}m"
+  if (duration > 0) or (str.length == 0)
+    str += "#{duration}s"
+  return str
+
 calcEntryStrings = (e) ->
   url = "https://youtu.be/#{e.id}"
   params = ""
@@ -349,7 +363,7 @@ calcEntryStrings = (e) ->
   return {
     title: title
     url: url
-    description: "**#{title}** `[#{e.user}, #{url}#{opinionString}]`"
+    description: "**#{title}** `[#{e.user}, #{url}#{opinionString}, #{prettyDuration(e.duration)}]`"
   }
 
 updateOpinion = (e) ->
