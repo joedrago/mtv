@@ -467,7 +467,7 @@ findMissingYoutubeInfo = ->
 
 main = ->
   secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'))
-  if not secrets.youtube?
+  if not secrets.youtube? or not secrets.cmd?
     console.error "Bad secrets: " + JSON.stringify(secrets)
     return
 
@@ -566,6 +566,9 @@ main = ->
   app.use(bodyParser.json())
   app.post '/cmd', (req, res) ->
     console.log req.body
+    if req.secret != secrets.cmd
+      res.send("MTV: bad secret")
+      return
     if req.body? && req.body.cmd?
       args = req.body.cmd.split(/\s+/g)
       user = req.body.user
