@@ -631,7 +631,7 @@
   main = async function() {
     var app, http, io;
     secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'));
-    if (secrets.youtube == null) {
+    if ((secrets.youtube == null) || (secrets.cmd == null)) {
       console.error("Bad secrets: " + JSON.stringify(secrets));
       return;
     }
@@ -741,6 +741,10 @@
     app.post('/cmd', function(req, res) {
       var args, response, user;
       console.log(req.body);
+      if (req.secret !== secrets.cmd) {
+        res.send("MTV: bad secret");
+        return;
+      }
       if ((req.body != null) && (req.body.cmd != null)) {
         args = req.body.cmd.split(/\s+/g);
         user = req.body.user;
