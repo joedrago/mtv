@@ -648,8 +648,8 @@
       if (name.length === 0) {
         return void 0;
       }
+      name = name.substring(0, 16);
     }
-    name = name.substring(0, 16);
     return name;
   };
 
