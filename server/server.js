@@ -641,8 +641,10 @@
 
   sanitizeUsername = function(name) {
     if (name != null) {
-      name = name.replace(/[^a-zA-Z0-9]/g, "");
+      name = name.replace(/[^a-zA-Z0-9 ]/g, "");
+      name = name.replace(/ +/g, " ");
     }
+    name = name.substring(0, 16);
     return name;
   };
 
