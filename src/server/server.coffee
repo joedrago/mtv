@@ -25,6 +25,7 @@ lastPlayedDuration = 1
 lastPlayed = null
 isCasting = {}
 isPlaying = {}
+playingName = {}
 opinions = {}
 
 load = ->
@@ -82,12 +83,20 @@ isAnyoneCasting = ->
       return true
   return false
 
-playingCount = ->
+calcOther = ->
+  names = []
   count = 0
   for sid, soc of sockets
     if isPlaying[sid]
       count += 1
-  return count
+    if playingName[sid]? and playingName[sid].length > 0
+      names.push playingName[sid]
+  names.sort()
+
+  other =
+    playing: count
+    names: names
+  return other
 
 updateCasts = (id = null) ->
   if lastPlayed == null
@@ -465,6 +474,11 @@ findMissingYoutubeInfo = ->
       missingTitleCount += 1
   console.log "Found #{missingTitleCount} missing Youtube info."
 
+sanitizeUsername = (name) ->
+  if name?
+    name = name.replace(/[^a-zA-Z0-9]/g, "")
+  return name
+
 main = (argv) ->
   secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'))
   if not secrets.youtube? or not secrets.cmd?
@@ -497,9 +511,22 @@ main = (argv) ->
 
     socket.on 'ready', (msg) ->
       # console.log "received ready"
+      needsRefresh = false
       if not isPlaying[socket.id]
+        isPlaying[socket.id] = true
+        needsRefresh = true
+
+      username = sanitizeUsername(msg.user)
+      if playingName[socket.id] != username
+        if username?
+          playingName[socket.id] = username
+        else
+          delete playingName[socket.id]
+        needsRefresh = true
+
+      if needsRefresh
         refreshDashboards()
-      isPlaying[socket.id] = true
+
       if lastPlayed?
         # Give fresh watchers something to watch until the next song hits
         startTime = lastPlayed.start + (now() - lastPlayedTime)
@@ -520,6 +547,8 @@ main = (argv) ->
         delete sockets[socket.id]
       if isCasting[socket.id]?
         delete isCasting[socket.id]
+      if playingName[socket.id]?
+        delete playingName[socket.id]
       if isPlaying[socket.id]?
         delete isPlaying[socket.id]
         refreshDashboards()
@@ -558,8 +587,7 @@ main = (argv) ->
     res.send(JSON.stringify(history, null, 2))
 
   app.get '/info/other', (req, res) ->
-    other =
-      playing: playingCount()
+    other = calcOther()
     res.type('application/json')
     res.send(JSON.stringify(other, null, 2))
 

@@ -79,8 +79,21 @@ updateOther = ->
       if (@readyState == 4) and (@status == 200)
          # Typical action to be performed when the document is ready:
          try
-           other = JSON.parse(xhttp.responseText)
-           document.getElementById("playing").innerHTML = "(#{other.playing} Watching)"
+          other = JSON.parse(xhttp.responseText)
+          console.log other
+          nameString = ""
+          if other.names? and (other.names.length > 0)
+            nameString = ""
+            for name in other.names
+              if nameString.length > 0
+                nameString += ", "
+              nameString += name
+            remainingCount = other.playing - other.names.length
+            if remainingCount > 0
+              nameString += " + #{remainingCount} anon"
+            nameString = ": #{nameString}"
+
+          document.getElementById("playing").innerHTML = "(#{other.playing} Watching#{nameString})"
          catch
            # nothing?
   xhttp.open("GET", "/info/other", true)
@@ -225,6 +238,15 @@ beginCast = (pkt) ->
     request.currentTime = pkt.start
   castSession.loadMedia(request)
 
+showWatchForm = ->
+  document.getElementById('aslink').style.display = 'none'
+  document.getElementById('asform').style.display = 'inline-block'
+  document.getElementById("userinput").focus()
+
+showWatchLink = ->
+  document.getElementById('aslink').style.display = 'inline-block'
+  document.getElementById('asform').style.display = 'none'
+
 processHash = ->
   currentHash = window.location.hash
   switch currentHash
@@ -245,6 +267,8 @@ init = ->
   window.showPlaylist = showPlaylist
   window.showBoth = showBoth
   window.showStats = showStats
+  window.showWatchForm = showWatchForm
+  window.showWatchLink = showWatchLink
   window.onhashchange = processHash
 
   processHash()
