@@ -83,11 +83,32 @@ a {
     color: #888888;
 }
 
+#asform {
+    display: none;
+}
+
+#userinput {
+    display: inline-block;
+    font-family: monospace;
+    font-size: 0.8em;
+    font-weight: 900;
+    color: #ffffff;
+    background-color: #222222;
+    border: 1px solid #fff;
+}
+
 </style>
 <body>
 
 <div id="castbox"><google-cast-launcher id="castbutton"></google-cast-launcher></div>
-[<a href="#history" onclick="showHistory()">History</a>] [<a href="#queue" onclick="showQueue()">Queue</a>] [<a href="#both" onclick="showBoth()">Both</a>] [<a href="#all" onclick="showPlaylist()">All</a>] [<a href="#stats" onclick="showStats()">Stats</a>] [<a class="watchlink" target="_blank" href="/watch">Watch</a>] <span id="playing"></span>
+[<a href="#history" onclick="showHistory()">History</a>]
+[<a href="#queue" onclick="showQueue()">Queue</a>]
+[<a href="#both" onclick="showBoth()">Both</a>]
+[<a href="#all" onclick="showPlaylist()">All</a>]
+[<a href="#stats" onclick="showStats()">Stats</a>]
+[<a class="watchlink" target="_blank" href="/watch">Watch</a>]
+[<a id="aslink" class="watchlink" onclick="showWatchForm()">Watch as...</a><form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()"><input size="38" placeholder="Type your Discord handle and hit Enter" id="userinput" type="text" name="user" value=""> <a onclick="showWatchLink()">Cancel</a></form>]
+<span id="playing"></span>
 <br><br>
 
 <div id="main"></div>
