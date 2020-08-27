@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "MTV Discord Channel",
   "bin": {
-    "mtv-server": "./bin/server"
+    "mtv": "./bin/mtv"
   },
   "scripts": {
     "build": "cake build",
@@ -22,7 +22,7 @@
     "bottleneck": "^2.19.5",
     "express": "^4.17.1",
     "iso8601-duration": "^1.2.0",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.5",
     "socket.io": "^2.3.0",
     "ytdl-core": "^3.2.0"
   }
