@@ -478,6 +478,8 @@ sanitizeUsername = (name) ->
   if name?
     name = name.replace(/[^a-zA-Z0-9 ]/g, "")
     name = name.replace(/ +/g, " ")
+  if name.match(/^ *$/)
+    return undefined
   name = name.substring(0, 16)
   return name
 
