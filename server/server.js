@@ -741,11 +741,11 @@
     app.post('/cmd', function(req, res) {
       var args, response, user;
       console.log(req.body);
-      if (req.secret !== secrets.cmd) {
-        res.send("MTV: bad secret");
-        return;
-      }
       if ((req.body != null) && (req.body.cmd != null)) {
+        if (req.body.secret !== secrets.cmd) {
+          res.send("MTV: bad secret");
+          return;
+        }
         args = req.body.cmd.split(/\s+/g);
         user = req.body.user;
         if (user == null) {
