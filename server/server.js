@@ -644,6 +644,9 @@
       name = name.replace(/[^a-zA-Z0-9 ]/g, "");
       name = name.replace(/ +/g, " ");
     }
+    if (name.match(/^ *$/)) {
+      return void 0;
+    }
     name = name.substring(0, 16);
     return name;
   };
