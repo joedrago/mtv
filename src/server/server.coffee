@@ -393,6 +393,24 @@ run = (args, user) ->
     when 'help', 'commands'
       return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`"
 
+    when 'here', 'watching', 'web', 'website'
+      other = calcOther()
+      nameString = ""
+      if other.playing == 0
+        return "MTV: [Here] Nobody is watching via the website."
+      anonCount = other.playing - other.names.length
+      if other.names.length > 0
+        nameString = ""
+        for name in other.names
+          if nameString.length > 0
+            nameString += ", "
+          nameString += "`#{name}`"
+      if anonCount > 0
+        if nameString.length > 0
+          nameString += " + "
+        nameString += "**#{anonCount}** anonymous"
+      return "MTV: [Here] Watching via the website: #{nameString}"
+
     when 'what', 'whatisthis', 'who', 'whodis', 'why'
       if lastPlayed == null
         return "MTV: I have no idea what's playing."
