@@ -527,7 +527,7 @@
   };
 
   run = function(args, user) {
-    var e, name1, ret, strs, title;
+    var anonCount, e, l, len, name, name1, nameString, other, ref, ret, strs, title;
     if (args.length < 1) {
       return "MTV: No command given.";
     }
@@ -535,6 +535,34 @@
       case 'help':
       case 'commands':
         return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`";
+      case 'here':
+      case 'watching':
+      case 'web':
+      case 'website':
+        other = calcOther();
+        nameString = "";
+        if (other.playing === 0) {
+          return "MTV: [Here] Nobody is watching via the website.";
+        }
+        anonCount = other.playing - other.names.length;
+        if (other.names.length > 0) {
+          nameString = "";
+          ref = other.names;
+          for (l = 0, len = ref.length; l < len; l++) {
+            name = ref[l];
+            if (nameString.length > 0) {
+              nameString += ", ";
+            }
+            nameString += `\`${name}\``;
+          }
+        }
+        if (anonCount > 0) {
+          if (nameString.length > 0) {
+            nameString += " + ";
+          }
+          nameString += `**${anonCount}** anonymous`;
+        }
+        return `MTV: [Here] Watching via the website: ${nameString}`;
       case 'what':
       case 'whatisthis':
       case 'who':
