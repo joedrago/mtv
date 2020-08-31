@@ -385,10 +385,11 @@ updateOpinions = (entries, isMap) ->
   return
 
 run = (args, user) ->
-  if args.length < 1
-    return "MTV: No command given."
+  cmd = 'who'
+  if args.length > 0
+    cmd = args[0]
 
-  switch args[0]
+  switch cmd
 
     when 'help', 'commands'
       return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`"
@@ -421,11 +422,11 @@ run = (args, user) ->
       if lastPlayed == null
         return "MTV: I have no idea what's playing."
       opinions[lastPlayed.id] ?= {}
-      if args[0] == 'none'
+      if cmd == 'none'
         if opinions[lastPlayed.id][user]?
           delete opinions[lastPlayed.id][user]
       else
-        opinions[lastPlayed.id][user] = args[0]
+        opinions[lastPlayed.id][user] = cmd
       updateOpinion(lastPlayed)
       strs = calcEntryStrings(lastPlayed)
       saveOpinions()
@@ -495,7 +496,7 @@ run = (args, user) ->
       strs = calcEntryStrings(e)
       return "MTV: Playing #{strs.description}"
 
-  return "MTV: unknown command #{args[0]}"
+  return "MTV: unknown command #{cmd}"
 
 findMissingYoutubeInfo = ->
   console.log "Checking for missing Youtube info..."
