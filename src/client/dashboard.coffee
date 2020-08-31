@@ -214,7 +214,11 @@ showUser = ->
 
           html = ""
 
-          sortedFeelings = Object.keys(entries.opinions).sort()
+          sortedFeelings = []
+          for feeling in ['like', 'meh', 'hate'] # always in this specific order
+            if entries.opinions[feeling]?
+              sortedFeelings.push feeling
+
           for feeling in sortedFeelings
             html += """
               <div class="restTitle">#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}:</div>
