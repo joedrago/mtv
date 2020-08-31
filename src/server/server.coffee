@@ -384,6 +384,22 @@ updateOpinions = (entries, isMap) ->
       updateOpinion(e)
   return
 
+calcUserInfo = (user) ->
+  userInfo =
+    added: []
+    opinions: {}
+
+  for k, e of playlist
+    if e.user == user
+      userInfo.added.push e
+    if opinions[e.id]? and opinions[e.id][user]?
+      feeling = opinions[e.id][user]
+      if not userInfo.opinions[feeling]?
+        userInfo.opinions[feeling] = []
+      userInfo.opinions[feeling].push e
+
+  return userInfo
+
 run = (args, user) ->
   cmd = 'who'
   if args.length > 0
@@ -628,6 +644,14 @@ main = (argv) ->
     updateOpinions(history)
     res.type('application/json')
     res.send(JSON.stringify(history, null, 2))
+
+  app.get '/info/user', (req, res) ->
+    if req.query? and req.query.user?
+      userInfo = calcUserInfo(req.query.user)
+      res.type('application/json')
+      res.send(JSON.stringify(userInfo, null, 2))
+    else
+      res.send("supply a user")
 
   app.get '/info/other', (req, res) ->
     other = calcOther()

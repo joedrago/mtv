@@ -1,8 +1,9 @@
 socket = null
 
 lastClicked = null
+lastUser = null
 
-renderEntries = (domID, firstTitle, restTitle, entries, isMap) ->
+renderEntries = (domID, firstTitle, restTitle, entries, isMap, sortList = false) ->
   html = ""
 
   if isMap
@@ -13,6 +14,9 @@ renderEntries = (domID, firstTitle, restTitle, entries, isMap) ->
       entries.push v
 
     # This is the "all" list, sort it
+    sortList = true
+
+  if sortList
     entries.sort (a, b) ->
       if a.title < b.title
         return -1
@@ -185,7 +189,7 @@ showStats = ->
           """
           for user in userList
             html += """
-              <div> * #{user}: #{userCounts[user]}</div>
+              <div> * <a href="#user/#{encodeURIComponent(user)}">#{user}</a>: #{userCounts[user]}</div>
             """
 
           # html = "<pre>" + JSON.stringify(userCounts, null, 2) + "</pre>"
@@ -198,6 +202,55 @@ showStats = ->
 
   updateOther()
   lastClicked = showStats
+
+showUser = ->
+  html = ""
+  xhttp = new XMLHttpRequest()
+  xhttp.onreadystatechange = ->
+    if (@readyState == 4) and (@status == 200)
+       # Typical action to be performed when the document is ready:
+       try
+          entries = JSON.parse(xhttp.responseText)
+
+          html = ""
+
+          sortedFeelings = Object.keys(entries.opinions).sort()
+          for feeling in sortedFeelings
+            html += """
+              <div class="restTitle">#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}:</div>
+              <div id="user#{feeling}"></div>
+            """
+
+          if entries.added.length > 0
+            html += """
+              <div class="restTitle">Added:</div>
+              <div id="useradded"></div>
+            """
+
+          if html.length == 0
+            html += """
+              <div class="restTitle">(No info on this user)</div>
+            """
+
+          html = """
+            <div class="statsheader">User: #{lastUser}</div>
+          """ + html
+
+          document.getElementById("main").innerHTML = html
+
+          setTimeout ->
+            for feeling, list of entries.opinions
+              renderEntries("user#{feeling}", null, null, entries.opinions[feeling], false, true)
+            if entries.added.length > 0
+              renderEntries("useradded", null, null, entries.added, false, true)
+          , 0
+       catch
+         html = "Error!"
+  xhttp.open("GET", "/info/user?user=#{encodeURIComponent(lastUser)}", true)
+  xhttp.send()
+
+  updateOther()
+  lastClicked = showUser
 
 class CastPlayer
   constructor: ->
@@ -249,6 +302,10 @@ showWatchLink = ->
 
 processHash = ->
   currentHash = window.location.hash
+  if matches = currentHash.match(/^#user\/(.+)/)
+    lastUser = decodeURIComponent(matches[1])
+    showUser()
+    return
   switch currentHash
     when '#queue'
       showQueue()
@@ -267,6 +324,7 @@ init = ->
   window.showPlaylist = showPlaylist
   window.showBoth = showBoth
   window.showStats = showStats
+  window.showUser = showUser
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
   window.onhashchange = processHash
