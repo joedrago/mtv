@@ -527,7 +527,7 @@
   };
 
   calcUserInfo = function(user) {
-    var base, base1, base2, base3, e, feeling, incoming, k, name1, outgoing, ref, userInfo;
+    var base, base1, base2, base3, e, feeling, incoming, k, name1, otherUser, outgoing, ref, userInfo;
     userInfo = {
       added: [],
       opinions: {},
@@ -548,15 +548,15 @@
         userInfo.added.push(e);
         if (opinions[e.id] != null) {
           ref = opinions[e.id];
-          for (user in ref) {
-            feeling = ref[user];
-            if (incoming[user] == null) {
-              incoming[user] = {};
+          for (otherUser in ref) {
+            feeling = ref[otherUser];
+            if (incoming[otherUser] == null) {
+              incoming[otherUser] = {};
             }
-            if ((base = incoming[user])[feeling] == null) {
+            if ((base = incoming[otherUser])[feeling] == null) {
               base[feeling] = 0;
             }
-            incoming[user][feeling] += 1;
+            incoming[otherUser][feeling] += 1;
             if ((base1 = userInfo.otherTotals.incoming)[feeling] == null) {
               base1[feeling] = 0;
             }
@@ -564,7 +564,7 @@
           }
         }
       }
-      if (opinions[e.id]) {
+      if (opinions[e.id] != null) {
         if (opinions[e.id][user] != null) {
           feeling = opinions[e.id][user];
           if (userInfo.opinions[feeling] == null) {

@@ -401,13 +401,13 @@ calcUserInfo = (user) ->
     if e.user == user
       userInfo.added.push e
       if opinions[e.id]?
-        for user, feeling of opinions[e.id]
-          incoming[user] ?= {}
-          incoming[user][feeling] ?= 0
-          incoming[user][feeling] += 1
+        for otherUser, feeling of opinions[e.id]
+          incoming[otherUser] ?= {}
+          incoming[otherUser][feeling] ?= 0
+          incoming[otherUser][feeling] += 1
           userInfo.otherTotals.incoming[feeling] ?= 0
           userInfo.otherTotals.incoming[feeling] += 1
-    if opinions[e.id]
+    if opinions[e.id]?
       if opinions[e.id][user]?
         feeling = opinions[e.id][user]
         if not userInfo.opinions[feeling]?
