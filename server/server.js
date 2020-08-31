@@ -531,6 +531,11 @@
     cmd = 'who';
     if (args.length > 0) {
       cmd = args[0];
+      cmd = cmd.replace(/^ +/, "");
+      cmd = cmd.replace(/ +$/, "");
+      if (cmd.length === 0) {
+        cmd = 'who';
+      }
     }
     switch (cmd) {
       case 'help':
