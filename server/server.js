@@ -527,11 +527,12 @@
   };
 
   run = function(args, user) {
-    var anonCount, e, l, len, name, name1, nameString, other, ref, ret, strs, title;
-    if (args.length < 1) {
-      return "MTV: No command given.";
+    var anonCount, cmd, e, l, len, name, name1, nameString, other, ref, ret, strs, title;
+    cmd = 'who';
+    if (args.length > 0) {
+      cmd = args[0];
     }
-    switch (args[0]) {
+    switch (cmd) {
       case 'help':
       case 'commands':
         return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`";
@@ -583,12 +584,12 @@
         if (opinions[name1 = lastPlayed.id] == null) {
           opinions[name1] = {};
         }
-        if (args[0] === 'none') {
+        if (cmd === 'none') {
           if (opinions[lastPlayed.id][user] != null) {
             delete opinions[lastPlayed.id][user];
           }
         } else {
-          opinions[lastPlayed.id][user] = args[0];
+          opinions[lastPlayed.id][user] = cmd;
         }
         updateOpinion(lastPlayed);
         strs = calcEntryStrings(lastPlayed);
@@ -669,7 +670,7 @@
         strs = calcEntryStrings(e);
         return `MTV: Playing ${strs.description}`;
     }
-    return `MTV: unknown command ${args[0]}`;
+    return `MTV: unknown command ${cmd}`;
   };
 
   findMissingYoutubeInfo = function() {
