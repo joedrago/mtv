@@ -3,6 +3,8 @@ socket = null
 lastClicked = null
 lastUser = null
 
+opinionOrder = ['like', 'meh', 'hate'] # always in this specific order
+
 renderEntries = (domID, firstTitle, restTitle, entries, isMap, sortList = false) ->
   html = ""
 
@@ -208,48 +210,130 @@ showUser = ->
   xhttp = new XMLHttpRequest()
   xhttp.onreadystatechange = ->
     if (@readyState == 4) and (@status == 200)
-       # Typical action to be performed when the document is ready:
-       try
-          entries = JSON.parse(xhttp.responseText)
+      # Typical action to be performed when the document is ready:
+      try
+        userInfo = JSON.parse(xhttp.responseText)
+      catch
+        document.getElementById("main").innerHTML = "Error!"
+        return
 
-          html = ""
+      html = """
+        <div class="statsheader">User: #{lastUser}</div>
+      """
 
-          sortedFeelings = []
-          for feeling in ['like', 'meh', 'hate'] # always in this specific order
-            if entries.opinions[feeling]?
-              sortedFeelings.push feeling
+      listHTML = ""
 
-          for feeling in sortedFeelings
+      sortedFeelings = []
+      for feeling in opinionOrder
+        if userInfo.opinions[feeling]?
+          sortedFeelings.push feeling
+
+      for feeling in sortedFeelings
+        listHTML += """
+          <div class="restTitle">#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}:</div>
+          <div id="user#{feeling}"></div>
+        """
+
+      if userInfo.added.length > 0
+        listHTML += """
+          <div class="restTitle">Added:</div>
+          <div id="useradded"></div>
+        """
+
+      if listHTML.length == 0
+        listHTML += """
+          <div class="restTitle">(No info on this user)</div>
+        """
+      else
+        hasIncomingOpinions = Object.keys(userInfo.otherTotals.incoming).length > 0
+        hasOutgoingOpinions = Object.keys(userInfo.otherTotals.outgoing).length > 0
+
+        if hasIncomingOpinions or hasOutgoingOpinions
+          html += """
+            <div class="restTitle">Opinion Stats:</div>
+            <ul>
+          """
+
+          if hasIncomingOpinions
             html += """
-              <div class="restTitle">#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}:</div>
-              <div id="user#{feeling}"></div>
+              <li>Incoming Totals:</li><ul>
+            """
+            for feeling in opinionOrder
+              if userInfo.otherTotals.incoming[feeling]?
+                html += """
+                  <li>#{feeling}: #{userInfo.otherTotals.incoming[feeling]}</li>
+                """
+            html += """
+              </ul>
             """
 
-          if entries.added.length > 0
             html += """
-              <div class="restTitle">Added:</div>
-              <div id="useradded"></div>
+              <li>Incoming by user:</li><ul>
+            """
+            for name, incoming of userInfo.otherOpinions.incoming
+              html += """
+                <li><a href="#user/#{encodeURIComponent(name)}">#{name}</a></li><ul>
+              """
+              for feeling in opinionOrder
+                if incoming[feeling]?
+                  html += """
+                    <li>#{feeling}: #{incoming[feeling]}</li>
+                  """
+              html += """
+                </ul>
+              """
+            html += """
+              </ul>
             """
 
-          if html.length == 0
+          if hasOutgoingOpinions
             html += """
-              <div class="restTitle">(No info on this user)</div>
+              <li>Outgoing:</li>
+              <ul>
+            """
+            for feeling in opinionOrder
+              if userInfo.otherTotals.outgoing[feeling]?
+                html += """
+                  <li>#{feeling}: #{userInfo.otherTotals.outgoing[feeling]}</li>
+                """
+            html += """
+              </ul>
             """
 
-          html = """
-            <div class="statsheader">User: #{lastUser}</div>
-          """ + html
+            html += """
+              <li>Outgoing by user:</li><ul>
+            """
+            for name, outgoing of userInfo.otherOpinions.outgoing
+              html += """
+                <li><a href="#user/#{encodeURIComponent(name)}">#{name}</a></li><ul>
+              """
+              for feeling in opinionOrder
+                if outgoing[feeling]?
+                  html += """
+                    <li>#{feeling}: #{outgoing[feeling]}</li>
+                  """
+              html += """
+                </ul>
+              """
+            html += """
+              </ul>
+            """
 
-          document.getElementById("main").innerHTML = html
+          html += """
+            </ul>
+          """
 
-          setTimeout ->
-            for feeling, list of entries.opinions
-              renderEntries("user#{feeling}", null, null, entries.opinions[feeling], false, true)
-            if entries.added.length > 0
-              renderEntries("useradded", null, null, entries.added, false, true)
-          , 0
-       catch
-         html = "Error!"
+
+      html += listHTML
+      document.getElementById("main").innerHTML = html
+
+      setTimeout ->
+        for feeling, list of userInfo.opinions
+          renderEntries("user#{feeling}", null, null, userInfo.opinions[feeling], false, true)
+        if userInfo.added.length > 0
+          renderEntries("useradded", null, null, userInfo.added, false, true)
+      , 0
+
   xhttp.open("GET", "/info/user?user=#{encodeURIComponent(lastUser)}", true)
   xhttp.send()
 

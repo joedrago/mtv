@@ -527,22 +527,62 @@
   };
 
   calcUserInfo = function(user) {
-    var e, feeling, k, userInfo;
+    var base, base1, base2, base3, e, feeling, incoming, k, name1, outgoing, ref, userInfo;
     userInfo = {
       added: [],
-      opinions: {}
+      opinions: {},
+      otherOpinions: {
+        incoming: {},
+        outgoing: {}
+      },
+      otherTotals: {
+        incoming: {},
+        outgoing: {}
+      }
     };
+    incoming = userInfo.otherOpinions.incoming;
+    outgoing = userInfo.otherOpinions.outgoing;
     for (k in playlist) {
       e = playlist[k];
       if (e.user === user) {
         userInfo.added.push(e);
-      }
-      if ((opinions[e.id] != null) && (opinions[e.id][user] != null)) {
-        feeling = opinions[e.id][user];
-        if (userInfo.opinions[feeling] == null) {
-          userInfo.opinions[feeling] = [];
+        if (opinions[e.id] != null) {
+          ref = opinions[e.id];
+          for (user in ref) {
+            feeling = ref[user];
+            if (incoming[user] == null) {
+              incoming[user] = {};
+            }
+            if ((base = incoming[user])[feeling] == null) {
+              base[feeling] = 0;
+            }
+            incoming[user][feeling] += 1;
+            if ((base1 = userInfo.otherTotals.incoming)[feeling] == null) {
+              base1[feeling] = 0;
+            }
+            userInfo.otherTotals.incoming[feeling] += 1;
+          }
         }
-        userInfo.opinions[feeling].push(e);
+      }
+      if (opinions[e.id]) {
+        if (opinions[e.id][user] != null) {
+          feeling = opinions[e.id][user];
+          if (userInfo.opinions[feeling] == null) {
+            userInfo.opinions[feeling] = [];
+          }
+          userInfo.opinions[feeling].push(e);
+          if (outgoing[name1 = e.user] == null) {
+            outgoing[name1] = {};
+          }
+          if ((base2 = outgoing[e.user])[feeling] == null) {
+            base2[feeling] = 0;
+          }
+          outgoing[e.user][feeling] += 1;
+          if ((base3 = userInfo.otherTotals.outgoing)[feeling] == null) {
+            base3[feeling] = 0;
+          }
+          userInfo.otherTotals.outgoing[feeling] += 1;
+        }
       }
     }
     return userInfo;
