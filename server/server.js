@@ -599,6 +599,8 @@
         cmd = 'who';
       }
     }
+    // Sanitize command
+    cmd = cmd.replace(/[^a-zA-Z0-9]/g, "");
     switch (cmd) {
       case 'help':
       case 'commands':
