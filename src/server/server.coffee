@@ -363,7 +363,7 @@ calcEntryStrings = (e) ->
   return {
     title: title
     url: url
-    description: "**#{title}** `[#{e.user}, #{url}#{opinionString}, #{prettyDuration(e.duration)}]`"
+    description: "**#{title}** `[#{e.user}, #{prettyDuration(e.duration)}#{opinionString}]`"
   }
 
 updateOpinion = (e) ->
@@ -461,6 +461,12 @@ run = (args, user) ->
         return "MTV: I have no idea what's playing."
       strs = calcEntryStrings(lastPlayed)
       return "MTV: Playing #{strs.description}"
+
+    when 'link', 'url', 'where'
+      if lastPlayed == null
+        return "MTV: I have no idea what's playing."
+      strs = calcEntryStrings(lastPlayed)
+      return "MTV: #{strs.url}"
 
     when 'like', 'meh', 'hate', 'none'
       if lastPlayed == null
