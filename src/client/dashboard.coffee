@@ -5,7 +5,7 @@ lastUser = null
 
 opinionOrder = ['like', 'meh', 'hate'] # always in this specific order
 
-renderEntries = (domID, firstTitle, restTitle, entries, isMap, sortList = false) ->
+renderEntries = (domID, firstTitle, restTitle, entries, isMap, sortList = false, showPlayCounts = false) ->
   html = ""
 
   if isMap
@@ -38,12 +38,13 @@ renderEntries = (domID, firstTitle, restTitle, entries, isMap, sortList = false)
       params += if params.length == 0 then "?" else "&"
       params += "end=#{e.end}"
     url = "https://youtu.be/#{e.id}#{params}"
-    extraInfo = ""
-    if e.countPlay?
-      extraInfo += ", #{e.countPlay} play#{if e.countPlay == 1 then "" else "s"}"
-    if e.countSkip?
-      extraInfo += ", #{e.countSkip} skip#{if e.countSkip == 1 then "" else "s"}"
 
+    extraInfo = ""
+    if showPlayCounts
+      if e.countPlay?
+        extraInfo += ", #{e.countPlay} play#{if e.countPlay == 1 then "" else "s"}"
+      if e.countSkip?
+        extraInfo += ", #{e.countSkip} skip#{if e.countSkip == 1 then "" else "s"}"
     if e.opinions?
       for feeling, count of e.opinions
         extraInfo += ", #{count} #{feeling}#{if count == 1 then "" else "s"}"
@@ -329,9 +330,9 @@ showUser = ->
 
       setTimeout ->
         for feeling, list of userInfo.opinions
-          renderEntries("user#{feeling}", null, null, userInfo.opinions[feeling], false, true)
+          renderEntries("user#{feeling}", null, null, userInfo.opinions[feeling], false, true, true)
         if userInfo.added.length > 0
-          renderEntries("useradded", null, null, userInfo.added, false, true)
+          renderEntries("useradded", null, null, userInfo.added, false, true, true)
       , 0
 
   xhttp.open("GET", "/info/user?user=#{encodeURIComponent(lastUser)}", true)
