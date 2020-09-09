@@ -33,11 +33,14 @@ main = (argv) ->
       console.log "Copy: #{src} -> #{dst}"
     fs.copyFileSync(src, dst)
 
+  spawnOptions = {}
+  if opts.verbose
+    spawnOptions.stdio = 'inherit'
   originalCwd = process.cwd()
   process.chdir(backupDir)
-  spawnSync('git', ['add', '.'], { stdio: 'inherit' })
-  spawnSync('git', ['commit', '-m', 'update'], { stdio: 'inherit' })
-  spawnSync('git', ['push'], { stdio: 'inherit' })
+  spawnSync('git', ['add', '.'], spawnOptions)
+  spawnSync('git', ['commit', '-m', 'update'], spawnOptions)
+  spawnSync('git', ['push'], spawnOptions)
   process.chdir(originalCwd)
 
 module.exports = main
