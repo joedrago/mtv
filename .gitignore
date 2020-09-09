@@ -4,3 +4,4 @@ rp/super_secret.h
 /secrets.json
 /opinions.json
 /state.json
+/backup
