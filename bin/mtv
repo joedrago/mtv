@@ -13,6 +13,8 @@ if(!subcommand) {
     require(lib + '/server')(argv);
 } else if(subcommand == 'cmd') {
     require(lib + '/cmd')(argv);
+} else if(subcommand == 'backup') {
+    require(lib + '/backup')(argv);
 } else {
     console.log("unknown subcommand: " + subcommand);
 }
