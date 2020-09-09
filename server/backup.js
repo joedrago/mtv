@@ -9,7 +9,7 @@
   ({spawnSync} = require('child_process'));
 
   main = function(argv) {
-    var backupDir, dst, fileList, filename, filesToBackup, i, j, len, len1, opts, originalCwd, parsed, rootDir, src;
+    var backupDir, dst, fileList, filename, filesToBackup, i, j, len, len1, opts, originalCwd, parsed, rootDir, spawnOptions, src;
     opts = require('minimist')(argv, {
       boolean: ['v'],
       alias: {
@@ -44,17 +44,15 @@
       }
       fs.copyFileSync(src, dst);
     }
+    spawnOptions = {};
+    if (opts.verbose) {
+      spawnOptions.stdio = 'inherit';
+    }
     originalCwd = process.cwd();
     process.chdir(backupDir);
-    spawnSync('git', ['add', '.'], {
-      stdio: 'inherit'
-    });
-    spawnSync('git', ['commit', '-m', 'update'], {
-      stdio: 'inherit'
-    });
-    spawnSync('git', ['push'], {
-      stdio: 'inherit'
-    });
+    spawnSync('git', ['add', '.'], spawnOptions);
+    spawnSync('git', ['commit', '-m', 'update'], spawnOptions);
+    spawnSync('git', ['push'], spawnOptions);
     return process.chdir(originalCwd);
   };
 
