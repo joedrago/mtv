@@ -37,7 +37,6 @@ onPlayerStateChange = (event) ->
 
 play = (id, startSeconds = null, endSeconds = null) ->
   console.log "Playing: #{id}"
-  id = id.replace(/_/g, "")
   opts = {
     videoId: id
   }
