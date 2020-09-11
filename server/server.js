@@ -465,7 +465,7 @@
   };
 
   calcEntryStrings = function(e) {
-    var count, feeling, opinionString, params, ref, title, url;
+    var actualDuration, count, endTime, feeling, opinionString, params, ref, startTime, title, url;
     url = `https://youtu.be/${e.id}`;
     params = "";
     if (e.start >= 0) {
@@ -482,6 +482,15 @@
       title = " ";
     }
     url = `${url}${params}`;
+    startTime = e.start;
+    if (startTime < 0) {
+      startTime = 0;
+    }
+    endTime = e.end;
+    if (endTime < 0) {
+      endTime = e.duration;
+    }
+    actualDuration = endTime - startTime;
     opinionString = "";
     ref = e.opinions;
     for (feeling in ref) {
@@ -491,7 +500,7 @@
     return {
       title: title,
       url: url,
-      description: `**${title}** \`[${e.user}, ${prettyDuration(e.duration)}${opinionString}]\``
+      description: `**${title}** \`[${e.user}, ${prettyDuration(actualDuration)}${opinionString}]\``
     };
   };
 

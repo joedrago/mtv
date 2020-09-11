@@ -67,7 +67,9 @@ renderEntries = (domID, firstTitle, restTitle, entries, isMap, sortList = false,
       params += "end=#{e.end}"
     url = "https://youtu.be/#{e.id}#{params}"
 
-    extraInfo = ", #{prettyDuration(e)}"
+    extraInfo = ""
+    if (e.start != -1) or  (e.end != -1)
+      extraInfo += ", #{prettyDuration(e)}"
     if showPlayCounts
       if e.countPlay?
         extraInfo += ", #{e.countPlay} play#{if e.countPlay == 1 then "" else "s"}"
