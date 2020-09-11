@@ -357,13 +357,21 @@ calcEntryStrings = (e) ->
     title = " "
   url = "#{url}#{params}"
 
+  startTime = e.start
+  if startTime < 0
+    startTime = 0
+  endTime = e.end
+  if endTime < 0
+    endTime = e.duration
+  actualDuration = endTime - startTime
+
   opinionString = ""
   for feeling, count of e.opinions
     opinionString += ", #{count} #{feeling}#{if count == 1 then "" else "s"}"
   return {
     title: title
     url: url
-    description: "**#{title}** `[#{e.user}, #{prettyDuration(e.duration)}#{opinionString}]`"
+    description: "**#{title}** `[#{e.user}, #{prettyDuration(actualDuration)}#{opinionString}]`"
   }
 
 updateOpinion = (e) ->
