@@ -5,6 +5,34 @@ lastUser = null
 
 opinionOrder = ['like', 'meh', 'hate'] # always in this specific order
 
+secondsToTime = (t) ->
+  units = [
+    { suffix: "h", factor: 3600, skip: true }
+    { suffix: "m", factor: 60, skip: false }
+    { suffix: "s", factor: 1, skip: false }
+  ]
+
+  str = ""
+  for unit in units
+    u = Math.floor(t / unit.factor)
+    if (u > 0) or not unit.skip
+      t -= u * unit.factor
+      if str.length > 0
+        str += ":"
+        if u < 10
+          str += "0"
+      str += String(u)
+  return str
+
+prettyDuration = (e) ->
+  startTime = e.start
+  if startTime < 0
+    startTime = 0
+  endTime = e.end
+  if endTime < 0
+    endTime = e.duration
+  return "#{secondsToTime(startTime)}-#{secondsToTime(endTime)}"
+
 renderEntries = (domID, firstTitle, restTitle, entries, isMap, sortList = false, showPlayCounts = false) ->
   html = ""
 
@@ -39,7 +67,7 @@ renderEntries = (domID, firstTitle, restTitle, entries, isMap, sortList = false,
       params += "end=#{e.end}"
     url = "https://youtu.be/#{e.id}#{params}"
 
-    extraInfo = ""
+    extraInfo = ", #{prettyDuration(e)}"
     if showPlayCounts
       if e.countPlay?
         extraInfo += ", #{e.countPlay} play#{if e.countPlay == 1 then "" else "s"}"
