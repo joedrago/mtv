@@ -550,9 +550,12 @@ run = (args, user) ->
       if lastPlayed?
         lastPlayed.countSkip ?= 0
         lastPlayed.countSkip += 1
+        strs = calcEntryStrings(e)
+        ret = "MTV: Skipped #{strs.description}"
       e = playNext()
-      strs = calcEntryStrings(e)
-      return "MTV: Playing #{strs.description}"
+      if not ret?
+        ret = "MTV: Skipped unknown song"
+      return ret
 
   return "MTV: unknown command #{cmd}"
 
