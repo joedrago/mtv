@@ -136,10 +136,10 @@ updateOther = ->
   xhttp.open("GET", "/info/other", true)
   xhttp.send()
 
-showHistory = ->
+showPlaying = ->
   showList('main', "Now Playing:", "History:", "/info/history")
   updateOther()
-  lastClicked = showHistory
+  lastClicked = showPlaying
 
 showQueue = ->
   showList('main', "Up Next:", "Queue:", "/info/queue")
@@ -435,10 +435,10 @@ processHash = ->
     when '#stats'
       showStats()
     else
-      showHistory()
+      showPlaying()
 
 init = ->
-  window.showHistory = showHistory
+  window.showPlaying = showPlaying
   window.showQueue = showQueue
   window.showPlaylist = showPlaylist
   window.showBoth = showBoth

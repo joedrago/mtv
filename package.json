@@ -20,6 +20,7 @@
   "dependencies": {
     "body-parser": "^1.19.0",
     "bottleneck": "^2.19.5",
+    "build": "^0.1.4",
     "express": "^4.17.1",
     "iso8601-duration": "^1.2.0",
     "minimist": "^1.2.5",
