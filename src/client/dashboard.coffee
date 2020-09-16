@@ -33,7 +33,7 @@ prettyDuration = (e) ->
     endTime = e.duration
   return "#{secondsToTime(startTime)}-#{secondsToTime(endTime)}"
 
-renderEntries = (domID, firstTitle, restTitle, entries, isMap, sortList = false, showPlayCounts = false) ->
+renderEntries = (firstTitle, restTitle, entries, isMap, sortList = false, showPlayCounts = false) ->
   html = ""
 
   if isMap
@@ -93,22 +93,22 @@ renderEntries = (domID, firstTitle, restTitle, entries, isMap, sortList = false,
       <div> * <a target="_blank" href="#{url}">#{title}</a> <span class="user">(#{e.user}#{extraInfo})</span></div>
 
     """
-  document.getElementById(domID).innerHTML = html
+  return html
 
 
-showList = (domID, firstTitle, restTitle, url, isMap = false) ->
-  # document.getElementById('main').innerHTML = ""
-  xhttp = new XMLHttpRequest()
-  xhttp.onreadystatechange = ->
-      if (@readyState == 4) and (@status == 200)
-         # Typical action to be performed when the document is ready:
-         try
-           entries = JSON.parse(xhttp.responseText)
-           renderEntries(domID, firstTitle, restTitle, entries, isMap)
-         catch
-           document.getElementById("main").innerHTML = "Error!"
-  xhttp.open("GET", url, true)
-  xhttp.send()
+showList = (firstTitle, restTitle, url, isMap = false) ->
+  return new Promise (resolve, reject) ->
+    xhttp = new XMLHttpRequest()
+    xhttp.onreadystatechange = ->
+        if (@readyState == 4) and (@status == 200)
+           # Typical action to be performed when the document is ready:
+           try
+             entries = JSON.parse(xhttp.responseText)
+             resolve(renderEntries(firstTitle, restTitle, entries, isMap))
+           catch
+             resolve("Error")
+    xhttp.open("GET", url, true)
+    xhttp.send()
 
 updateOther = ->
   xhttp = new XMLHttpRequest()
@@ -137,27 +137,27 @@ updateOther = ->
   xhttp.send()
 
 showPlaying = ->
-  showList('main', "Now Playing:", "History:", "/info/history")
+  document.getElementById('main').innerHTML = await showList("Now Playing:", "History:", "/info/history")
   updateOther()
   lastClicked = showPlaying
 
 showQueue = ->
-  showList('main', "Up Next:", "Queue:", "/info/queue")
+  document.getElementById('main').innerHTML = await showList("Up Next:", "Queue:", "/info/queue")
   updateOther()
   lastClicked = showQueue
 
 showBoth = ->
+  leftSide = await showList("Now Playing:", "History:", "/info/history")
+  rightSide = await showList("Up Next:", "Queue:", "/info/queue")
   document.getElementById('main').innerHTML = """
-    <div id="mainl"></div>
-    <div id="mainr"></div>
+    <div id="mainl">#{leftSide}</div>
+    <div id="mainr">#{rightSide}</div>
   """
-  showList('mainl', "Now Playing:", "History:", "/info/history")
-  showList('mainr', "Up Next:", "Queue:", "/info/queue")
   updateOther()
   lastClicked = showBoth
 
 showPlaylist = ->
-  showList('main', null, null, "/info/playlist", true)
+  document.getElementById('main').innerHTML = await showList(null, null, "/info/playlist", true)
   updateOther()
   lastClicked = showPlaylist
 
