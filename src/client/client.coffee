@@ -56,7 +56,12 @@ tick = ->
   if not playing and player?
     sendReady()
 
+youtubeReady = false
 window.onYouTubePlayerAPIReady = ->
+  if youtubeReady
+    return
+  youtubeReady = true
+
   console.log "onYouTubePlayerAPIReady"
 
   player = new YT.Player 'player', {
@@ -82,3 +87,10 @@ window.onYouTubePlayerAPIReady = ->
     serverEpoch = server.epoch
 
   setInterval(tick, 5000)
+
+setTimeout ->
+  # somehow we missed this event, just kick it manually
+  if not youtubeReady
+    console.log "kicking Youtube..."
+    window.onYouTubePlayerAPIReady()
+, 3000
