@@ -672,17 +672,17 @@ main = (argv) ->
     res.send(html)
 
   app.get '/info/playlist', (req, res) ->
-    updateOpinions(playlist, true)
+    # updateOpinions(playlist, true)
     res.type('application/json')
     res.send(JSON.stringify(playlist, null, 2))
 
   app.get '/info/queue', (req, res) ->
-    updateOpinions(queue)
+    # updateOpinions(queue)
     res.type('application/json')
     res.send(JSON.stringify(queue, null, 2))
 
   app.get '/info/history', (req, res) ->
-    updateOpinions(history)
+    # updateOpinions(history)
     res.type('application/json')
     res.send(JSON.stringify(history, null, 2))
 
