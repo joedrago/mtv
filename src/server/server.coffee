@@ -27,6 +27,7 @@ isCasting = {}
 isPlaying = {}
 playingName = {}
 opinions = {}
+dashboardsRefreshNeeded = false
 
 load = ->
   if fs.existsSync("playlist.json")
@@ -63,6 +64,15 @@ saveOpinions = ->
 refreshDashboards = ->
   for sid, soc of sockets
     soc.emit 'refresh', {}
+
+requestDashboardRefresh = ->
+  dashboardsRefreshNeeded = true
+
+refreshDashboardsIfNeeded = ->
+  if dashboardsRefreshNeeded
+    # console.log "refreshDashboardsIfNeeded(): refreshing..."
+    dashboardsRefreshNeeded = false
+    refreshDashboards()
 
 saveState = ->
   savedQueue = []
@@ -488,7 +498,7 @@ run = (args, user) ->
       updateOpinion(lastPlayed)
       strs = calcEntryStrings(lastPlayed)
       saveOpinions()
-      refreshDashboards()
+      requestDashboardRefresh()
       return "MTV: Playing #{strs.description}"
 
     when 'add'
@@ -521,7 +531,7 @@ run = (args, user) ->
         ret = "MTV: Queued next and added to pool: #{e.id}"
       saveState()
       setTimeout(->
-        refreshDashboards()
+        requestDashboardRefresh()
       , 3000)
       return ret
 
@@ -529,7 +539,7 @@ run = (args, user) ->
       queue = []
       e = playNext()
       strs = calcEntryStrings(e)
-      refreshDashboards()
+      requestDashboardRefresh()
       return "MTV: Shuffled and playing a fresh song #{strs.description}"
 
     when 'remove', 'delete', 'del'
@@ -595,6 +605,10 @@ main = (argv) ->
     findMissingYoutubeInfo()
   , 60 * 1000)
 
+  setInterval( ->
+    refreshDashboardsIfNeeded()
+  , 5 * 1000)
+
   # attempt to restart whatever was just playing
   if history.length > 0
     queue.unshift(history.shift())
@@ -625,7 +639,7 @@ main = (argv) ->
         needsRefresh = true
 
       if needsRefresh
-        refreshDashboards()
+        requestDashboardRefresh()
 
       if lastPlayed?
         # Give fresh watchers something to watch until the next song hits
@@ -651,7 +665,7 @@ main = (argv) ->
         delete playingName[socket.id]
       if isPlaying[socket.id]?
         delete isPlaying[socket.id]
-        refreshDashboards()
+        requestDashboardRefresh()
 
     socket.on 'castready', (msg) ->
       console.log "castready!"
