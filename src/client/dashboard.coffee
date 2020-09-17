@@ -360,9 +360,9 @@ showUser = ->
 
       setTimeout ->
         for feeling, list of userInfo.opinions
-          renderEntries("user#{feeling}", null, null, userInfo.opinions[feeling], false, true, true)
+          document.getElementById("user#{feeling}").innerHTML = renderEntries(null, null, userInfo.opinions[feeling], false, true, true)
         if userInfo.added.length > 0
-          renderEntries("useradded", null, null, userInfo.added, false, true, true)
+          document.getElementById("useradded").innerHTML = renderEntries(null, null, userInfo.added, false, true, true)
       , 0
 
   xhttp.open("GET", "/info/user?user=#{encodeURIComponent(lastUser)}", true)
