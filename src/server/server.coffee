@@ -514,6 +514,40 @@ run = (args, user) ->
       savePlaylist()
       return "MTV: Added to pool: #{e.id}"
 
+    when 'edit'
+      e = entryFromArg(args[1])
+      if not e?
+        return "MTV: edit: invalid argument"
+      if not playlist[e.id]?
+        return "MTV: edit: Not in pool already, ignoring"
+
+      if args.length < 4
+        return "MTV: Syntax: edit [URL/id] [user/start/end] [newValue]"
+      property = args[2]
+      switch property
+        when 'user'
+          newValue = args[3]
+        when 'start'
+          newValue = parseInt(args[3])
+          if isNaN(newValue)
+            return "MTV: edit: invalid number #{args[3]}"
+          if newValue == 0
+            newValue = -1
+        when 'end'
+          newValue = parseInt(args[3])
+          if isNaN(newValue)
+            return "MTV: edit: invalid number #{args[3]}"
+          if newValue >= playlist[e.id].duration
+            newValue = -1
+        else
+          return "MTV: edit: unknown property: #{property}"
+
+      oldValue = playlist[e.id][property]
+      playlist[e.id][property] = newValue
+      savePlaylist()
+      requestDashboardRefresh()
+      return "MTV: Edited: #{e.id} [#{property}] `#{oldValue}` -> `#{newValue}`"
+
     when 'queue', 'q'
       e = entryFromArg(args[1])
       if not e?

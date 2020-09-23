@@ -612,7 +612,7 @@
   };
 
   run = function(args, user) {
-    var anonCount, cmd, e, l, len, name, name1, nameString, other, ref, ret, strs, title;
+    var anonCount, cmd, e, l, len, name, name1, nameString, newValue, oldValue, other, property, ref, ret, strs, title;
     cmd = 'who';
     if (args.length > 0) {
       cmd = args[0];
@@ -710,6 +710,48 @@
         getYoutubeData(e);
         savePlaylist();
         return `MTV: Added to pool: ${e.id}`;
+      case 'edit':
+        e = entryFromArg(args[1]);
+        if (e == null) {
+          return "MTV: edit: invalid argument";
+        }
+        if (playlist[e.id] == null) {
+          return "MTV: edit: Not in pool already, ignoring";
+        }
+        if (args.length < 4) {
+          return "MTV: Syntax: edit [URL/id] [user/start/end] [newValue]";
+        }
+        property = args[2];
+        switch (property) {
+          case 'user':
+            newValue = args[3];
+            break;
+          case 'start':
+            newValue = parseInt(args[3]);
+            if (isNaN(newValue)) {
+              return `MTV: edit: invalid number ${args[3]}`;
+            }
+            if (newValue === 0) {
+              newValue = -1;
+            }
+            break;
+          case 'end':
+            newValue = parseInt(args[3]);
+            if (isNaN(newValue)) {
+              return `MTV: edit: invalid number ${args[3]}`;
+            }
+            if (newValue >= playlist[e.id].duration) {
+              newValue = -1;
+            }
+            break;
+          default:
+            return `MTV: edit: unknown property: ${property}`;
+        }
+        oldValue = playlist[e.id][property];
+        playlist[e.id][property] = newValue;
+        savePlaylist();
+        requestDashboardRefresh();
+        return `MTV: Edited: ${e.id} [${property}] \`${oldValue}\` -> \`${newValue}\``;
       case 'queue':
       case 'q':
         e = entryFromArg(args[1]);
