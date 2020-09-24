@@ -221,9 +221,15 @@
     return discordClient.channels.fetch(discordChannel).then(function(channel) {
       var newTopic;
       newTopic = discordPrefix + lastPlayed.title;
-      console.log(`Discord: ${newTopic}`);
-      return channel.setTopic(newTopic).catch(console.error);
-    }).catch(console.error);
+      console.log(`Discord Setting topic: [#${channel.name}]: ${newTopic}`);
+      return channel.setTopic(newTopic).then(function(newChannel) {
+        return console.log(`Discord Topic Set: [#${channel.name}]: ${newTopic}`);
+      }).catch(function(e) {
+        return console.log(`Discord Error: ${e}`);
+      });
+    }).catch(function(e) {
+      return console.log(`Discord Error: ${e}`);
+    });
   };
 
   autoPlayNext = function() {
@@ -887,10 +893,14 @@
         discordPrefix = secrets.discordPrefix;
       }
       discordClient = new Discord.Client();
+      // discordClient.on 'debug', (text) ->
+      //   console.log "DiscordDebug: #{text}"
       discordClient.on('ready', function() {
         discordClientReady = true;
-        console.log("Discord ready!");
-        return updateDiscord();
+        console.log(`Discord ready, logged in as: ${discordClient.user.tag}`);
+        return setTimeout(function() {
+          return updateDiscord();
+        }, 0);
       });
       discordClient.login(secrets.discordToken);
     } else {
