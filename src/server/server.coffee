@@ -140,10 +140,13 @@ updateDiscord = ->
   discordClient.channels.fetch(discordChannel)
     .then (channel) ->
       newTopic = discordPrefix + lastPlayed.title
-      console.log "Discord: #{newTopic}"
-      channel.setTopic(newTopic)
-        .catch(console.error)
-    .catch(console.error)
+      console.log "Discord Setting topic: [##{channel.name}]: #{newTopic}"
+      channel.setTopic(newTopic).then (newChannel) ->
+          console.log "Discord Topic Set: [##{channel.name}]: #{newTopic}"
+        .catch (e) ->
+          console.log "Discord Error: #{e}"
+    .catch (e) ->
+      console.log "Discord Error: #{e}"
 
 autoPlayNext = ->
   e = playNext()
@@ -658,10 +661,14 @@ main = (argv) ->
     if secrets.discordPrefix?
       discordPrefix = secrets.discordPrefix
     discordClient = new Discord.Client()
+    # discordClient.on 'debug', (text) ->
+    #   console.log "DiscordDebug: #{text}"
     discordClient.on 'ready', ->
       discordClientReady = true
-      console.log "Discord ready!"
-      updateDiscord()
+      console.log "Discord ready, logged in as: #{discordClient.user.tag}"
+      setTimeout ->
+        updateDiscord()
+      , 0
     discordClient.login(secrets.discordToken)
   else
     console.log "Discord disabled."
