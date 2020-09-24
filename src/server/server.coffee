@@ -1,4 +1,5 @@
 Bottleneck = require 'bottleneck'
+Discord = require('discord.js')
 express = require 'express'
 bodyParser = require 'body-parser'
 iso8601 = require 'iso8601-duration'
@@ -28,6 +29,10 @@ isPlaying = {}
 playingName = {}
 opinions = {}
 dashboardsRefreshNeeded = false
+discordChannel = null
+discordPrefix = ""
+discordClient = null
+discordClientReady = false
 
 load = ->
   if fs.existsSync("playlist.json")
@@ -128,6 +133,18 @@ updateCasts = (id = null) ->
           start: lastPlayed.start
         }
 
+updateDiscord = ->
+  if not discordClient? or not discordChannel? or not discordClientReady or not lastPlayed?
+    return
+
+  discordClient.channels.fetch(discordChannel)
+    .then (channel) ->
+      newTopic = discordPrefix + lastPlayed.title
+      console.log "Discord: #{newTopic}"
+      channel.setTopic(newTopic)
+        .catch(console.error)
+    .catch(console.error)
+
 autoPlayNext = ->
   e = playNext()
   console.log "autoPlayNext: #{JSON.stringify(e, null, 2)}"
@@ -149,6 +166,7 @@ play = (e) ->
   updateCasts()
   saveState()
   savePlaylist()
+  updateDiscord()
 
   console.log "Playing: #{e.title} [#{e.id}]"
   startTime = e.start
@@ -633,6 +651,20 @@ main = (argv) ->
   console.log JSON.stringify(secrets, null, 2)
 
   load()
+
+  if secrets.discordToken and secrets.discordChannel
+    console.log "Discord enabled, logging in..."
+    discordChannel = secrets.discordChannel
+    if secrets.discordPrefix?
+      discordPrefix = secrets.discordPrefix
+    discordClient = new Discord.Client()
+    discordClient.on 'ready', ->
+      discordClientReady = true
+      console.log "Discord ready!"
+      updateDiscord()
+    discordClient.login(secrets.discordToken)
+  else
+    console.log "Discord disabled."
 
   await findMissingYoutubeInfo()
   setInterval( ->
