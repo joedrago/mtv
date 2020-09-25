@@ -1,5 +1,4 @@
 Bottleneck = require 'bottleneck'
-Discord = require('discord.js')
 express = require 'express'
 bodyParser = require 'body-parser'
 iso8601 = require 'iso8601-duration'
@@ -29,10 +28,8 @@ isPlaying = {}
 playingName = {}
 opinions = {}
 dashboardsRefreshNeeded = false
-discordChannel = null
-discordPrefix = ""
-discordClient = null
-discordClientReady = false
+discordEnabled = false
+discordIndex = 0
 
 load = ->
   if fs.existsSync("playlist.json")
@@ -134,19 +131,47 @@ updateCasts = (id = null) ->
         }
 
 updateDiscord = ->
-  if not discordClient? or not discordChannel? or not discordClientReady or not lastPlayed?
+  if not discordEnabled or not lastPlayed?
     return
 
-  discordClient.channels.fetch(discordChannel)
-    .then (channel) ->
-      newTopic = discordPrefix + lastPlayed.title
-      console.log "Discord Setting topic: [##{channel.name}]: #{newTopic}"
-      channel.setTopic(newTopic).then (newChannel) ->
-          console.log "Discord Topic Set: [##{channel.name}]: #{newTopic}"
-        .catch (e) ->
-          console.log "Discord Error: #{e}"
-    .catch (e) ->
-      console.log "Discord Error: #{e}"
+  index = discordIndex
+  discordIndex = (discordIndex + 1) % secrets.discordTokens.length
+  do (index) ->
+    discordPath = "/api/channels/#{secrets.discordChannel}"
+    discordPrefix = secrets.discordPrefix
+    if not discordPrefix?
+      discordPrefix = ""
+    postData = JSON.stringify {
+      topic: "#{discordPrefix}#{lastPlayed.title}"
+    }
+
+    options =
+      hostname: 'discord.com'
+      port: 443
+      path: discordPath
+      method: 'PATCH',
+      headers:
+        'Authorization': "Bot #{secrets.discordTokens[index]}"
+        'Content-Type': 'application/json',
+        'Content-Length': postData.length
+    # console.log JSON.stringify(options, null, 2)
+
+    req = https.request options, (res) ->
+      statusCode = res.statusCode
+      reply = ""
+      res.on 'data', (d) ->
+        reply += String(d)
+      res.on 'end', (d) ->
+        if statusCode == 200
+          reply = "OK"
+        console.log "Discord[#{index}] Reply [#{statusCode}]: #{reply}"
+
+    req.on 'error', (error) ->
+      console.error "Discord[#{index}] Error: #{error}"
+
+    console.log "Discord[#{index}] PATCH #{discordPath}: #{postData}"
+    req.write(postData)
+    req.end()
 
 autoPlayNext = ->
   e = playNext()
@@ -655,18 +680,9 @@ main = (argv) ->
 
   load()
 
-  if secrets.discordToken and secrets.discordChannel
+  if secrets.discordTokens and secrets.discordChannel
     console.log "Discord enabled, logging in..."
-    discordChannel = secrets.discordChannel
-    if secrets.discordPrefix?
-      discordPrefix = secrets.discordPrefix
-    discordClient = new Discord.Client()
-    discordClient.on 'debug', (text) ->
-      console.log " * DiscordDebug: #{text}"
-    discordClient.on 'ready', ->
-      discordClientReady = true
-      console.log "Discord ready, logged in as: #{discordClient.user.tag}"
-    discordClient.login(secrets.discordToken)
+    discordEnabled = true
   else
     console.log "Discord disabled."
 
