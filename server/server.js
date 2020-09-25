@@ -893,8 +893,9 @@
         discordPrefix = secrets.discordPrefix;
       }
       discordClient = new Discord.Client();
-      // discordClient.on 'debug', (text) ->
-      //   console.log "DiscordDebug: #{text}"
+      discordClient.on('debug', function(text) {
+        return console.log(` * DiscordDebug: ${text}`);
+      });
       discordClient.on('ready', function() {
         discordClientReady = true;
         console.log(`Discord ready, logged in as: ${discordClient.user.tag}`);

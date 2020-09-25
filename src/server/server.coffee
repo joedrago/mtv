@@ -661,8 +661,8 @@ main = (argv) ->
     if secrets.discordPrefix?
       discordPrefix = secrets.discordPrefix
     discordClient = new Discord.Client()
-    # discordClient.on 'debug', (text) ->
-    #   console.log "DiscordDebug: #{text}"
+    discordClient.on 'debug', (text) ->
+      console.log " * DiscordDebug: #{text}"
     discordClient.on 'ready', ->
       discordClientReady = true
       console.log "Discord ready, logged in as: #{discordClient.user.tag}"
