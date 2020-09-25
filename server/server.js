@@ -898,10 +898,7 @@
       });
       discordClient.on('ready', function() {
         discordClientReady = true;
-        console.log(`Discord ready, logged in as: ${discordClient.user.tag}`);
-        return setTimeout(function() {
-          return updateDiscord();
-        }, 0);
+        return console.log(`Discord ready, logged in as: ${discordClient.user.tag}`);
       });
       discordClient.login(secrets.discordToken);
     } else {
