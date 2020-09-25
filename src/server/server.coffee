@@ -666,9 +666,6 @@ main = (argv) ->
     discordClient.on 'ready', ->
       discordClientReady = true
       console.log "Discord ready, logged in as: #{discordClient.user.tag}"
-      setTimeout ->
-        updateDiscord()
-      , 0
     discordClient.login(secrets.discordToken)
   else
     console.log "Discord disabled."
