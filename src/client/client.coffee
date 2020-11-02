@@ -57,6 +57,7 @@ tick = ->
     sendReady()
     return
 
+  user = qs('user')
   socket.emit 'playing', { user: user }
 
 youtubeReady = false
