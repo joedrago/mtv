@@ -940,6 +940,26 @@
       socket.emit('server', {
         epoch: serverEpoch
       });
+      socket.on('playing', function(msg) {
+        var needsRefresh, username;
+        needsRefresh = false;
+        if (!isPlaying[socket.id]) {
+          isPlaying[socket.id] = true;
+          needsRefresh = true;
+        }
+        username = sanitizeUsername(msg.user);
+        if (playingName[socket.id] !== username) {
+          if (username != null) {
+            playingName[socket.id] = username;
+          } else {
+            delete playingName[socket.id];
+          }
+          needsRefresh = true;
+        }
+        if (needsRefresh) {
+          return requestDashboardRefresh();
+        }
+      });
       socket.on('ready', function(msg) {
         var endTime, needsRefresh, startTime, username;
         // console.log "received ready"
