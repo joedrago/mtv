@@ -709,6 +709,23 @@ main = (argv) ->
 
     socket.emit('server', { epoch: serverEpoch })
 
+    socket.on 'playing', (msg) ->
+      needsRefresh = false
+      if not isPlaying[socket.id]
+        isPlaying[socket.id] = true
+        needsRefresh = true
+
+      username = sanitizeUsername(msg.user)
+      if playingName[socket.id] != username
+        if username?
+          playingName[socket.id] = username
+        else
+          delete playingName[socket.id]
+        needsRefresh = true
+
+      if needsRefresh
+        requestDashboardRefresh()
+
     socket.on 'ready', (msg) ->
       # console.log "received ready"
       needsRefresh = false

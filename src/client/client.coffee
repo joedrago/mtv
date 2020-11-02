@@ -55,6 +55,9 @@ sendReady = ->
 tick = ->
   if not playing and player?
     sendReady()
+    return
+
+  socket.emit 'playing', { user: user }
 
 youtubeReady = false
 window.onYouTubePlayerAPIReady = ->
