@@ -558,7 +558,7 @@ run = (args, user) ->
   switch cmd
 
     when 'help', 'commands'
-      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, 'edit', 'trending', 'adopt'"
+      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, `edit`, `trending`, `adopt`"
 
     when 'here', 'watching', 'web', 'website'
       other = calcOther()
