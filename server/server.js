@@ -767,7 +767,7 @@
     switch (cmd) {
       case 'help':
       case 'commands':
-        return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, 'edit', 'trending', 'adopt'";
+        return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, `edit`, `trending`, `adopt`";
       case 'here':
       case 'watching':
       case 'web':
