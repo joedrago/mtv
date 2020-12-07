@@ -767,7 +767,7 @@
     switch (cmd) {
       case 'help':
       case 'commands':
-        return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`";
+        return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, 'edit', 'trending', 'adopt'";
       case 'here':
       case 'watching':
       case 'web':
@@ -864,6 +864,7 @@
         lastPlayed.user = user;
         playlist[lastPlayed.id] = lastPlayed;
         savePlaylist();
+        requestDashboardRefresh();
         return `MTV: Added to pool: ${lastPlayed.id}`;
       case 'edit':
         e = entryFromArg(args[1]);
