@@ -6,6 +6,8 @@ fs = require 'fs'
 https = require 'https'
 ytdl = require 'ytdl-core'
 
+YOUTUBE_USER = "YouTube"
+
 limiter = new Bottleneck {
   maxConcurrent: 5
 }
@@ -219,6 +221,62 @@ play = (e) ->
 
 parseDuration = (s) ->
   return iso8601.toSeconds(iso8601.parse(s))
+
+queueYoutubeTrending = ->
+  return new Promise (resolve, reject) ->
+    url = "https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&chart=mostPopular&maxResults=50&regionCode=US&videoCategoryId=10&key=#{secrets.youtube}"
+    req = https.request url, (res) ->
+      rawJSON = ""
+      res.on 'data', (chunk) ->
+        rawJSON += chunk
+      res.on 'error', ->
+        console.log "Error getting trending music"
+        resolve()
+      res.on 'end', ->
+        data = null
+        try
+          data = JSON.parse(rawJSON)
+        catch
+          console.log "ERROR: Failed to talk to parse JSON: #{rawJSON}"
+          return
+        saved = false
+        if data.items? and (data.items.length > 0)
+          unshuffledTrendingQueue = []
+          for item in data.items
+            chosenThumb = null
+            for thumbType, thumb of item.snippet.thumbnails
+              if not chosenThumb?
+                chosenThumb = thumb
+                continue
+              if thumbType == 'medium'
+                chosenThumb = thumb
+                break
+              if chosenThumb.height < thumb.height
+                chosenThumb = thumb
+            thumbUrl = null
+            if chosenThumb?
+              thumbUrl = chosenThumb.url
+            if not thumbUrl?
+              thumbUrl = '/unknown.png'
+            e = entryFromArg(item.id)
+            e.title = item.snippet.title
+            e.thumb = thumbUrl
+            e.user = YOUTUBE_USER
+            e.duration = parseDuration(item.contentDetails.duration)
+            console.log "Found trending title [#{e.id}]: #{e.title}"
+            # savePlaylist()
+            # saved = true
+            unshuffledTrendingQueue.push e
+
+          trendingQueue = [ unshuffledTrendingQueue.shift() ]
+          for i, index in unshuffledTrendingQueue
+            j = Math.floor(Math.random() * (index + 1))
+            trendingQueue.push(trendingQueue[j])
+            trendingQueue[j] = i
+          for e in trendingQueue
+            queue.unshift e
+        resolve()
+    req.end()
 
 getYoutubeData = (e) ->
   limiter.schedule ->
@@ -500,7 +558,7 @@ run = (args, user) ->
   switch cmd
 
     when 'help', 'commands'
-      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`"
+      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, 'edit', 'trending', 'adopt'"
 
     when 'here', 'watching', 'web', 'website'
       other = calcOther()
@@ -559,6 +617,20 @@ run = (args, user) ->
       getYoutubeData(e)
       savePlaylist()
       return "MTV: Added to pool: #{e.id}"
+
+    when 'adopt'
+      if lastPlayed == null
+        return "MTV: I have no idea what's playing."
+      if lastPlayed.user != YOUTUBE_USER
+        return "MTV: You may only adopt entries from #{YOUTUBE_USER}."
+      if playlist[lastPlayed.id]?
+        strs = calcEntryStrings(playlist[lastPlayed.id])
+        return "MTV: Already in pool: #{strs.description}"
+      lastPlayed.user = user
+      playlist[lastPlayed.id] = lastPlayed
+      savePlaylist()
+      requestDashboardRefresh()
+      return "MTV: Added to pool: #{lastPlayed.id}"
 
     when 'edit'
       e = entryFromArg(args[1])
@@ -622,6 +694,13 @@ run = (args, user) ->
       requestDashboardRefresh()
       return "MTV: Shuffled and playing a fresh song #{strs.description}"
 
+    when 'trending'
+      await queueYoutubeTrending()
+      e = playNext()
+      strs = calcEntryStrings(e)
+      requestDashboardRefresh()
+      return "MTV: Queued up the top 50 trending music from youtube. First up: #{strs.description}"
+
     when 'remove', 'delete', 'del'
       e = entryFromArg(args[1])
       if not e?
@@ -653,6 +732,10 @@ findMissingYoutubeInfo = ->
   console.log "Checking for missing Youtube info..."
   missingTitleCount = 0
   for k,v of playlist
+    if not v.title? or not v.thumb? or not v.duration?
+      getYoutubeData(v)
+      missingTitleCount += 1
+  for v in queue
     if not v.title? or not v.thumb? or not v.duration?
       getYoutubeData(v)
       missingTitleCount += 1
@@ -827,7 +910,7 @@ main = (argv) ->
       args = req.body.cmd.split(/\s+/g)
       user = req.body.user
       user ?= 'Anonymous'
-      response = run(args, user)
+      response = await run(args, user)
       console.log "CMD: #{response}"
       res.send(response)
       return
