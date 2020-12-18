@@ -15,12 +15,14 @@ limiter = new Bottleneck {
 now = ->
   return Math.floor(Date.now() / 1000)
 
+# TODO: Switch this sloppy pile of flat maps to a map of objects?
 serverEpoch = now()
 secrets = null
 sockets = {}
 playlist = {}
 queue = []
 history = []
+output = []
 lastPlayedTimeout = null
 lastPlayedTime = now()
 lastPlayedDuration = 1
@@ -28,10 +30,18 @@ lastPlayed = null
 isCasting = {}
 isPlaying = {}
 playingName = {}
+ident = {}
 opinions = {}
 dashboardsRefreshNeeded = false
 discordEnabled = false
 discordIndex = 0
+
+logOutput = (msg) ->
+  output.push msg
+  while output.length > 10
+    output.shift()
+  return
+
 
 load = ->
   if fs.existsSync("playlist.json")
@@ -175,6 +185,45 @@ updateDiscord = ->
     req.write(postData)
     req.end()
 
+autoskip = ->
+  if lastPlayed == null
+    console.log "autoskip: lastPlayed is null."
+    return
+
+  shouldSkip = false
+  for sid, soc of sockets
+    if not isPlaying[sid]
+      continue
+    if ident[sid]?
+      feeling = opinions[lastPlayed.id]?[ident[sid]]
+      if not feeling?
+        console.log "autoskip: #{ident[sid]} has no opinion of this song, bailing out."
+        return
+      if feeling == 'like'
+        console.log "autoskip: #{ident[sid]} likes this song, bailing out."
+        return
+
+      # any other feeling is autoskip-worthy
+      shouldSkip = true
+    else
+      console.log "autoskip: Unidentified watcher attached, bailing out."
+      return
+
+  if shouldSkip
+    strs = calcEntryStrings(lastPlayed)
+    console.log "autoskip: Autoskipped #{strs.description}"
+    logOutput("MTV: Auto-skipped #{strs.description}")
+    playNext()
+    return
+
+  console.log "autoskip: Nothing to do."
+  return
+
+checkAutoskip = ->
+  setTimeout ->
+    autoskip()
+  , 0
+
 autoPlayNext = ->
   e = playNext()
   console.log "autoPlayNext: #{JSON.stringify(e, null, 2)}"
@@ -217,6 +266,7 @@ play = (e) ->
     lastPlayedTimeout = null
   lastPlayedTimeout = setTimeout(autoPlayNext, (lastPlayedDuration + 3) * 1000)
   console.log "Play: [#{e.title}] [#{lastPlayedDuration} seconds]"
+  checkAutoskip()
   return
 
 parseDuration = (s) ->
@@ -558,7 +608,7 @@ run = (args, user) ->
   switch cmd
 
     when 'help', 'commands'
-      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, `edit`, `trending`, `adopt`"
+      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, `edit`, `trending`, `adopt`, 'identify'"
 
     when 'here', 'watching', 'web', 'website'
       other = calcOther()
@@ -590,6 +640,14 @@ run = (args, user) ->
       strs = calcEntryStrings(lastPlayed)
       return "MTV: #{strs.url}"
 
+    when 'identify', 'me', 'iam'
+      for sid, soc of sockets
+        if playingName[sid]? and playingName[sid] == args[1]
+          ident[sid] = user
+          checkAutoskip()
+          return "MTV: Watcher `#{playingName[sid]}` is now recognized as Discord user `#{user}`."
+      return "MTV: Error: Nobody is streaming under the name `#{args[1]}`."
+
     when 'like', 'meh', 'hate', 'none'
       if lastPlayed == null
         return "MTV: I have no idea what's playing."
@@ -603,6 +661,7 @@ run = (args, user) ->
       strs = calcEntryStrings(lastPlayed)
       saveOpinions()
       requestDashboardRefresh()
+      checkAutoskip()
       return "MTV: Playing #{strs.description}"
 
     when 'add'
@@ -859,6 +918,9 @@ main = (argv) ->
       if isPlaying[socket.id]?
         delete isPlaying[socket.id]
         requestDashboardRefresh()
+      if ident[socket.id]?
+        delete ident[socket.id]
+      checkAutoskip()
 
     socket.on 'castready', (msg) ->
       console.log "castready!"
@@ -905,6 +967,15 @@ main = (argv) ->
     other = calcOther()
     res.type('application/json')
     res.send(JSON.stringify(other, null, 2))
+
+  app.get '/info/output', (req, res) ->
+    res.type('application/json')
+    res.send(JSON.stringify(output, null, 2))
+    if req.query? && req.query.secret?
+      if req.query.secret == secrets.cmd
+        output = []
+      else
+        console.log "Bad secret, not clearing output array"
 
   app.use(bodyParser.json())
   app.post '/cmd', (req, res) ->
