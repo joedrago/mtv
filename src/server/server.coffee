@@ -716,11 +716,18 @@ run = (args, user) ->
         return "MTV: #{e.id} is already not in the shuffled pool."
 
     when 'next', 'skip'
+      extraSkips = 0
+      if args.length > 1
+        count = parseInt(args[1])
+        if count > 1
+          extraSkips = count - 1
       if lastPlayed?
         lastPlayed.countSkip ?= 0
         lastPlayed.countSkip += 1
         strs = calcEntryStrings(lastPlayed)
         ret = "MTV: Skipped #{strs.description}"
+      for i in [0...extraSkips]
+        queue.shift()
       e = playNext()
       if not ret?
         ret = "MTV: Skipped unknown song"
