@@ -7,6 +7,7 @@ https = require 'https'
 ytdl = require 'ytdl-core'
 
 YOUTUBE_USER = "YouTube"
+AUTOSKIPLIST_COUNT = 3
 
 limiter = new Bottleneck {
   maxConcurrent: 5
@@ -30,11 +31,13 @@ lastPlayed = null
 isCasting = {}
 isPlaying = {}
 playingName = {}
-ident = {}
 opinions = {}
 dashboardsRefreshNeeded = false
 discordEnabled = false
 discordIndex = 0
+autoskipCount = 0
+autoskipTimeout = null
+autoskipList = []
 
 logOutput = (msg) ->
   output.push msg
@@ -185,34 +188,51 @@ updateDiscord = ->
     req.write(postData)
     req.end()
 
+logAutoskip = ->
+  if autoskipCount > 0
+    l = autoskipList.join(", ")
+    if autoskipCount > AUTOSKIPLIST_COUNT 
+      l += ", +#{autoskipCount - AUTOSKIPLIST_COUNT} more"
+    logOutput("MTV: Auto-skipped #{autoskipCount} song#{if autoskipCount == 1 then "" else "s"}: `#{l}`")
+  autoskipCount = 0
+  autoskipList = []
+  return
+
+shouldSkip = (e) ->
+  skipIt = false
+  for sid, soc of sockets
+    if not isPlaying[sid]
+      continue
+    if playingName[sid]?
+      feeling = opinions[e.id]?[playingName[sid]]
+      if not feeling?
+        console.log "autoskip: #{playingName[sid]} has no opinion of this song, bailing out."
+        return false
+      if feeling == 'like'
+        console.log "autoskip: #{playingName[sid]} likes this song, bailing out."
+        return false
+
+      # any other feeling is autoskip-worthy
+      skipIt = true
+  return skipIt
+
 autoskip = ->
   if lastPlayed == null
     console.log "autoskip: lastPlayed is null."
     return
 
-  shouldSkip = false
-  for sid, soc of sockets
-    if not isPlaying[sid]
-      continue
-    if ident[sid]?
-      feeling = opinions[lastPlayed.id]?[ident[sid]]
-      if not feeling?
-        console.log "autoskip: #{ident[sid]} has no opinion of this song, bailing out."
-        return
-      if feeling == 'like'
-        console.log "autoskip: #{ident[sid]} likes this song, bailing out."
-        return
-
-      # any other feeling is autoskip-worthy
-      shouldSkip = true
-    else
-      console.log "autoskip: Unidentified watcher attached, bailing out."
-      return
-
-  if shouldSkip
+  if shouldSkip(lastPlayed)
     strs = calcEntryStrings(lastPlayed)
     console.log "autoskip: Autoskipped #{strs.description}"
-    logOutput("MTV: Auto-skipped #{strs.description}")
+
+    if autoskipTimeout?
+      clearTimeout(autoskipTimeout)
+      autoskipTimeout = null
+    autoskipTimeout = setTimeout(logAutoskip, 5000)
+    autoskipCount += 1
+    if autoskipCount <= AUTOSKIPLIST_COUNT
+      autoskipList.push(strs.title)
+
     playNext()
     return
 
@@ -230,22 +250,22 @@ autoPlayNext = ->
 
 play = (e) ->
   lastPlayedTime = now()
-  for socketId, socket of sockets
-    socket.emit 'play', {
-      id: e.id
-      start: e.start
-      end: e.end
-    }
   lastPlayed = e
-  lastPlayed.countPlay ?= 0
-  lastPlayed.countPlay += 1
   history.unshift(e)
   while history.length > 20
     history.pop()
-  updateCasts()
-  saveState()
-  savePlaylist()
-  updateDiscord()
+
+  if not shouldSkip(lastPlayed)
+    for socketId, socket of sockets
+      socket.emit 'play', {
+        id: e.id
+        start: e.start
+        end: e.end
+      }
+    updateCasts()
+    saveState()
+    savePlaylist()
+    updateDiscord()
 
   console.log "Playing: #{e.title} [#{e.id}]"
   startTime = e.start
@@ -608,7 +628,7 @@ run = (args, user) ->
   switch cmd
 
     when 'help', 'commands'
-      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, `edit`, `trending`, `adopt`, 'identify'"
+      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, `edit`, `trending`, `adopt`"
 
     when 'here', 'watching', 'web', 'website'
       other = calcOther()
@@ -639,14 +659,6 @@ run = (args, user) ->
         return "MTV: I have no idea what's playing."
       strs = calcEntryStrings(lastPlayed)
       return "MTV: #{strs.url}"
-
-    when 'identify', 'me', 'iam'
-      for sid, soc of sockets
-        if playingName[sid]? and playingName[sid] == args[1]
-          ident[sid] = user
-          checkAutoskip()
-          return "MTV: Watcher `#{playingName[sid]}` is now recognized as Discord user `#{user}`."
-      return "MTV: Error: Nobody is streaming under the name `#{args[1]}`."
 
     when 'like', 'meh', 'hate', 'none'
       if lastPlayed == null
@@ -781,8 +793,6 @@ run = (args, user) ->
         if count > 1
           extraSkips = count - 1
       if lastPlayed?
-        lastPlayed.countSkip ?= 0
-        lastPlayed.countSkip += 1
         strs = calcEntryStrings(lastPlayed)
         ret = "MTV: Skipped #{strs.description}"
       for i in [0...extraSkips]
@@ -797,14 +807,29 @@ run = (args, user) ->
 findMissingYoutubeInfo = ->
   console.log "Checking for missing Youtube info..."
   missingTitleCount = 0
+  foundCount = false
   for k,v of playlist
+    if playlist[k].countPlay?
+      delete playlist[k]["countPlay"]
+      foundCount = true
+    if playlist[k].countSkip?
+      delete playlist[k]["countSkip"]
+      foundCount = true
     if not v.title? or not v.thumb? or not v.duration?
       getYoutubeData(v)
       missingTitleCount += 1
   for v in queue
+    if v.countPlay?
+      delete v["countPlay"]
+      foundCount = true
+    if v.countSkip?
+      delete v["countSkip"]
+      foundCount = true
     if not v.title? or not v.thumb? or not v.duration?
       getYoutubeData(v)
       missingTitleCount += 1
+  if foundCount
+    savePlaylist()
   console.log "Found #{missingTitleCount} missing Youtube info."
 
 sanitizeUsername = (name) ->
@@ -881,6 +906,7 @@ main = (argv) ->
       if not isPlaying[socket.id]
         isPlaying[socket.id] = true
         needsRefresh = true
+        checkAutoskip()
 
       username = sanitizeUsername(msg.user)
       if playingName[socket.id] != username
@@ -918,8 +944,6 @@ main = (argv) ->
       if isPlaying[socket.id]?
         delete isPlaying[socket.id]
         requestDashboardRefresh()
-      if ident[socket.id]?
-        delete ident[socket.id]
       checkAutoskip()
 
     socket.on 'castready', (msg) ->
