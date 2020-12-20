@@ -70,11 +70,6 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortList = false, showPl
     extraInfo = ""
     if (e.start != -1) or  (e.end != -1)
       extraInfo += ", #{prettyDuration(e)}"
-    if showPlayCounts
-      if e.countPlay?
-        extraInfo += ", #{e.countPlay} play#{if e.countPlay == 1 then "" else "s"}"
-      if e.countSkip?
-        extraInfo += ", #{e.countSkip} skip#{if e.countSkip == 1 then "" else "s"}"
     if e.opinions?
       for feeling, count of e.opinions
         extraInfo += ", #{count} #{feeling}#{if count == 1 then "" else "s"}"
