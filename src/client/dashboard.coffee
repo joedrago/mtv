@@ -3,7 +3,7 @@ socket = null
 lastClicked = null
 lastUser = null
 
-opinionOrder = ['like', 'meh', 'hate'] # always in this specific order
+opinionOrder = ['like', 'meh', 'bleh', 'hate'] # always in this specific order
 
 secondsToTime = (t) ->
   units = [
