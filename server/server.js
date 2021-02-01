@@ -712,7 +712,7 @@
   };
 
   calcEntryStrings = function(e) {
-    var actualDuration, count, endTime, feeling, opinionString, params, ref, startTime, title, url;
+    var actualDuration, count, endTime, feeling, opinionString, params, ref, ref1, startTime, title, url, user, userFeeling, whoList;
     url = `https://youtu.be/${e.id}`;
     params = "";
     if (e.start >= 0) {
@@ -743,6 +743,18 @@
     for (feeling in ref) {
       count = ref[feeling];
       opinionString += `, ${count} ${feeling}${count === 1 ? "" : "s"}`;
+      if ((opinions[e.id] != null) && (count > 0)) {
+        whoList = [];
+        ref1 = opinions[e.id];
+        for (user in ref1) {
+          userFeeling = ref1[user];
+          if (feeling === userFeeling) {
+            whoList.push(user);
+          }
+        }
+        whoList.sort();
+        opinionString += ` (${whoList.join(', ')})`;
+      }
     }
     return {
       title: title,
