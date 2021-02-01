@@ -191,7 +191,7 @@ updateDiscord = ->
 logAutoskip = ->
   if autoskipCount > 0
     l = autoskipList.join(", ")
-    if autoskipCount > AUTOSKIPLIST_COUNT 
+    if autoskipCount > AUTOSKIPLIST_COUNT
       l += ", +#{autoskipCount - AUTOSKIPLIST_COUNT} more"
     logOutput("MTV: Auto-skipped #{autoskipCount} song#{if autoskipCount == 1 then "" else "s"}: `#{l}`")
   autoskipCount = 0
@@ -559,6 +559,14 @@ calcEntryStrings = (e) ->
   opinionString = ""
   for feeling, count of e.opinions
     opinionString += ", #{count} #{feeling}#{if count == 1 then "" else "s"}"
+    if opinions[e.id]? and (count > 0)
+      whoList = []
+      for user, userFeeling of opinions[e.id]
+        if feeling == userFeeling
+          whoList.push user
+      whoList.sort()
+      opinionString += " (#{whoList.join(', ')})"
+
   return {
     title: title
     url: url
