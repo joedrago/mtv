@@ -311,6 +311,10 @@
           console.log(`autoskip: ${playingName[sid]} likes this song, bailing out.`);
           return false;
         }
+        if (feeling === 'meh') {
+          console.log(`autoskip: ${playingName[sid]} mehs this song, bailing out.`);
+          return false;
+        }
         // any other feeling is autoskip-worthy
         skipIt = true;
       }
@@ -331,7 +335,7 @@
         clearTimeout(autoskipTimeout);
         autoskipTimeout = null;
       }
-      autoskipTimeout = setTimeout(logAutoskip, 5000);
+      autoskipTimeout = setTimeout(logAutoskip, 1000);
       autoskipCount += 1;
       if (autoskipCount <= AUTOSKIPLIST_COUNT) {
         autoskipList.push(strs.title);
@@ -459,15 +463,19 @@
                 thumbUrl = '/unknown.png';
               }
               e = entryFromArg(item.id);
-              e.title = item.snippet.title;
-              e.thumb = thumbUrl;
-              e.user = YOUTUBE_USER;
-              e.duration = parseDuration(item.contentDetails.duration);
+              if (playlist[e.id] != null) {
+                unshuffledTrendingQueue.push(playlist[e.id]);
+              } else {
+                e.title = item.snippet.title;
+                e.thumb = thumbUrl;
+                e.user = YOUTUBE_USER;
+                e.duration = parseDuration(item.contentDetails.duration);
+                unshuffledTrendingQueue.push(e);
+              }
               console.log(`Found trending title [${e.id}]: ${e.title}`);
-              // savePlaylist()
-              // saved = true
-              unshuffledTrendingQueue.push(e);
             }
+            // savePlaylist()
+            // saved = true
             trendingQueue = [unshuffledTrendingQueue.shift()];
             for (index = n = 0, len1 = unshuffledTrendingQueue.length; n < len1; index = ++n) {
               i = unshuffledTrendingQueue[index];
@@ -852,7 +860,7 @@
     switch (cmd) {
       case 'help':
       case 'commands':
-        return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `hate`, `none`, `edit`, `trending`, `adopt`";
+        return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `bleh`, `hate`, `none`, `edit`, `trending`, `adopt`";
       case 'here':
       case 'watching':
       case 'web':
@@ -901,6 +909,7 @@
         return `MTV: ${strs.url}`;
       case 'like':
       case 'meh':
+      case 'bleh':
       case 'hate':
       case 'none':
         if (lastPlayed === null) {
