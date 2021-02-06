@@ -754,8 +754,8 @@ run = (args, user) ->
       if not playlist[e.id]?
         return "MTV: edit: Not in pool already, ignoring"
 
-      if args.length < 4
-        return "MTV: Syntax: edit [URL/id] [user/start/end] [newValue]"
+      if args.length < 3
+        return "MTV: Syntax: edit [URL/id] [user/start/end/nsfw/sfw] [newValue]"
       property = args[2]
       switch property
         when 'user'
@@ -766,6 +766,9 @@ run = (args, user) ->
             return "MTV: edit: invalid number #{args[3]}"
           if newValue == 0
             newValue = -1
+        when 'sfw', 'nsfw'
+          newValue = (property == 'nsfw')
+          property = 'nsfw'
         when 'end'
           newValue = parseInt(args[3])
           if isNaN(newValue)
