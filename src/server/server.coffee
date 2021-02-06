@@ -31,6 +31,7 @@ lastPlayed = null
 isCasting = {}
 isPlaying = {}
 playingName = {}
+sfwOnly = {}
 opinions = {}
 dashboardsRefreshNeeded = false
 discordEnabled = false
@@ -117,7 +118,10 @@ calcOther = ->
     if isPlaying[sid]
       count += 1
     if playingName[sid]? and playingName[sid].length > 0
-      names.push playingName[sid]
+      n = playingName[sid]
+      if sfwOnly[sid]
+        n += " (SFW)"
+      names.push n
   names.sort()
 
   other =
@@ -199,6 +203,16 @@ logAutoskip = ->
   return
 
 shouldSkip = (e) ->
+  console.log "shouldSkip: e #{JSON.stringify(e)}"
+  if e.nsfw
+    # console.log "shouldSkip: sfwOnly #{JSON.stringify(sfwOnly)}"
+    for sid, soc of sockets
+      if not isPlaying[sid]
+        continue
+      if sfwOnly[sid]
+        console.log "autoskip: #{playingName[sid]} can't watch NSFW content, bailing out."
+        return true
+
   skipIt = false
   for sid, soc of sockets
     if not isPlaying[sid]
@@ -567,10 +581,14 @@ calcEntryStrings = (e) ->
       whoList.sort()
       opinionString += " (#{whoList.join(', ')})"
 
+  nsfwString = ""
+  if e.nsfw
+    nsfwString = ", NSFW"
+
   return {
     title: title
     url: url
-    description: "**#{title}** `[#{e.user}, #{prettyDuration(actualDuration)}#{opinionString}]`"
+    description: "**#{title}** `[#{e.user}#{nsfwString}, #{prettyDuration(actualDuration)}#{opinionString}]`"
   }
 
 updateOpinion = (e) ->
@@ -643,13 +661,13 @@ run = (args, user) ->
   switch cmd
 
     when 'help', 'commands'
-      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `bleh`, `hate`, `none`, `edit`, `trending`, `adopt`"
+      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `bleh`, `hate`, `none`, `edit`, `trending`, `adopt`, `nsfw`, `sfw`"
 
     when 'here', 'watching', 'web', 'website'
       other = calcOther()
       nameString = ""
       if other.playing == 0
-        return "MTV: [Here] Nobody is watching via the website."
+        return "MTV: [Here] Nobody is watching."
       anonCount = other.playing - other.names.length
       if other.names.length > 0
         nameString = ""
@@ -661,7 +679,7 @@ run = (args, user) ->
         if nameString.length > 0
           nameString += " + "
         nameString += "**#{anonCount}** anonymous"
-      return "MTV: [Here] Watching via the website: #{nameString}"
+      return "MTV: [Here] Watching: #{nameString}"
 
     when 'what', 'whatisthis', 'who', 'whodis', 'why'
       if lastPlayed == null
@@ -690,6 +708,17 @@ run = (args, user) ->
       requestDashboardRefresh()
       checkAutoskip()
       return "MTV: Playing #{strs.description}"
+
+    when 'nsfw', 'sfw'
+      if lastPlayed == null
+        return "MTV: I have no idea what's playing."
+      nsfw = (cmd == 'nsfw')
+      lastPlayed.nsfw = nsfw
+      strs = calcEntryStrings(lastPlayed)
+      savePlaylist()
+      requestDashboardRefresh()
+      checkAutoskip()
+      return "MTV: (N)SFW Adjustment: #{strs.description}"
 
     when 'add'
       e = entryFromArg(args[1])
@@ -912,6 +941,14 @@ main = (argv) ->
           delete playingName[socket.id]
         needsRefresh = true
 
+      sfw = false
+      # console.log "GOT MSG: #{JSON.stringify(msg)}"
+      if msg.sfw? and ((msg.sfw == 'on') or (msg.sfw == '1') or (msg.sfw == 'true') or (msg.sfw == true))
+        sfw = true
+      if sfwOnly[socket.id] != sfw
+        sfwOnly[socket.id] = sfw
+        needsRefresh = true
+
       if needsRefresh
         requestDashboardRefresh()
 
@@ -929,6 +966,14 @@ main = (argv) ->
           playingName[socket.id] = username
         else
           delete playingName[socket.id]
+        needsRefresh = true
+
+      sfw = false
+      # console.log "GOT MSG: #{JSON.stringify(msg)}"
+      if msg.sfw? and ((msg.sfw == 'on') or (msg.sfw == '1') or (msg.sfw == 'true') or (msg.sfw == true))
+        sfw = true
+      if sfwOnly[socket.id] != sfw
+        sfwOnly[socket.id] = sfw
         needsRefresh = true
 
       if needsRefresh

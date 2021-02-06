@@ -106,8 +106,7 @@ a {
 [<a href="#both" onclick="showBoth()">Both</a>]
 [<a href="#all" onclick="showPlaylist()">All</a>]
 [<a href="#stats" onclick="showStats()">Stats</a>]
-[<a class="watchlink" target="_blank" href="/watch">Watch</a>]
-[<a id="aslink" class="watchlink" onclick="showWatchForm()">Watch as...</a><form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()"><input size="38" placeholder="Type your Discord handle and hit Enter" id="userinput" type="text" name="user" value=""> <a onclick="showWatchLink()">Cancel</a></form>]
+[<a id="aslink" class="watchlink" onclick="showWatchForm()">Watch</a><form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()"><input size="12" placeholder="Anonymous" id="userinput" type="text" name="user" value=""> <input type="checkbox" name="sfw"> SFW Only <input type="checkbox" name="controls"> Show Controls <input type="submit" value="Watch"> <a onclick="showWatchLink()">Cancel</a></form>]
 <span id="playing"></span>
 <br><br>
 
