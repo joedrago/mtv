@@ -50,7 +50,10 @@ play = (id, startSeconds = null, endSeconds = null) ->
 sendReady = ->
   console.log "Ready"
   user = qs('user')
-  socket.emit 'ready', { user: user }
+  sfw = false
+  if qs('sfw')
+    sfw = true
+  socket.emit 'ready', { user: user, sfw: sfw }
 
 tick = ->
   if not playing and player?
@@ -58,7 +61,10 @@ tick = ->
     return
 
   user = qs('user')
-  socket.emit 'playing', { user: user }
+  sfw = false
+  if qs('sfw')
+    sfw = true
+  socket.emit 'playing', { user: user, sfw: sfw }
 
 youtubeReady = false
 window.onYouTubePlayerAPIReady = ->

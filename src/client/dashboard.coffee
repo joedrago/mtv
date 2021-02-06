@@ -68,6 +68,8 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortList = false, showPl
     url = "https://youtu.be/#{e.id}#{params}"
 
     extraInfo = ""
+    if e.nsfw
+      extraInfo += ", NSFW"
     if (e.start != -1) or  (e.end != -1)
       extraInfo += ", #{prettyDuration(e)}"
     if e.opinions?
