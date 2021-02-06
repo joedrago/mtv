@@ -1017,8 +1017,8 @@
         if (playlist[e.id] == null) {
           return "MTV: edit: Not in pool already, ignoring";
         }
-        if (args.length < 4) {
-          return "MTV: Syntax: edit [URL/id] [user/start/end] [newValue]";
+        if (args.length < 3) {
+          return "MTV: Syntax: edit [URL/id] [user/start/end/nsfw/sfw] [newValue]";
         }
         property = args[2];
         switch (property) {
@@ -1033,6 +1033,11 @@
             if (newValue === 0) {
               newValue = -1;
             }
+            break;
+          case 'sfw':
+          case 'nsfw':
+            newValue = property === 'nsfw';
+            property = 'nsfw';
             break;
           case 'end':
             newValue = parseInt(args[3]);
