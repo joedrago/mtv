@@ -273,11 +273,15 @@ play = (e) ->
     history.pop()
 
   if not shouldSkip(lastPlayed)
+    strs = calcEntryStrings(e)
     for socketId, socket of sockets
       socket.emit 'play', {
         id: e.id
         start: e.start
         end: e.end
+        artist: strs.artist
+        title: strs.title
+        opinions: strs.opinions
       }
     updateCasts()
     saveState()
@@ -413,7 +417,8 @@ getYoutubeData = (e) ->
               e.title = data.items[0].snippet.title
               e.thumb = thumbUrl
               e.duration = parseDuration(data.items[0].contentDetails.duration)
-              console.log "Found title [#{e.id}]: #{e.title}"
+              splitArtist(e)
+              console.log "Found title [#{e.id}]: '#{e.artist}' - '#{e.title}'"
               savePlaylist()
               saved = true
           if not saved
@@ -560,6 +565,10 @@ calcEntryStrings = (e) ->
     title = "#{e.title} "
   else
     title = " "
+  if e.artist?
+    artist = e.artist
+  else
+    artist = "Unknown"
   url = "#{url}#{params}"
 
   startTime = e.start
@@ -570,14 +579,17 @@ calcEntryStrings = (e) ->
     endTime = e.duration
   actualDuration = endTime - startTime
 
+  opinionTable = {}
   opinionString = ""
   for feeling, count of e.opinions
+    opinionTable[feeling] ?= []
     opinionString += ", #{count} #{feeling}#{if count == 1 then "" else "s"}"
     if opinions[e.id]? and (count > 0)
       whoList = []
       for user, userFeeling of opinions[e.id]
         if feeling == userFeeling
           whoList.push user
+          opinionTable[feeling].push user
       whoList.sort()
       opinionString += " (#{whoList.join(', ')})"
 
@@ -586,9 +598,11 @@ calcEntryStrings = (e) ->
     nsfwString = ", NSFW"
 
   return {
+    artist: artist
     title: title
+    opinions: opinionTable
     url: url
-    description: "**#{title}** `[#{e.user}#{nsfwString}, #{prettyDuration(actualDuration)}#{opinionString}]`"
+    description: "**#{artist}** - **#{title}** `[#{e.user}#{nsfwString}, #{prettyDuration(actualDuration)}#{opinionString}]`"
   }
 
 updateOpinion = (e) ->
@@ -755,8 +769,12 @@ run = (args, user) ->
         return "MTV: edit: Not in pool already, ignoring"
 
       if args.length < 3
-        return "MTV: Syntax: edit [URL/id] [user/start/end/nsfw/sfw] [newValue]"
+        return "MTV: Syntax: edit [URL/id] [user/start/end/artist/title/nsfw/sfw] [newValue]"
       property = args[2]
+      editArgs = []
+      for i in [3...args.length]
+        editArgs.push args[i]
+      concatenatedArgs = editArgs.join(" ")
       switch property
         when 'user'
           newValue = args[3]
@@ -766,15 +784,19 @@ run = (args, user) ->
             return "MTV: edit: invalid number #{args[3]}"
           if newValue == 0
             newValue = -1
-        when 'sfw', 'nsfw'
-          newValue = (property == 'nsfw')
-          property = 'nsfw'
         when 'end'
           newValue = parseInt(args[3])
           if isNaN(newValue)
             return "MTV: edit: invalid number #{args[3]}"
           if newValue >= playlist[e.id].duration
             newValue = -1
+        when 'artist'
+          newValue = concatenatedArgs
+        when 'title'
+          newValue = concatenatedArgs
+        when 'sfw', 'nsfw'
+          newValue = (property == 'nsfw')
+          property = 'nsfw'
         else
           return "MTV: edit: unknown property: #{property}"
 
@@ -851,31 +873,60 @@ run = (args, user) ->
 
   return "MTV: unknown command #{cmd}"
 
+splitArtist = (e) ->
+  if e.artist?
+    return
+
+  artist = "Unknown"
+  title = e.title
+  if matches = e.title.match(/^(.+)\s[–-]\s(.+)$/)
+    artist = matches[1]
+    title = matches[2]
+  else if matches = e.title.match(/^([^"]+)\s"([^"]+)"/)
+    artist = matches[1]
+    title = matches[2]
+
+  title = title.replace(/[\(\[]Official(\sMusic)?\sVideo[\)\]]/i, "")
+  title = title.replace(/^\s+/, "")
+  title = title.replace(/\s+$/, "")
+  if title.match(/^".+"$/)
+    title = title.replace(/^"/, "")
+    title = title.replace(/"$/, "")
+  e.artist = artist
+  e.title = title
+  return
+
 findMissingYoutubeInfo = ->
   console.log "Checking for missing Youtube info..."
   missingTitleCount = 0
-  foundCount = false
+  needsSave = false
   for k,v of playlist
     if playlist[k].countPlay?
       delete playlist[k]["countPlay"]
-      foundCount = true
+      needsSave = true
     if playlist[k].countSkip?
       delete playlist[k]["countSkip"]
-      foundCount = true
+      needsSave = true
     if not v.title? or not v.thumb? or not v.duration?
       getYoutubeData(v)
       missingTitleCount += 1
+    else if not v.artist?
+      splitArtist(v)
+      needsSave = true
   for v in queue
     if v.countPlay?
       delete v["countPlay"]
-      foundCount = true
+      needsSave = true
     if v.countSkip?
       delete v["countSkip"]
-      foundCount = true
+      needsSave = true
     if not v.title? or not v.thumb? or not v.duration?
       getYoutubeData(v)
       missingTitleCount += 1
-  if foundCount
+    else if not v.artist?
+      splitArtist(v)
+      needsSave = true
+  if needsSave
     savePlaylist()
   console.log "Found #{missingTitleCount} missing Youtube info."
 
@@ -991,10 +1042,14 @@ main = (argv) ->
 
         # console.log "endTime #{endTime} startTime #{startTime}"
         if (endTime - startTime) > 5
+          strs = calcEntryStrings(lastPlayed)
           socket.emit 'play', {
             id: lastPlayed.id
             start: startTime
             end: endTime
+            artist: strs.artist
+            title: strs.title
+            opinions: strs.opinions
           }
 
     socket.on 'disconnect', ->

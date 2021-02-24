@@ -48,13 +48,16 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortList = false, showPl
 
   if sortList
     entries.sort (a, b) ->
-      if a.title.toLowerCase() < b.title.toLowerCase()
+      if a.artist.toLowerCase() < b.artist.toLowerCase()
         return -1
-      if a.title.toLowerCase() > b.title.toLowerCase()
+      if a.artist.toLowerCase() > b.artist.toLowerCase()
         return 1
       return 0
 
   for e, entryIndex in entries
+    artist = e.artist
+    if not artist?
+      artist = "Unknown"
     title = e.title
     if not title?
       title = e.id
@@ -87,7 +90,7 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortList = false, showPl
           <div class="restTitle">#{restTitle}</div>
         """
     html += """
-      <div> * <a target="_blank" href="#{url}">#{title}</a> <span class="user">(#{e.user}#{extraInfo})</span></div>
+      <div> * <a target="_blank" href="#{url}"><span class="entryartist">#{artist}</span><span class="entrymiddle"> - </span><span class="entrytitle">#{title}</span></a> <span class="user">(#{e.user}#{extraInfo})</span></div>
 
     """
   return html
