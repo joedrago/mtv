@@ -403,6 +403,7 @@
           id: e.id,
           start: e.start,
           end: e.end,
+          user: e.user,
           artist: strs.artist,
           title: strs.title,
           opinions: strs.opinions
@@ -1371,6 +1372,7 @@
               id: lastPlayed.id,
               start: startTime,
               end: endTime,
+              user: lastPlayed.user,
               artist: strs.artist,
               title: strs.title,
               opinions: strs.opinions
