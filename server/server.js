@@ -1290,6 +1290,7 @@
     }
     e.artist = artist;
     e.title = title;
+    logOutput(`MTV: Calc[\`${e.id}\`] Artist: \`${e.artist}\`, Title: \`${e.title}\``);
   };
 
   findMissingYoutubeInfo = function() {
