@@ -28,6 +28,7 @@ lastPlayedTimeout = null
 lastPlayedTime = now()
 lastPlayedDuration = 1
 lastPlayed = null
+songEndingTimeout = null
 isCasting = {}
 isPlaying = {}
 playingName = {}
@@ -251,7 +252,7 @@ autoskip = ->
     autoskipTimeout = setTimeout(logAutoskip, 1000)
     autoskipCount += 1
     if autoskipCount <= AUTOSKIPLIST_COUNT
-      autoskipList.push(strs.title)
+      autoskipList.push("#{strs.artist} - #{strs.title}")
 
     playNext()
     return
@@ -267,6 +268,18 @@ checkAutoskip = ->
   setTimeout ->
     autoskip()
   , 0
+
+songEnding = ->
+  if not lastPlayed?
+    return
+  strs = calcEntryStrings(lastPlayed)
+  for socketId, socket of sockets
+    socket.emit 'ending', {
+      user: lastPlayed.user
+      artist: strs.artist
+      title: strs.title
+      opinions: strs.opinions
+    }
 
 autoPlayNext = ->
   e = playNext()
@@ -314,6 +327,11 @@ play = (e) ->
     clearTimeout(lastPlayedTimeout)
     lastPlayedTimeout = null
   lastPlayedTimeout = setTimeout(autoPlayNext, (lastPlayedDuration + 3) * 1000)
+  if songEndingTimeout?
+    clearTimeout(songEndingTimeout)
+    songEndingTimeout = null
+  if lastPlayedDuration > 30
+    songEndingTimeout = setTimeout(songEnding, (lastPlayedDuration - 15) * 1000)
   console.log "Play: [#{e.title}] [#{lastPlayedDuration} seconds]"
   echoNewSong = true
   checkAutoskip()
