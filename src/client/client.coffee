@@ -112,7 +112,9 @@ play = (pkt, id, startSeconds = null, endSeconds = null) ->
     title = pkt.title
     title = title.replace(/^\s+/, "")
     title = title.replace(/\s+$/, "")
-    html = "#{artist}\n\"#{title}\""
+    user = pkt.user
+    user = user.charAt(0).toUpperCase() + user.slice(1)
+    html = "#{artist}\n\"#{title}\"\n#{user} Records"
     feelings = []
     for o in opinionOrder
       if pkt.opinions[o]?
@@ -122,7 +124,8 @@ play = (pkt, id, startSeconds = null, endSeconds = null) ->
     else
       for feeling in feelings
         list = pkt.opinions[feeling]
-        html += "\n#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}: #{list.join(',')}"
+        list.sort()
+        html += "\n#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}: #{list.join(', ')}"
     overElement.innerHTML = html
 
     for t in overTimers
