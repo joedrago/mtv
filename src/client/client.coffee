@@ -88,22 +88,14 @@ onPlayerStateChange = (event) ->
       playing = false
     , 2000)
 
-play = (pkt, id, startSeconds = null, endSeconds = null) ->
-  console.log "Playing: #{id}"
-  opts = {
-    videoId: id
-  }
-  if startSeconds? and (startSeconds >= 0)
-    opts.startSeconds = startSeconds
-  if endSeconds? and (endSeconds >= 1)
-    opts.endSeconds = endSeconds
-  player.loadVideoById(opts)
-  playing = true
-
+showInfo = (pkt) ->
   console.log pkt
 
   overElement = document.getElementById("over")
   overElement.style.display = "none"
+  for t in overTimers
+    clearTimeout(t)
+  overTimers = []
 
   if showTitles
     artist = pkt.artist
@@ -128,15 +120,26 @@ play = (pkt, id, startSeconds = null, endSeconds = null) ->
         html += "\n#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}: #{list.join(', ')}"
     overElement.innerHTML = html
 
-    for t in overTimers
-      clearTimeout(t)
-    overTimers = []
     overTimers.push setTimeout ->
       fadeIn(overElement, 1000)
     , 3000
     overTimers.push setTimeout ->
       fadeOut(overElement, 1000)
     , 15000
+
+play = (pkt, id, startSeconds = null, endSeconds = null) ->
+  console.log "Playing: #{id}"
+  opts = {
+    videoId: id
+  }
+  if startSeconds? and (startSeconds >= 0)
+    opts.startSeconds = startSeconds
+  if endSeconds? and (endSeconds >= 1)
+    opts.endSeconds = endSeconds
+  player.loadVideoById(opts)
+  playing = true
+
+  showInfo(pkt)
 
 sendReady = ->
   console.log "Ready"
@@ -184,6 +187,10 @@ window.onYouTubePlayerAPIReady = ->
   socket.on 'play', (pkt) ->
     # console.log pkt
     play(pkt, pkt.id, pkt.start, pkt.end)
+
+  socket.on 'ending', (pkt) ->
+    # console.log pkt
+    showInfo(pkt)
 
   socket.on 'server', (server) ->
     if serverEpoch? and (serverEpoch != server.epoch)
