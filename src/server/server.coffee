@@ -45,12 +45,7 @@ autoskipList = []
 echoNewSong = false
 echoEnabled = false
 
-logOutput = (msg) ->
-  output.push msg
-  while output.length > 10
-    output.shift()
-  return
-
+companies = {}
 
 load = ->
   if fs.existsSync("playlist.json")
@@ -76,6 +71,8 @@ load = ->
         history.push playlist[id]
   if fs.existsSync("opinions.json")
     opinions = JSON.parse(fs.readFileSync("opinions.json", 'utf8'))
+  if fs.existsSync("companies.json")
+    companies = JSON.parse(fs.readFileSync("companies.json", 'utf8'))
   return
 
 savePlaylist = ->
@@ -83,6 +80,15 @@ savePlaylist = ->
 
 saveOpinions = ->
   fs.writeFileSync("opinions.json", JSON.stringify(opinions, null, 2))
+
+saveCompanies = ->
+  fs.writeFileSync("companies.json", JSON.stringify(companies, null, 2))
+
+logOutput = (msg) ->
+  output.push msg
+  while output.length > 10
+    output.shift()
+  return
 
 refreshDashboards = ->
   for sid, soc of sockets
@@ -275,12 +281,8 @@ songEnding = ->
     return
   strs = calcEntryStrings(lastPlayed)
   for socketId, socket of sockets
-    socket.emit 'ending', {
-      user: lastPlayed.user
-      artist: strs.artist
-      title: strs.title
-      opinions: strs.opinions
-    }
+    pkt = calcLicensingInfo(lastPlayed)
+    socket.emit 'ending', pkt
 
 someoneIsWatching = ->
   someoneWatching = false
@@ -315,17 +317,12 @@ play = (e) ->
     history.pop()
 
   if not shouldSkip(lastPlayed)
-    strs = calcEntryStrings(e)
+    pkt = calcLicensingInfo(e)
+    pkt.id = e.id
+    pkt.start = e.start
+    pkt.end = e.end
     for socketId, socket of sockets
-      socket.emit 'play', {
-        id: e.id
-        start: e.start
-        end: e.end
-        user: e.user
-        artist: strs.artist
-        title: strs.title
-        opinions: strs.opinions
-      }
+      socket.emit 'play', pkt
     updateCasts()
     saveState()
     savePlaylist()
@@ -654,6 +651,21 @@ calcEntryStrings = (e) ->
     description: "**#{artist}** - **#{title}** `[#{e.user}#{nsfwString}, #{prettyDuration(actualDuration)}#{opinionString}]`"
   }
 
+calcLicensingInfo = (e) ->
+  strs = calcEntryStrings(e)
+  if companies[e.user]?
+    company = companies[e.user]
+  else
+    company = e.user.charAt(0).toUpperCase() + e.user.slice(1)
+    company += " Records"
+  return {
+    user: e.user
+    artist: strs.artist
+    title: strs.title
+    opinions: strs.opinions
+    company: company
+  }
+
 updateOpinion = (e) ->
   o = {}
   if opinions[e.id]?
@@ -894,6 +906,18 @@ run = (args, user) ->
       requestDashboardRefresh()
       return "MTV: Queued up the top 50 trending music from youtube. First up: #{strs.description}"
 
+    when 'company', 'label'
+      companyArgs = []
+      for i in [1...args.length]
+        companyArgs.push args[i]
+      newCompany = companyArgs.join(" ")
+      console.log "newCompany: '#{newCompany}'"
+      if newCompany.match(/^\s*$/)
+        return "MTV: Ignoring empty company name"
+      companies[user] = newCompany
+      saveCompanies()
+      return "MTV: `#{user}`'s new label: `#{newCompany}`"
+
     when 'remove', 'delete', 'del'
       e = entryFromArg(args[1])
       if not e?
@@ -1098,16 +1122,11 @@ main = (argv) ->
 
         # console.log "endTime #{endTime} startTime #{startTime}"
         if (endTime - startTime) > 5
-          strs = calcEntryStrings(lastPlayed)
-          socket.emit 'play', {
-            id: lastPlayed.id
-            start: startTime
-            end: endTime
-            user: lastPlayed.user
-            artist: strs.artist
-            title: strs.title
-            opinions: strs.opinions
-          }
+          pkt = calcLicensingInfo(lastPlayed)
+          pkt.id = lastPlayed.id
+          pkt.start = startTime
+          pkt.end = endTime
+          socket.emit 'play', pkt
 
     socket.on 'disconnect', ->
       if sockets[socket.id]?
