@@ -1000,7 +1000,7 @@
     switch (cmd) {
       case 'help':
       case 'commands':
-        return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `bleh`, `hate`, `none`, `edit`, `trending`, `adopt`, `nsfw`, `sfw`, `echo`";
+        return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `bleh`, `hate`, `none`, `edit`, `trending`, `adopt`, `nsfw`, `sfw`, `echo`, `label`";
       case 'here':
       case 'watching':
       case 'web':
