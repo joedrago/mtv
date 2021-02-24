@@ -463,10 +463,10 @@ init = ->
       lastClicked()
 
   window.__onGCastApiAvailable = (isAvailable) ->
-    console.log "__onGCastApiAvailable fired: #{isAvailable}"
-    castPlayer = new CastPlayer
-    if isAvailable
-      castPlayer.initializeCastPlayer()
+    # console.log "__onGCastApiAvailable fired: #{isAvailable}"
+    # castPlayer = new CastPlayer
+    # if isAvailable
+    #   castPlayer.initializeCastPlayer()
 
   console.log "initialized!"
 

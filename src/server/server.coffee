@@ -29,6 +29,7 @@ lastPlayedTime = now()
 lastPlayedDuration = 1
 lastPlayed = null
 songEndingTimeout = null
+nobodyWatchingTimeout = null
 isCasting = {}
 isPlaying = {}
 playingName = {}
@@ -280,6 +281,27 @@ songEnding = ->
       title: strs.title
       opinions: strs.opinions
     }
+
+someoneIsWatching = ->
+  someoneWatching = false
+  for sid, soc of sockets
+    if isPlaying[sid]
+      someoneWatching = true
+      break
+  return someoneWatching
+
+checkIfEveryoneLeft = ->
+  if nobodyWatchingTimeout?
+    return
+
+  if not someoneIsWatching()
+    nobodyWatchingTimeout = setTimeout ->
+      if echoEnabled
+        echoEnabled = false
+        logOutput("MTV: Auto-disabling echo (everyone left)")
+      nobodyWatchingTimeout = null
+    , 15000
+
 
 autoPlayNext = ->
   e = playNext()
@@ -1017,6 +1039,9 @@ main = (argv) ->
       if not isPlaying[socket.id]
         isPlaying[socket.id] = true
         needsRefresh = true
+        if nobodyWatchingTimeout?
+          clearTimeout(nobodyWatchingTimeout)
+          nobodyWatchingTimeout = null
 
       username = sanitizeUsername(msg.user)
       if playingName[socket.id] != username
@@ -1095,6 +1120,7 @@ main = (argv) ->
         delete isPlaying[socket.id]
         requestDashboardRefresh()
       checkAutoskip()
+      checkIfEveryoneLeft()
 
     socket.on 'castready', (msg) ->
       console.log "castready!"
