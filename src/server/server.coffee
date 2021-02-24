@@ -40,6 +40,9 @@ autoskipCount = 0
 autoskipTimeout = null
 autoskipList = []
 
+echoNewSong = false
+echoEnabled = false
+
 logOutput = (msg) ->
   output.push msg
   while output.length > 10
@@ -254,6 +257,10 @@ autoskip = ->
     return
 
   console.log "autoskip: Nothing to do."
+  if echoEnabled and echoNewSong
+    echoNewSong = false
+    strs = calcEntryStrings(lastPlayed)
+    logOutput("MTV: Playing: #{strs.description}")
   return
 
 checkAutoskip = ->
@@ -307,6 +314,7 @@ play = (e) ->
     lastPlayedTimeout = null
   lastPlayedTimeout = setTimeout(autoPlayNext, (lastPlayedDuration + 3) * 1000)
   console.log "Play: [#{e.title}] [#{lastPlayedDuration} seconds]"
+  echoNewSong = true
   checkAutoskip()
   return
 
@@ -675,7 +683,7 @@ run = (args, user) ->
   switch cmd
 
     when 'help', 'commands'
-      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `bleh`, `hate`, `none`, `edit`, `trending`, `adopt`, `nsfw`, `sfw`"
+      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `bleh`, `hate`, `none`, `edit`, `trending`, `adopt`, `nsfw`, `sfw`, `echo`"
 
     when 'here', 'watching', 'web', 'website'
       other = calcOther()
@@ -722,6 +730,10 @@ run = (args, user) ->
       requestDashboardRefresh()
       checkAutoskip()
       return "MTV: Playing #{strs.description}"
+
+    when 'echo'
+      echoEnabled = !echoEnabled
+      return "MTV: Echo: #{echoEnabled}"
 
     when 'nsfw', 'sfw'
       if lastPlayed == null
