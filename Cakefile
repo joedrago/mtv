@@ -1,6 +1,7 @@
 browserify = require 'browserify'
 coffeeify = require 'coffeeify'
 uglifyify = require 'uglifyify'
+MarkdownIt = require 'markdown-it'
 
 fs = require 'fs'
 path = require 'path'
@@ -51,18 +52,34 @@ buildServer = (callback) ->
     util.log "Server compilation finished."
     callback?() if code is 0
 
+buildMarkdown = (callback) ->
+  files = ['web/help']
+  for filename in files
+    md = new MarkdownIt()
+    srcFilename = filename + ".md"
+    dstFilename = filename + ".html"
+    templateFilename = filename + ".template.html"
+    markdown = fs.readFileSync(srcFilename, "utf8")
+    template = fs.readFileSync(templateFilename, "utf8")
+    innerHTML = md.render(markdown)
+    html = template.replace(/!MARKDOWN!/, innerHTML)
+    fs.writeFileSync(dstFilename, html)
+
+  callback?()
+
 buildEverything = ->
   buildServer ->
     buildClient ->
+      buildMarkdown ->
 
 task 'build', 'build JS bundle', (options) ->
   buildEverything()
 
 watchEverything = ->
   util.log "Watching for changes in src"
-  watch ['src/client','src/server','package.json'], (evt, filename) ->
-    coffeeFileRegex = /\.coffee$/
-    if coffeeFileRegex.test(filename) || (filename == 'package.json')
+  watch ['src/client','src/server','package.json','web'], (evt, filename) ->
+    parsed = path.parse(filename)
+    if (parsed.ext == '.coffee') or (parsed.ext == '.md') or (filename == 'package.json')
       util.log "Source code #{filename} changed."
       util.log "Regenerating..."
       buildEverything()
