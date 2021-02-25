@@ -760,7 +760,7 @@ run = (args, user) ->
       if lastPlayed == null
         return "MTV: I have no idea what's playing."
       strs = calcEntryStrings(lastPlayed)
-      return "MTV: Playing #{strs.description}"
+      return "MTV: Playing: #{strs.description}"
 
     when 'link', 'url', 'where'
       if lastPlayed == null
@@ -782,7 +782,7 @@ run = (args, user) ->
       saveOpinions()
       requestDashboardRefresh()
       checkAutoskip()
-      return "MTV: Playing #{strs.description}"
+      return "MTV: Playing: #{strs.description}"
 
     when 'echo'
       echoEnabled = !echoEnabled
