@@ -163,6 +163,11 @@ This will only remove videos from the pool. This is useful for videos that have 
 
 The only new one here from above is `#mtv none`, which _removes_ your opinion.
 
+Instead of giving your opinion on the current playing song, you can append a video or the word `last` in order to adjust your opinion of it directly, such as:
+
+    #mtv like https://www.youtube.com/watch?v=dQw4w9WgXcQ
+    #mtv like last
+
 ### Trending / Adopt
 
     #mtv trending

@@ -736,7 +736,7 @@ run = (args, user) ->
   switch cmd
 
     when 'help', 'commands'
-      return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `bleh`, `hate`, `none`, `edit`, `trending`, `adopt`, `nsfw`, `sfw`, `echo`, `label`"
+      return "MTV: Help: #{secrets.url}/help/"
 
     when 'here', 'watching', 'web', 'website'
       other = calcOther()
@@ -769,20 +769,35 @@ run = (args, user) ->
       return "MTV: #{strs.url}"
 
     when 'like', 'meh', 'bleh', 'hate', 'none'
-      if lastPlayed == null
-        return "MTV: I have no idea what's playing."
-      opinions[lastPlayed.id] ?= {}
+      e = null
+      if args.length > 1
+        if args[1].toLowerCase() == 'last'
+          if history.length < 2
+            return "MTV [opinion]: Can't updated last song; no history."
+          e = history[1]
+        else
+          e = entryFromArg(args[1])
+          if not e?
+            return "MTV [opinion]: I don't know what #{args[1]} is."
+      if not e?
+        if lastPlayed == null
+          return "MTV: I have no idea what's playing."
+        e = lastPlayed
+      if not playlist[e.id]?
+        return "MTV [opinion]: #{e.id} is not in the pool."
+      e = playlist[e.id]
+      opinions[e.id] ?= {}
       if cmd == 'none'
-        if opinions[lastPlayed.id][user]?
-          delete opinions[lastPlayed.id][user]
+        if opinions[e.id][user]?
+          delete opinions[e.id][user]
       else
-        opinions[lastPlayed.id][user] = cmd
-      updateOpinion(lastPlayed)
-      strs = calcEntryStrings(lastPlayed)
+        opinions[e.id][user] = cmd
+      updateOpinion(e)
+      strs = calcEntryStrings(e)
       saveOpinions()
       requestDashboardRefresh()
       checkAutoskip()
-      return "MTV: Playing: #{strs.description}"
+      return "MTV: Updated: #{strs.description}"
 
     when 'echo'
       echoEnabled = !echoEnabled
@@ -1150,6 +1165,10 @@ main = (argv) ->
 
   app.get '/', (req, res) ->
     html = fs.readFileSync("#{__dirname}/../web/dashboard.html", "utf8")
+    res.send(html)
+
+  app.get '/help', (req, res) ->
+    html = fs.readFileSync("#{__dirname}/../web/help.html", "utf8")
     res.send(html)
 
   app.get '/stream', (req, res) ->

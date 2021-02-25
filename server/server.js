@@ -1000,7 +1000,7 @@
     switch (cmd) {
       case 'help':
       case 'commands':
-        return "MTV: Legal commands: `who`, `add`, `queue`, `remove`, `skip`, `like`, `meh`, `bleh`, `hate`, `none`, `edit`, `trending`, `adopt`, `nsfw`, `sfw`, `echo`, `label`";
+        return `MTV: Help: ${secrets.url}/help/`;
       case 'here':
       case 'watching':
       case 'web':
@@ -1038,7 +1038,7 @@
           return "MTV: I have no idea what's playing.";
         }
         strs = calcEntryStrings(lastPlayed);
-        return `MTV: Playing ${strs.description}`;
+        return `MTV: Playing: ${strs.description}`;
       case 'link':
       case 'url':
       case 'where':
@@ -1052,25 +1052,46 @@
       case 'bleh':
       case 'hate':
       case 'none':
-        if (lastPlayed === null) {
-          return "MTV: I have no idea what's playing.";
+        e = null;
+        if (args.length > 1) {
+          if (args[1].toLowerCase() === 'last') {
+            if (history.length < 2) {
+              return "MTV [opinion]: Can't updated last song; no history.";
+            }
+            e = history[1];
+          } else {
+            e = entryFromArg(args[1]);
+            if (e == null) {
+              return `MTV [opinion]: I don't know what ${args[1]} is.`;
+            }
+          }
         }
-        if (opinions[name1 = lastPlayed.id] == null) {
+        if (e == null) {
+          if (lastPlayed === null) {
+            return "MTV: I have no idea what's playing.";
+          }
+          e = lastPlayed;
+        }
+        if (playlist[e.id] == null) {
+          return `MTV [opinion]: ${e.id} is not in the pool.`;
+        }
+        e = playlist[e.id];
+        if (opinions[name1 = e.id] == null) {
           opinions[name1] = {};
         }
         if (cmd === 'none') {
-          if (opinions[lastPlayed.id][user] != null) {
-            delete opinions[lastPlayed.id][user];
+          if (opinions[e.id][user] != null) {
+            delete opinions[e.id][user];
           }
         } else {
-          opinions[lastPlayed.id][user] = cmd;
+          opinions[e.id][user] = cmd;
         }
-        updateOpinion(lastPlayed);
-        strs = calcEntryStrings(lastPlayed);
+        updateOpinion(e);
+        strs = calcEntryStrings(e);
         saveOpinions();
         requestDashboardRefresh();
         checkAutoskip();
-        return `MTV: Playing ${strs.description}`;
+        return `MTV: Updated: ${strs.description}`;
       case 'echo':
         echoEnabled = !echoEnabled;
         return `MTV: Echo: ${echoEnabled}`;
@@ -1498,6 +1519,11 @@
     app.get('/', function(req, res) {
       var html;
       html = fs.readFileSync(`${__dirname}/../web/dashboard.html`, "utf8");
+      return res.send(html);
+    });
+    app.get('/help', function(req, res) {
+      var html;
+      html = fs.readFileSync(`${__dirname}/../web/help.html`, "utf8");
       return res.send(html);
     });
     app.get('/stream', function(req, res) {
