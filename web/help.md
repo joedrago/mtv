@@ -17,7 +17,7 @@ This should help you get up and running with MTV and Discord.
   * [Skipping the Current Video](#skip)
   * [Get Info About the Current Video](#who)
   * [Removing a Video](#remove)
-  * [Setting/Removing Your Opinion](#opinion)
+  * [Setting/Removing Your Opinion](#opinions)
   * [Trending / Adopt](#trending)
   * [NSFW / SFW Toggling](#nsfw)
   * [Echo Toggling](#echo)
@@ -169,7 +169,7 @@ This just prints the info about the current song. There are a bunch of other ali
 
 This will only remove videos from the pool. This is useful for videos that have been removed or age-restricted on YouTube so they don't work anymore, or some video that universally hated.
 
-### Setting/Removing Your Opinion {#opinion}
+### Setting/Removing Your Opinion {#opinions}
 
     love
     like
