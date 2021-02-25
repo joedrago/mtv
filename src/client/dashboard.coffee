@@ -52,6 +52,10 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortList = false, showPl
         return -1
       if a.artist.toLowerCase() > b.artist.toLowerCase()
         return 1
+      if a.title.toLowerCase() < b.title.toLowerCase()
+        return -1
+      if a.title.toLowerCase() > b.title.toLowerCase()
+        return 1
       return 0
 
   for e, entryIndex in entries

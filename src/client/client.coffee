@@ -104,7 +104,7 @@ showInfo = (pkt) ->
     title = pkt.title
     title = title.replace(/^\s+/, "")
     title = title.replace(/\s+$/, "")
-    html = "#{artist}\n\"#{title}\"\n#{pkt.company}"
+    html = "#{artist}\n&#x201C;#{title}&#x201D;\n#{pkt.company}"
     feelings = []
     for o in opinionOrder
       if pkt.opinions[o]?
