@@ -2,7 +2,28 @@
 
 This should help you get up and running with MTV and Discord.
 
-## Introduction
+* [Introduction](#intro)
+* [Discord Preparation](#discord)
+  * [Set your Discord nickname](#nickname)
+  * [Give yourself a record label!](#label)
+* [Watching MTV](#watch)
+* [Giving Your Opinion](#opinion)
+  * [Emojis](#emojis)
+* [Autoskip](#autoskip)
+* [Action Basics](#basics)
+* [Actions](#actions)
+  * [Adding a New Video (to the "pool")](#add)
+  * [Queueing a (New) Video (to the "pool" _and_ the "queue")](#queue)
+  * [Skipping the Current Video](#skip)
+  * [Get Info About the Current Video](#who)
+  * [Removing a Video](#remove)
+  * [Setting/Removing Your Opinion](#opinion)
+  * [Trending / Adopt](#trending)
+  * [NSFW / SFW Toggling](#nsfw)
+  * [Echo Toggling](#echo)
+  * [Editing a Video in the Pool](#edit)
+
+## Introduction {#intro}
 
 MTV is a living playlist of music videos, known as the "pool". The MTV server takes all of the videos in this pool, shuffles them once into what is called the "queue", and then plays the entire queue in order. When the queue runs out, the server then takes the pool (which may have changed) and repeats the process. Everyone watching is synchronized to the same part of the currently playing song, so we can talk about it in Discord as it plays.
 
@@ -12,15 +33,15 @@ When you visit the [main page](/), you will be shown What is **Now Playing**. Th
 
 You can then click on [Up Next](/#queue) to see the full queue of upcoming songs, which might be hundreds of songs. If you want to see both **Now Playing** and **Up Next** at the same time, use the [Both](/#both) link. For fun stats about how many songs are in MTV or how many each user has provided, visit the [Stats](/#stats) page. If you just want to see the full pool of songs, go to [All](/#all).
 
-## Discord Preparation
+## Discord Preparation {#discord}
 
 These are some quick things to check before really digging into MTV.
 
-### Set your Discord nickname
+### Set your Discord nickname {#nickname}
 
 All interactions with MTV are done through the #mtv Discord channel, and your identity with the server is determined by your current Discord nickname. It is important that you set it and continue to use the same one while interacting with MTV.
 
-### Give yourself a record label!
+### Give yourself a record label! {#label}
 
 Every video you add to MTV will be associated to your nickname, but when it is displayed in MTV, it is shown instead as your record label, which is silly and fun. Let's say you wanted to your fake record label to be `Example Records`. You would accomplish this by typing this into the #mtv Discord channel:
 
@@ -28,7 +49,7 @@ Every video you add to MTV will be associated to your nickname, but when it is d
 
 Congrats, you're now the owner of `Example Records`. This isn't set in stone, so feel free to change it up if you come up with a better one.
 
-## Watching MTV
+## Watching MTV {#watch}
 
 To watch MTV, simply visit the [main page](/) and click on **Watch** at the top. It will ask for your Discord nickname and offer you a handful of choices. Type in your nickname exactly (case matters), choose some options, and hit the Watch button. If you want to watch anonymously, leave the nickname box empty. This will simply remove you from consideration when MTV chooses to "autoskip" (see **Autoskip** below).
 
@@ -38,7 +59,7 @@ Here's what the checkboxes mean:
 * **Show Ctrls** - Show the Youtube controls, such as the volume slider.
 * **Hide Titles** - Do not show the title info in the bottom left at the start/end of videos.
 
-## Giving Your Opinion
+## Giving Your Opinion {#opinion}
 
 Alright, so you're finally watching MTV, congrats! Not only that, but this first song is fantastic! Or is it bad? Let's make it official. Type _one_ of these words (with nothing before or after it) into the #mtv channel:
 
@@ -64,17 +85,17 @@ This offers a simple vocabulary for us to hint at each other whether or not some
 
 This will skip the video for everyone, so this goes both ways. Don't be rude and force skip things a bunch of people are currently enjoying. You can always just click on the video itself to pause this song until the next one plays, for example.
 
-### Emojis
+### Emojis {#emojis}
 
 If you use certain Discord emojis in the #mtv channel (_anywhere in your text_), they will be interpreted as a specific opinion. These are subject to change, but here is a general list:
 
 * **like** - `:heart:`, `:thumbsup:`, `:disguised_face:`, `:smiley_cat:`
-* **meh** - `:neutral_face:`, `:rolling_eyes:`
+* **meh&nbsp;** - `:neutral_face:`, `:rolling_eyes:`
 * **bleh** - `:weary:`
-* **hate** - `:thumbsdown:`, `:frowning:`, `:face_vomiting:`, `:face_with_hand_over_mouth:`
+* **hate** - `:thumbsdown:`, `:frowning:`, `:face_vomiting:`
 
 
-## Autoskip
+## Autoskip {#autoskip}
 
 When _everyone_ that is watching (_even if only one person is watching_) all dislikes the current song (`bleh` or `hate`), there's no real reason to keep the song going. This is where autoskip comes in, and is why **Watch** asks for your Discord nickname.
 
@@ -82,9 +103,9 @@ If the server detects that all _named_ watchers have a negative opinion of the c
 
 If you want to watch MTV, but don't want to participate / interfere with Autoskip, simply watch "anonymously". You will still be able to give your opinion in the Discord channel, but only those that provided their nicknames will interact with Autoskip.
 
-## Command Basics
+## Action Basics {#basics}
 
-All basic interaction with MTV involves actually using the `#mtv` command in the #mtv Discord channel. Here are a few simple examples:
+All basic interaction with MTV involves actually using the `#mtv` action in the #mtv Discord channel. Here are a few simple examples:
 
     #mtv who
     #mtv here
@@ -93,11 +114,11 @@ All basic interaction with MTV involves actually using the `#mtv` command in the
 
 If you use `#mtv` without anything after it (or at the end of something you just typed), it behaves the same as `#mtv who`, which will simply just tell you what is currently playing, along with who added the video, its duration, and people's opinions of the video.
 
-`#mtv here` tells you who is watching right now (if anyone). `#mtv like` sets your opinion of the currently playing video to `like`, and `#mtv skip` will immediately skip the current song for everyone. See below for a full list of commands and how to use them.
+`#mtv here` tells you who is watching right now (if anyone). `#mtv like` sets your opinion of the currently playing video to `like`, and `#mtv skip` will immediately skip the current song for everyone. See below for a full list of actions and how to use them.
 
-## Command List
+## Actions {#actions}
 
-### Adding a New Video (to the "pool")
+### Adding a New Video (to the "pool") {#add}
 
     #mtv add https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
@@ -118,14 +139,14 @@ There are only a few **general guidelines on adding a new video**:
 * It has to be a _video_, not just a song with a static image. Visualizers are borderline, but allowed.
 * When adding it, if the Artist/Title it guesses for the video are bad, please fix them with `#mtv edit` (see below), and/or ask for help.
 
-### Queueing a (New) Video (to the "pool" _and_ the "queue")
+### Queueing a (New) Video (to the "pool" _and_ the "queue") {#queue}
 
     #mtv queue https://www.youtube.com/watch?v=dQw4w9WgXcQ
     #mtv q https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
-This command behaves identically to `#mtv add`, but also throws it in the front of the queue, so that it'll play immediately after the current song (for everyone). This works great with videos already in the pool too, so feel free to offer links from the actual main page.
+This action behaves identically to `#mtv add`, but also throws it in the front of the queue, so that it'll play immediately after the current song (for everyone). This works great with videos already in the pool too, so feel free to offer links from the actual main page.
 
-### Skipping the Current Video
+### Skipping the Current Video {#skip}
 
     skip
     #mtv skip
@@ -133,7 +154,7 @@ This command behaves identically to `#mtv add`, but also throws it in the front 
 
 This will skip the currently playing songs, or X songs (if X is a number). For example, `#mtv skip 5` will skip the next 5 songs.
 
-### Get Info About the Current Video
+### Get Info About the Current Video {#who}
 
     #mtv
     #mtv who
@@ -142,13 +163,13 @@ This will skip the currently playing songs, or X songs (if X is a number). For e
 
 This just prints the info about the current song. There are a bunch of other aliases, most times people just use `#mtv`.
 
-### Removing a Video
+### Removing a Video {#remove}
 
     #mtv remove https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
 This will only remove videos from the pool. This is useful for videos that have been removed or age-restricted on YouTube so they don't work anymore, or some video that universally hated.
 
-### Setting/Removing Your Opinion
+### Setting/Removing Your Opinion {#opinion}
 
     love
     like
@@ -168,16 +189,16 @@ Instead of giving your opinion on the current playing song, you can append a vid
     #mtv like https://www.youtube.com/watch?v=dQw4w9WgXcQ
     #mtv like last
 
-### Trending / Adopt
+### Trending / Adopt {#trending}
 
     #mtv trending
     #mtv adopt
 
-The `trending` command asks YouTube for the top 50 Music Videos in the US _right now_, shuffles them, and puts them at the front of the queue, owned by `YouTube`. This does _not_ put them in the pool; it is just a one-time fun thing for those currently watching. This will most likely be followed up by quite a few `skip`s, or perhaps a `#mtv skip 50` if you're desperate.
+The `trending` action asks YouTube for the top 50 Music Videos in the US _right now_, shuffles them, and puts them at the front of the queue, owned by `YouTube`. This does _not_ put them in the pool; it is just a one-time fun thing for those currently watching. This will most likely be followed up by quite a few `skip`s, or perhaps a `#mtv skip 50` if you're desperate.
 
 However, once in a while, you'll find a new gem! If you see a new video that you think belongs permanently in MTV, use `#mtv adopt`, and you'll claim ownership from YouTube over the video, and it'll put it in the pool with your name attached.
 
-### NSFW / SFW Toggling
+### NSFW / SFW Toggling {#nsfw}
 
     nsfw
     sfw
@@ -186,19 +207,13 @@ However, once in a while, you'll find a new gem! If you see a new video that you
 
 MTV doesn't have any clue if a video is NSFW (Not Safe For Work); you have to help it out. The only reason this matters at all on a video is if someone currently watching has "SFW Only" checked, in which no NSFW videos will be shown (they'll all be autoskipped).
 
-### Echo Toggling
+### Echo Toggling {#echo}
 
     #mtv echo
 
 This toggles whether or not "echo" is enabled. Echo has the MTV server do the equivalent of an `#mtv who` automatically when the song changes. It is automatically disabled when nobody is watching for a long enough period.
 
-### Setting Your Record Label
-
-    #mtv label Your Record Label
-
-This lets your set your "record label" for your videos (the label listed under the song's title displayed in the bottom left when a video starrs).
-
-### Editing a Video in the Pool
+### Editing a Video in the Pool {#edit}
 
     #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ user bill
     #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ artist Some Artist
@@ -208,4 +223,4 @@ This lets your set your "record label" for your videos (the label listed under t
     #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ start 60
     #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ end 90
 
-This is an advanced command! The `edit` command allows you to directly poke at the MTV database -- Please be extra careful with this! Use this to adjust songs that have too-long intros or outros, or have incorrect artist or title names, or have the wrong owner. Do not use this to adopt a song from YouTube when using the `trending` command; use `adopt` for that.
+This is an advanced action! The `edit` action allows you to directly poke at the MTV database -- Please be extra careful with this! Use this to adjust songs that have too-long intros or outros, or have incorrect artist or title names, or have the wrong owner. Do not use this to adopt a song from YouTube when using the `trending` action; use `adopt` for that.
