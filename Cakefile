@@ -56,6 +56,7 @@ buildMarkdown = (callback) ->
   files = ['web/help']
   for filename in files
     md = new MarkdownIt()
+    md.use(require("markdown-it-attrs"))
     srcFilename = filename + ".md"
     dstFilename = filename + ".html"
     templateFilename = filename + ".template.html"
@@ -79,7 +80,8 @@ watchEverything = ->
   util.log "Watching for changes in src"
   watch ['src/client','src/server','package.json','web'], (evt, filename) ->
     parsed = path.parse(filename)
-    if (parsed.ext == '.coffee') or (parsed.ext == '.md') or (filename == 'package.json')
+    # console.log parsed
+    if (parsed.ext == '.coffee') or (parsed.ext == '.md') or (filename == 'package.json') or (parsed.base == 'help.template.html')
       util.log "Source code #{filename} changed."
       util.log "Regenerating..."
       buildEverything()
