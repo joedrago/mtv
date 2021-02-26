@@ -47,6 +47,7 @@ echoEnabled = false
 
 companies = {}
 nicknames = {}
+ignored = {}
 
 getNickname = (user) ->
   if nicknames[user]?
@@ -92,6 +93,8 @@ load = ->
     companies = JSON.parse(fs.readFileSync("companies.json", 'utf8'))
   if fs.existsSync("nicknames.json")
     nicknames = JSON.parse(fs.readFileSync("nicknames.json", 'utf8'))
+  if fs.existsSync("ignored.json")
+    ignored = JSON.parse(fs.readFileSync("ignored.json", 'utf8'))
   return
 
 savePlaylist = ->
@@ -105,6 +108,9 @@ saveCompanies = ->
 
 saveNicknames = ->
   fs.writeFileSync("nicknames.json", JSON.stringify(nicknames, null, 2))
+
+saveIgnored = ->
+  fs.writeFileSync("ignored.json", JSON.stringify(ignored, null, 2))
 
 logOutput = (msg) ->
   output.push msg
@@ -155,7 +161,10 @@ calcOther = ->
       n = getNickname(playingName[sid])
       user = getUserFromNickname(n)
       if nicknames[user]?
-        props.push "Auto"
+        if ignored[getNickname(user)]
+          props.push "Ignored"
+        else
+          props.push "Auto"
       if sfwOnly[sid]
         props.push "SFW"
       if props.length > 0
@@ -265,6 +274,9 @@ shouldSkip = (e) ->
         if user == playingName[sid]
           # The nickname provided doesn't map to ID we know, skip them
           continue
+      if ignored[getNickname(playingName[sid])]
+        # This nickname is explicitly ignored for now
+        continue
 
       feeling = opinions[e.id]?[user]
       if not feeling?
@@ -898,6 +910,47 @@ run = (args, user) ->
       savePlaylist()
       requestDashboardRefresh()
       return "MTV: Added to pool: #{lastPlayed.id}"
+
+    when 'ignore'
+      ignoreCmd = args[1]
+      ignoreArgs = []
+      for i in [2...args.length]
+        ignoreArgs.push args[i]
+      ignoreName = ignoreArgs.join(" ")
+      switch ignoreCmd
+        when 'add'
+          if ignoreName.match(/^\s*$/)
+            return "MTV: ignore add requires a nickname."
+          if ignored[ignoreName]
+            return "MTV: `#{ignoreName}` is already ignored."
+          else
+            ignored[ignoreName] = true
+            saveIgnored()
+            return "MTV: Now ignoring nickname: `#{ignoreName}`"
+        when 'remove'
+          if ignoreName.match(/^\s*$/)
+            return "MTV: ignore remove requires a nickname."
+          if not ignored[ignoreName]
+            return "MTV: `#{ignoreName}` is already not ignored."
+          else
+            delete ignored[ignoreName]
+            saveIgnored()
+            checkAutoskip()
+            return "MTV: No longer ignoring nickname: `#{ignoreName}`"
+        when 'clear'
+          ignored = {}
+          saveIgnored()
+          checkAutoskip()
+          return "MTV: No longer ignoring anyone."
+        when 'list'
+          prettyList = []
+          for k,v of ignored
+            prettyList.push "`#{k}`"
+          if prettyList.length == 0
+            return "MTV: Nobody is being ignored right now."
+          return "MTV: Ignoring: #{prettyList.join(", ")}"
+        else
+          return "MTV: ignore [add/remove/clear/list]"
 
     when 'edit'
       e = entryFromArg(args[1])
