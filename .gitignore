@@ -1,7 +1,9 @@
 node_modules/
 rp/super_secret.h
+/backup
+/companies.json
+/nicknames.json
+/opinions.json
 /playlist.json
 /secrets.json
-/opinions.json
 /state.json
-/backup

@@ -134,7 +134,7 @@ updateOther = ->
               nameString += " + #{remainingCount} anon"
             nameString = ": #{nameString}"
 
-          document.getElementById("playing").innerHTML = "(#{other.playing} Watching#{nameString})"
+          document.getElementById("playing").innerHTML = "#{other.playing} Watching#{nameString}"
          catch
            # nothing?
   xhttp.open("GET", "/info/other", true)
