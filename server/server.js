@@ -1316,7 +1316,11 @@
         newCompany = companyArgs.join(" ");
         console.log(`newCompany: '${newCompany}'`);
         if (newCompany.match(/^\s*$/)) {
-          return "MTV: Ignoring empty company name";
+          if (companies[user] != null) {
+            return `MTV: Your (\`${user}\`) current label is: \`${companies[user]}\``;
+          } else {
+            return `MTV: You (\`${user}\`) have not set a label yet.\``;
+          }
         }
         companies[user] = newCompany;
         saveCompanies();
@@ -1330,7 +1334,11 @@
         newNickname = nicknameArgs.join(" ");
         console.log(`newNickname: '${newNickname}'`);
         if (newNickname.match(/^\s*$/)) {
-          return "MTV: Ignoring empty nickname";
+          if (nicknames[user] != null) {
+            return `MTV: Your (\`${user}\`) current nickname is: \`${nicknames[user]}\``;
+          } else {
+            return `MTV: You (\`${user}\`) have not set a nickname yet.\``;
+          }
         }
         nicknames[user] = newNickname;
         saveNicknames();

@@ -986,7 +986,10 @@ run = (args, user) ->
       newCompany = companyArgs.join(" ")
       console.log "newCompany: '#{newCompany}'"
       if newCompany.match(/^\s*$/)
-        return "MTV: Ignoring empty company name"
+        if companies[user]?
+          return "MTV: Your (`#{user}`) current label is: `#{companies[user]}`"
+        else
+          return "MTV: You (`#{user}`) have not set a label yet.`"
       companies[user] = newCompany
       saveCompanies()
       return "MTV: `#{user}`'s new label: `#{newCompany}`"
@@ -998,7 +1001,10 @@ run = (args, user) ->
       newNickname = nicknameArgs.join(" ")
       console.log "newNickname: '#{newNickname}'"
       if newNickname.match(/^\s*$/)
-        return "MTV: Ignoring empty nickname"
+        if nicknames[user]?
+          return "MTV: Your (`#{user}`) current nickname is: `#{nicknames[user]}`"
+        else
+          return "MTV: You (`#{user}`) have not set a nickname yet.`"
       nicknames[user] = newNickname
       saveNicknames()
       requestDashboardRefresh()
