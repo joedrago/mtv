@@ -94,7 +94,7 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortList = false, showPl
           <div class="restTitle">#{restTitle}</div>
         """
     html += """
-      <div> * <a target="_blank" href="#{url}"><span class="entryartist">#{artist}</span><span class="entrymiddle"> - </span><span class="entrytitle">#{title}</span></a> <span class="user">(#{e.user}#{extraInfo})</span></div>
+      <div> * <a target="_blank" href="#{url}"><span class="entryartist">#{artist}</span></a><span class="entrymiddle"> - </span><a target="_blank" href="#{url}"><span class="entrytitle">#{title}</span></a> <span class="user">(#{e.nickname}#{extraInfo})</span></div>
 
     """
   return html
@@ -182,8 +182,8 @@ showStats = ->
 
           userCounts = {}
           for e in entries
-            userCounts[e.user] ?= 0
-            userCounts[e.user] += 1
+            userCounts[e.nickname] ?= 0
+            userCounts[e.nickname] += 1
             startTime = e.start
             if startTime < 0
               startTime = 0
