@@ -101,11 +101,11 @@ If you use certain Discord emojis in the #mtv channel (_anywhere in your text_),
 
 ## Autoskip {#autoskip}
 
-When _everyone_ that is watching (_even if only one person is watching_) all dislikes the current song (`bleh` or `hate`), there's no real reason to keep the song going. This is where autoskip comes in, and is why **Watch** asks for your Discord nickname.
+Even if only one person is watching, when nobody watching likes the current song (`bleh` or `hate`), there's no real reason to keep the song going. This is where autoskip comes in, and is why **Watch** asks for your Discord handle or MTV nickname. If the server recognizes your Discord handle or MTV nickname when you type it into the Watch name box, it will mark you as `(Auto)`, which means it knows you and you can participate in Autoskip.
 
-If the server detects that all _named_ watchers have a negative opinion of the current song, it will automatically perform a skip! This can happen multiple times in a row. This allows for people watching alone (or with like minded folks) to get exactly the MTV experience they're looking for. This autoskip is immediately applied after every opinion too, so if a new song comes on for you that you hate, there's no need to use `hate` and then `skip`. If you `hate` it and nobody else watching disagrees with you, the skip will immediately just happen for you.
+If the server detects that all _known_ watchers have a negative opinion of the current song, it will automatically perform a skip! This can happen multiple times in a row. This allows for people watching alone (or with like minded folks) to get exactly the MTV experience they're looking for. This autoskip is immediately applied after every opinion too, so if a new song comes on for you that you hate, there's no need to use `hate` and then `skip`. If you `hate` it and nobody else watching disagrees with you, the skip will immediately just happen for you.
 
-If you want to watch MTV, but don't want to participate / interfere with Autoskip, simply watch "anonymously". You will still be able to give your opinion in the Discord channel, but only those that provided their nicknames will interact with Autoskip.
+If you want to watch MTV, but don't want to participate / interfere with Autoskip, simply watch "anonymously", or using a name that MTV doesn't know. You will still be able to give your opinion in the Discord channel, but only those that provided their nicknames will interact with Autoskip. You'll know that you're not participating in autoskip if you don't see `(Auto)` written after your name in the Watching list at the top of the dashboard or when using `#mtv here`.
 
 ## Action Basics {#basics}
 

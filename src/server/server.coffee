@@ -53,6 +53,12 @@ getNickname = (user) ->
     return nicknames[user]
   return user
 
+getUserFromNickname = (nickname) ->
+  for u, n of nicknames
+    if nickname == n
+      return u
+  return nickname
+
 privacyReplacer = (k, v) ->
   if k == 'user'
     return undefined
@@ -145,9 +151,15 @@ calcOther = ->
     if isPlaying[sid]
       count += 1
     if playingName[sid]? and playingName[sid].length > 0
+      props = []
       n = getNickname(playingName[sid])
+      user = getUserFromNickname(n)
+      if nicknames[user]?
+        props.push "Auto"
       if sfwOnly[sid]
-        n += " (SFW)"
+        props.push "SFW"
+      if props.length > 0
+        n += " (#{props.join(", ")})"
       names.push n
   names.sort()
 
@@ -245,15 +257,24 @@ shouldSkip = (e) ->
     if not isPlaying[sid]
       continue
     if playingName[sid]?
-      feeling = opinions[e.id]?[playingName[sid]]
+      if nicknames[playingName[sid]]?
+        # This playingName has a nickname, it must be the user
+        user = playingName[sid]
+      else
+        user = getUserFromNickname(playingName[sid])
+        if user == playingName[sid]
+          # The nickname provided doesn't map to ID we know, skip them
+          continue
+
+      feeling = opinions[e.id]?[user]
       if not feeling?
-        console.log "autoskip: #{playingName[sid]} has no opinion of this song, bailing out."
+        console.log "autoskip: #{user} has no opinion of this song, bailing out."
         return false
       if feeling == 'like'
-        console.log "autoskip: #{playingName[sid]} likes this song, bailing out."
+        console.log "autoskip: #{user} likes this song, bailing out."
         return false
       if feeling == 'meh'
-        console.log "autoskip: #{playingName[sid]} mehs this song, bailing out."
+        console.log "autoskip: #{user} mehs this song, bailing out."
         return false
 
       # any other feeling is autoskip-worthy
@@ -730,10 +751,7 @@ calcUserInfo = (user) ->
   incoming = userInfo.otherOpinions.incoming
   outgoing = userInfo.otherOpinions.outgoing
 
-  for u, n of nicknames
-    if user == n
-      user = u
-      break
+  user = getUserFromNickname(user)
 
   for k, e of playlist
     if e.user == user
