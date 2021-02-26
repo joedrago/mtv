@@ -46,6 +46,17 @@ echoNewSong = false
 echoEnabled = false
 
 companies = {}
+nicknames = {}
+
+getNickname = (user) ->
+  if nicknames[user]?
+    return nicknames[user]
+  return user
+
+privacyReplacer = (k, v) ->
+  if k == 'user'
+    return undefined
+  return v
 
 load = ->
   if fs.existsSync("playlist.json")
@@ -73,6 +84,8 @@ load = ->
     opinions = JSON.parse(fs.readFileSync("opinions.json", 'utf8'))
   if fs.existsSync("companies.json")
     companies = JSON.parse(fs.readFileSync("companies.json", 'utf8'))
+  if fs.existsSync("nicknames.json")
+    nicknames = JSON.parse(fs.readFileSync("nicknames.json", 'utf8'))
   return
 
 savePlaylist = ->
@@ -83,6 +96,9 @@ saveOpinions = ->
 
 saveCompanies = ->
   fs.writeFileSync("companies.json", JSON.stringify(companies, null, 2))
+
+saveNicknames = ->
+  fs.writeFileSync("nicknames.json", JSON.stringify(nicknames, null, 2))
 
 logOutput = (msg) ->
   output.push msg
@@ -129,7 +145,7 @@ calcOther = ->
     if isPlaying[sid]
       count += 1
     if playingName[sid]? and playingName[sid].length > 0
-      n = playingName[sid]
+      n = getNickname(playingName[sid])
       if sfwOnly[sid]
         n += " (SFW)"
       names.push n
@@ -634,8 +650,9 @@ calcEntryStrings = (e) ->
       whoList = []
       for user, userFeeling of opinions[e.id]
         if feeling == userFeeling
-          whoList.push user
-          opinionTable[feeling].push user
+          nick = getNickname(user)
+          whoList.push nick
+          opinionTable[feeling].push nick
       whoList.sort()
       opinionString += " (#{whoList.join(', ')})"
 
@@ -643,12 +660,14 @@ calcEntryStrings = (e) ->
   if e.nsfw
     nsfwString = ", NSFW"
 
+  ownerNick = getNickname(e.user)
+
   return {
     artist: artist
     title: title
     opinions: opinionTable
     url: url
-    description: "**#{artist}** - **#{title}** `[#{e.user}#{nsfwString}, #{prettyDuration(actualDuration)}#{opinionString}]`"
+    description: "**#{artist}** - **#{title}** `[#{ownerNick}#{nsfwString}, #{prettyDuration(actualDuration)}#{opinionString}]`"
   }
 
 calcLicensingInfo = (e) ->
@@ -665,6 +684,19 @@ calcLicensingInfo = (e) ->
     opinions: strs.opinions
     company: company
   }
+
+updateNickname = (e) ->
+  e.nickname = getNickname(e.user)
+  return
+
+updateNicknames = (entries, isMap) ->
+  if isMap
+    for k, v of entries
+      updateNickname(v)
+  else
+    for e in entries
+      updateNickname(e)
+  return
 
 updateOpinion = (e) ->
   o = {}
@@ -697,11 +729,17 @@ calcUserInfo = (user) ->
   incoming = userInfo.otherOpinions.incoming
   outgoing = userInfo.otherOpinions.outgoing
 
+  for u, n of nicknames
+    if user == n
+      user = u
+      break
+
   for k, e of playlist
     if e.user == user
       userInfo.added.push e
       if opinions[e.id]?
         for otherUser, feeling of opinions[e.id]
+          otherUser = getNickname(otherUser)
           incoming[otherUser] ?= {}
           incoming[otherUser][feeling] ?= 0
           incoming[otherUser][feeling] += 1
@@ -713,9 +751,10 @@ calcUserInfo = (user) ->
         if not userInfo.opinions[feeling]?
           userInfo.opinions[feeling] = []
         userInfo.opinions[feeling].push e
-        outgoing[e.user] ?= {}
-        outgoing[e.user][feeling] ?= 0
-        outgoing[e.user][feeling] += 1
+        nickname = getNickname(e.user)
+        outgoing[nickname] ?= {}
+        outgoing[nickname][feeling] ?= 0
+        outgoing[nickname][feeling] += 1
         userInfo.otherTotals.outgoing[feeling] ?= 0
         userInfo.otherTotals.outgoing[feeling] += 1
 
@@ -933,6 +972,19 @@ run = (args, user) ->
       saveCompanies()
       return "MTV: `#{user}`'s new label: `#{newCompany}`"
 
+    when 'nickname', 'name'
+      nicknameArgs = []
+      for i in [1...args.length]
+        nicknameArgs.push args[i]
+      newNickname = nicknameArgs.join(" ")
+      console.log "newNickname: '#{newNickname}'"
+      if newNickname.match(/^\s*$/)
+        return "MTV: Ignoring empty nickname"
+      nicknames[user] = newNickname
+      saveNicknames()
+      requestDashboardRefresh()
+      return "MTV: `#{user}`'s new nickname: `#{newNickname}`"
+
     when 'remove', 'delete', 'del'
       e = entryFromArg(args[1])
       if not e?
@@ -1025,7 +1077,7 @@ findMissingYoutubeInfo = ->
 
 sanitizeUsername = (name) ->
   if name?
-    name = name.replace(/[^a-zA-Z0-9 ]/g, "")
+    name = name.replace(/[^a-zA-Z0-9# ]/g, "")
     name = name.replace(/ +/g, " ")
     name = name.replace(/^ */, "")
     name = name.replace(/ *$/, "")
@@ -1181,24 +1233,27 @@ main = (argv) ->
 
   app.get '/info/playlist', (req, res) ->
     updateOpinions(playlist, true)
+    updateNicknames(playlist, true)
     res.type('application/json')
-    res.send(JSON.stringify(playlist, null, 2))
+    res.send(JSON.stringify(playlist, privacyReplacer, 2))
 
   app.get '/info/queue', (req, res) ->
     updateOpinions(queue)
+    updateNicknames(queue)
     res.type('application/json')
-    res.send(JSON.stringify(queue, null, 2))
+    res.send(JSON.stringify(queue, privacyReplacer, 2))
 
   app.get '/info/history', (req, res) ->
     updateOpinions(history)
+    updateNicknames(history)
     res.type('application/json')
-    res.send(JSON.stringify(history, null, 2))
+    res.send(JSON.stringify(history, privacyReplacer, 2))
 
   app.get '/info/user', (req, res) ->
     if req.query? and req.query.user?
       userInfo = calcUserInfo(req.query.user)
       res.type('application/json')
-      res.send(JSON.stringify(userInfo, null, 2))
+      res.send(JSON.stringify(userInfo, privacyReplacer, 2))
     else
       res.send("supply a user")
 
