@@ -4,7 +4,7 @@ This should help you get up and running with MTV and Discord.
 
 * [Introduction](#intro)
 * [Discord Preparation](#discord)
-  * [Set your Discord nickname](#nickname)
+  * [Set your MTV nickname!](#nickname)
   * [Give yourself a record label!](#label)
 * [Watching MTV](#watch)
 * [Giving Your Opinion](#opinion)
@@ -37,9 +37,13 @@ You can then click on [Up Next](/#queue) to see the full queue of upcoming songs
 
 These are some quick things to check before really digging into MTV.
 
-### Set your Discord nickname {#nickname}
+### Set your MTV nickname! {#nickname}
 
-All interactions with MTV are done through the #mtv Discord channel, and your identity with the server is determined by your current Discord nickname. It is important that you set it and continue to use the same one while interacting with MTV.
+All interactions with MTV are done through the #mtv Discord channel, and your identity with the server is determined by Discord handle (`SomeName#5555`). To keep this information private, you should choose a nickname that MTV should refer to you by. It doesn't have to be the same as your Discord nickname, but that is a good start. To set your nickname, type something like this into the #mtv Discord channel:
+
+    #mtv nickname YourNickname
+
+You should be able to change this freely and all things MTV should update on the fly, including the lists on the dashboard and all shown opinions.
 
 ### Give yourself a record label! {#label}
 
@@ -51,7 +55,7 @@ Congrats, you're now the owner of `Example Records`. This isn't set in stone, so
 
 ## Watching MTV {#watch}
 
-To watch MTV, simply visit the [main page](/) and click on **Watch** at the top. It will ask for your Discord nickname and offer you a handful of choices. Type in your nickname exactly (case matters), choose some options, and hit the Watch button. If you want to watch anonymously, leave the nickname box empty. This will simply remove you from consideration when MTV chooses to "autoskip" (see **Autoskip** below).
+To watch MTV, simply visit the [main page](/) and click on **Watch** at the top. It will ask for your Discord nickname and offer you a handful of choices. Type in your Discord handle exactly (such as `SomeName#5555`, case matters), choose some options, and hit the Watch button. If you want to watch anonymously, leave the nickname box empty. This will simply remove you from consideration when MTV chooses to "autoskip" (see **Autoskip** below).
 
 Here's what the checkboxes mean:
 

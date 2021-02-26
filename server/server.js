@@ -899,12 +899,13 @@
   };
 
   calcLicensingInfo = function(e) {
-    var company, strs;
+    var company, nickname, strs;
     strs = calcEntryStrings(e);
     if (companies[e.user] != null) {
       company = companies[e.user];
     } else {
-      company = e.user.charAt(0).toUpperCase() + e.user.slice(1);
+      nickname = getNickname(e.user);
+      company = nickname.charAt(0).toUpperCase() + nickname.slice(1);
       company += " Records";
     }
     return {
