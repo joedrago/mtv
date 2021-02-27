@@ -33,7 +33,11 @@ prettyDuration = (e) ->
     endTime = e.duration
   return "#{secondsToTime(startTime)}-#{secondsToTime(endTime)}"
 
-renderEntries = (firstTitle, restTitle, entries, isMap, sortList = false, showPlayCounts = false) ->
+SORT_NONE = 0
+SORT_ARTIST_TITLE = 1
+SORT_ADDED = 2
+
+renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE) ->
   html = ""
 
   if isMap
@@ -43,20 +47,33 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortList = false, showPl
     for k, v of m
       entries.push v
 
-    # This is the "all" list, sort it
-    sortList = true
-
-  if sortList
-    entries.sort (a, b) ->
-      if a.artist.toLowerCase() < b.artist.toLowerCase()
-        return -1
-      if a.artist.toLowerCase() > b.artist.toLowerCase()
-        return 1
-      if a.title.toLowerCase() < b.title.toLowerCase()
-        return -1
-      if a.title.toLowerCase() > b.title.toLowerCase()
-        return 1
-      return 0
+  switch sortMethod
+    when SORT_ARTIST_TITLE
+      entries.sort (a, b) ->
+        if a.artist.toLowerCase() < b.artist.toLowerCase()
+          return -1
+        if a.artist.toLowerCase() > b.artist.toLowerCase()
+          return 1
+        if a.title.toLowerCase() < b.title.toLowerCase()
+          return -1
+        if a.title.toLowerCase() > b.title.toLowerCase()
+          return 1
+        return 0
+    when SORT_ADDED
+      entries.sort (a, b) ->
+        if a.added < b.added
+          return -1
+        if a.added > b.added
+          return 1
+        if a.artist.toLowerCase() < b.artist.toLowerCase()
+          return -1
+        if a.artist.toLowerCase() > b.artist.toLowerCase()
+          return 1
+        if a.title.toLowerCase() < b.title.toLowerCase()
+          return -1
+        if a.title.toLowerCase() > b.title.toLowerCase()
+          return 1
+        return 0
 
   for e, entryIndex in entries
     artist = e.artist
@@ -100,7 +117,7 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortList = false, showPl
   return html
 
 
-showList = (firstTitle, restTitle, url, isMap = false) ->
+showList = (firstTitle, restTitle, url, isMap = false, sortMethod = SORT_NONE) ->
   return new Promise (resolve, reject) ->
     xhttp = new XMLHttpRequest()
     xhttp.onreadystatechange = ->
@@ -108,7 +125,7 @@ showList = (firstTitle, restTitle, url, isMap = false) ->
            # Typical action to be performed when the document is ready:
            try
              entries = JSON.parse(xhttp.responseText)
-             resolve(renderEntries(firstTitle, restTitle, entries, isMap))
+             resolve(renderEntries(firstTitle, restTitle, entries, isMap, sortMethod))
            catch
              resolve("Error")
     xhttp.open("GET", url, true)
@@ -161,9 +178,14 @@ showBoth = ->
   lastClicked = showBoth
 
 showPlaylist = ->
-  document.getElementById('main').innerHTML = await showList(null, null, "/info/playlist", true)
+  document.getElementById('main').innerHTML = await showList(null, null, "/info/playlist", true, SORT_ARTIST_TITLE)
   updateOther()
   lastClicked = showPlaylist
+
+showRecent = ->
+  document.getElementById('main').innerHTML = await showList(null, null, "/info/playlist", true, SORT_ADDED)
+  updateOther()
+  lastClicked = showRecent
 
 showStats = ->
   html = ""
@@ -364,9 +386,9 @@ showUser = ->
 
       setTimeout ->
         for feeling, list of userInfo.opinions
-          document.getElementById("user#{feeling}").innerHTML = renderEntries(null, null, userInfo.opinions[feeling], false, true, true)
+          document.getElementById("user#{feeling}").innerHTML = renderEntries(null, null, userInfo.opinions[feeling], false, SORT_ARTIST_TITLE)
         if userInfo.added.length > 0
-          document.getElementById("useradded").innerHTML = renderEntries(null, null, userInfo.added, false, true, true)
+          document.getElementById("useradded").innerHTML = renderEntries(null, null, userInfo.added, false, SORT_ARTIST_TITLE)
       , 0
 
   xhttp.open("GET", "/info/user?user=#{encodeURIComponent(lastUser)}", true)
@@ -434,6 +456,8 @@ processHash = ->
       showQueue()
     when '#all'
       showPlaylist()
+    when '#recent'
+      showRecent()
     when '#both'
       showBoth()
     when '#stats'

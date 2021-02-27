@@ -851,7 +851,8 @@
     return {
       id: id,
       start: startTime,
-      end: endTime
+      end: endTime,
+      added: now()
     };
   };
 
@@ -1515,6 +1516,10 @@
         splitArtist(v);
         needsSave = true;
       }
+      if (v.added == null) {
+        v.added = serverEpoch;
+        needsSave = true;
+      }
     }
     for (m = 0, len = queue.length; m < len; m++) {
       v = queue[m];
@@ -1531,6 +1536,10 @@
         missingTitleCount += 1;
       } else if (v.artist == null) {
         splitArtist(v);
+        needsSave = true;
+      }
+      if (v.added == null) {
+        v.added = serverEpoch;
         needsSave = true;
       }
     }
