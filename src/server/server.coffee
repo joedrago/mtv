@@ -631,6 +631,7 @@ entryFromArg = (arg) ->
     id: id
     start: startTime
     end: endTime
+    added: now()
   }
 
 prettyDuration = (duration) ->
@@ -1147,6 +1148,9 @@ findMissingYoutubeInfo = ->
     else if not v.artist?
       splitArtist(v)
       needsSave = true
+    if not v.added?
+      v.added = serverEpoch
+      needsSave = true
   for v in queue
     if v.countPlay?
       delete v["countPlay"]
@@ -1159,6 +1163,9 @@ findMissingYoutubeInfo = ->
       missingTitleCount += 1
     else if not v.artist?
       splitArtist(v)
+      needsSave = true
+    if not v.added?
+      v.added = serverEpoch
       needsSave = true
   if needsSave
     savePlaylist()
