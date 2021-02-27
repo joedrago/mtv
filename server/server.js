@@ -1471,12 +1471,22 @@
       artist = matches[1];
       title = matches[2];
     }
-    title = title.replace(/[\(\[]Official(\sMusic)?\sVideo[\)\]]/i, "");
+    title = title.replace(/[\(\[](Official)?\s?(Music)?\sVideo[\)\]]/i, "");
     title = title.replace(/^\s+/, "");
     title = title.replace(/\s+$/, "");
     if (title.match(/^".+"$/)) {
       title = title.replace(/^"/, "");
       title = title.replace(/"$/, "");
+    }
+    if (matches = title.match(/^(.+)\s+\(f(ea)?t. (.+)\)$/i)) {
+      title = matches[1];
+      artist += ` ft. ${matches[3]}`;
+    } else if (matches = title.match(/^(.+)\s+f(ea)?t. (.+)$/i)) {
+      title = matches[1];
+      artist += ` ft. ${matches[3]}`;
+    }
+    if (matches = artist.match(/^(.+)\s+\(with ([^)]+)\)$/)) {
+      artist = `${matches[1]} ft. ${matches[2]}`;
     }
     e.artist = artist;
     e.title = title;
