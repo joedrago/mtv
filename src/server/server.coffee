@@ -333,10 +333,10 @@ songEnding = ->
     pkt = calcLicensingInfo(lastPlayed)
     socket.emit 'ending', pkt
 
-someoneIsWatching = ->
+someoneIsWatchingWithAutoskip = ->
   someoneWatching = false
   for sid, soc of sockets
-    if isPlaying[sid]
+    if isPlaying[sid] and playingName[sid] and not ignored[getNickname(playingName[sid])]
       someoneWatching = true
       break
   return someoneWatching
@@ -345,7 +345,7 @@ checkIfEveryoneLeft = ->
   if nobodyWatchingTimeout?
     return
 
-  if not someoneIsWatching()
+  if not someoneIsWatchingWithAutoskip()
     nobodyWatchingTimeout = setTimeout ->
       if echoEnabled
         echoEnabled = false
