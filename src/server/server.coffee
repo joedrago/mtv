@@ -349,7 +349,7 @@ checkIfEveryoneLeft = ->
     nobodyWatchingTimeout = setTimeout ->
       if echoEnabled
         echoEnabled = false
-        logOutput("MTV: Auto-disabling echo (everyone left)")
+        logOutput("MTV: Auto-disabling echo (all autoskippers left)")
       nobodyWatchingTimeout = null
     , 15000
 

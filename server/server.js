@@ -499,7 +499,7 @@
       return nobodyWatchingTimeout = setTimeout(function() {
         if (echoEnabled) {
           echoEnabled = false;
-          logOutput("MTV: Auto-disabling echo (everyone left)");
+          logOutput("MTV: Auto-disabling echo (all autoskippers left)");
         }
         return nobodyWatchingTimeout = null;
       }, 15000);
