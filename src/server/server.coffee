@@ -277,7 +277,13 @@ autoskip = ->
         list = licensingInfo.opinions[feeling]
         list.sort()
         logText += "\n#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}: #{list.join(', ')}"
-    logText = "```#{logText}```"
+    maxLineLength = 0
+    for line in logText.split(/\n/)
+      if maxLineLength < line.length
+        maxLineLength = line.length
+
+    border = "--------------------------------------------------------------".substr(0, maxLineLength)
+    logText = "```\n#{border}\n#{logText}\n#{border}```"
     logOutput(logText)
 
     # logOutput("MTV: Playing: #{strs.description}")
