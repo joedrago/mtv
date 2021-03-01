@@ -356,7 +356,7 @@
   };
 
   autoskip = function() {
-    var artist, feeling, feelings, len, len1, licensingInfo, list, logText, m, o, q, strs, title;
+    var artist, border, feeling, feelings, len, len1, len2, licensingInfo, line, list, logText, m, maxLineLength, o, q, r, ref, strs, title;
     if (lastPlayed === null) {
       console.log("autoskip: lastPlayed is null.");
       return;
@@ -404,7 +404,16 @@
           logText += `\n${feeling.charAt(0).toUpperCase() + feeling.slice(1)}: ${list.join(', ')}`;
         }
       }
-      logText = `\`\`\`${logText}\`\`\``;
+      maxLineLength = 0;
+      ref = logText.split(/\n/);
+      for (r = 0, len2 = ref.length; r < len2; r++) {
+        line = ref[r];
+        if (maxLineLength < line.length) {
+          maxLineLength = line.length;
+        }
+      }
+      border = "--------------------------------------------------------------".substr(0, maxLineLength);
+      logText = `\`\`\`\n${border}\n${logText}\n${border}\`\`\``;
       logOutput(logText);
     }
   };
