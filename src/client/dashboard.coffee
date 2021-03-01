@@ -2,8 +2,19 @@ socket = null
 
 lastClicked = null
 lastUser = null
+discordTag = null
+discordNickname = null
 
 opinionOrder = ['like', 'meh', 'bleh', 'hate'] # always in this specific order
+
+qs = (name) ->
+  url = window.location.href
+  name = name.replace(/[\[\]]/g, '\\$&')
+  regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)')
+  results = regex.exec(url);
+  if not results or not results[2]
+    return null
+  return decodeURIComponent(results[2].replace(/\+/g, ' '))
 
 secondsToTime = (t) ->
   units = [
@@ -110,8 +121,14 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE) 
         html += """
           <div class="restTitle">#{restTitle}</div>
         """
+
+    if discordTag
+      actions = "" # " [ Do stuff as #{discordTag} ]"
+    else
+      actions = ""
+
     html += """
-      <div> * <a target="_blank" href="#{url}"><span class="entryartist">#{artist}</span></a><span class="entrymiddle"> - </span><a target="_blank" href="#{url}"><span class="entrytitle">#{title}</span></a> <span class="user">(#{e.nickname}#{extraInfo})</span></div>
+      <div> * <a target="_blank" href="#{url}"><span class="entryartist">#{artist}</span></a><span class="entrymiddle"> - </span><a target="_blank" href="#{url}"><span class="entrytitle">#{title}</span></a> <span class="user">(#{e.nickname}#{extraInfo})</span>#{actions}</div>
 
     """
   return html
@@ -397,45 +414,6 @@ showUser = ->
   updateOther()
   lastClicked = showUser
 
-class CastPlayer
-  constructor: ->
-    @remotePlayer = null
-    @remotePlayerController = null
-
-  initializeCastPlayer: ->
-    options =
-      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-      receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID
-    cast.framework.CastContext.getInstance().setOptions(options)
-    @remotePlayer = new cast.framework.RemotePlayer()
-    @remotePlayerController = new cast.framework.RemotePlayerController(@remotePlayer)
-    @remotePlayerController.addEventListener(cast.framework.RemotePlayerEventType.IS_CONNECTED_CHANGED, @switchPlayer.bind(this))
-
-  switchPlayer: ->
-    sessionState = cast.framework.CastContext.getInstance().getSessionState()
-    if sessionState != cast.framework.SessionState.SESSION_STARTED
-      console.log "Session ended!"
-      return
-
-    console.log "Session starting!"
-    socket.emit 'castready', { id: socket.id }
-
-beginCast = (pkt) ->
-  console.log "CAST:", pkt
-
-  sessionState = cast.framework.CastContext.getInstance().getSessionState()
-  if sessionState != cast.framework.SessionState.SESSION_STARTED
-    console.log "No session; skipping beginCast"
-    return
-
-  console.log "Starting cast!"
-  castSession = cast.framework.CastContext.getInstance().getCurrentSession()
-  mediaInfo = new chrome.cast.media.MediaInfo(pkt.url, 'video/mp4')
-  request = new chrome.cast.media.LoadRequest(mediaInfo)
-  if pkt.start > 0
-    request.currentTime = pkt.start
-  castSession.loadMedia(request)
-
 showWatchForm = ->
   document.getElementById('aslink').style.display = 'none'
   document.getElementById('asform').style.display = 'inline-block'
@@ -465,22 +443,72 @@ processHash = ->
     else
       showPlaying()
 
+logout = ->
+  document.getElementById("identity").innerHTML = "Logging out..."
+  localStorage.removeItem('token')
+  sendIdentity()
+
+sendIdentity = ->
+  token = localStorage.getItem('token')
+  identityPayload = {
+    token: token
+  }
+  console.log "Sending identify: ", identityPayload
+  socket.emit 'identify', identityPayload
+
+receiveIdentity = (pkt) ->
+  console.log "identify response:", pkt
+  if pkt.disabled
+    console.log "Discord auth disabled."
+    document.getElementById("identity").innerHTML = ""
+    return
+
+  if pkt.tag? and (pkt.tag.length > 0)
+    discordTag = pkt.tag
+    discordNicknameString = ""
+    if pkt.nickname?
+      discordNickname = pkt.nickname
+      discordNicknameString = " (#{discordNickname})"
+    html = """
+      #{discordTag}#{discordNicknameString} - [<a onclick="logout()">Logout</a>]
+    """
+  else
+    discordTag = null
+    discordNickname = null
+
+    redirectURL = String(window.location).replace(/#.*$/, "") + "oauth"
+    loginLink = "https://discord.com/api/oauth2/authorize?client_id=#{window.CLIENT_ID}&redirect_uri=#{encodeURIComponent(redirectURL)}&response_type=code&scope=identify"
+    html = """
+      [<a href="#{loginLink}">Login</a>]
+    """
+  document.getElementById("identity").innerHTML = html
+  if lastClicked?
+    lastClicked()
+
 init = ->
-  window.showPlaying = showPlaying
-  window.showQueue = showQueue
-  window.showPlaylist = showPlaylist
+  window.logout = logout
+  window.onhashchange = processHash
   window.showBoth = showBoth
+  window.showPlaying = showPlaying
+  window.showPlaylist = showPlaylist
+  window.showQueue = showQueue
   window.showStats = showStats
   window.showUser = showUser
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
-  window.onhashchange = processHash
+
+  token = qs('token')
+  if token?
+    localStorage.setItem('token', token)
+    window.location = '/'
+    return
 
   processHash()
 
   socket = io()
-  socket.on 'cast', (pkt) ->
-    beginCast(pkt)
+
+  socket.on 'connect', ->
+    sendIdentity()
 
   socket.on 'play', (pkt) ->
     if lastClicked?
@@ -490,12 +518,7 @@ init = ->
     if lastClicked?
       lastClicked()
 
-  window.__onGCastApiAvailable = (isAvailable) ->
-    # console.log "__onGCastApiAvailable fired: #{isAvailable}"
-    # castPlayer = new CastPlayer
-    # if isAvailable
-    #   castPlayer.initializeCastPlayer()
-
-  console.log "initialized!"
+  socket.on 'identify', (pkt) ->
+    receiveIdentity(pkt)
 
 window.onload = init
