@@ -1,9 +1,14 @@
 socket = null
 
+DASHCAST_NAMESPACE = 'urn:x-cast:es.offd.dashcast'
+
 lastClicked = null
 lastUser = null
 discordTag = null
 discordNickname = null
+
+castAvailable = false
+castSession = null
 
 opinionOrder = ['like', 'meh', 'bleh', 'hate'] # always in this specific order
 
@@ -417,6 +422,7 @@ showUser = ->
 showWatchForm = ->
   # document.getElementById('aslink').style.display = 'none'
   document.getElementById('asform').style.display = 'block'
+  document.getElementById('castbutton').style.display = 'inline-block'
   document.getElementById("userinput").focus()
 
 showWatchLink = ->
@@ -485,6 +491,42 @@ receiveIdentity = (pkt) ->
   if lastClicked?
     lastClicked()
 
+onInitSuccess = ->
+  console.log "Cast available!"
+  castAvailable = true
+
+onError = (message) ->
+
+sessionListener = (e) ->
+  castSession = e
+
+sessionUpdateListener = (isAlive) ->
+  if not isAlive
+    castSession = null
+
+prepareCast = ->
+  if not chrome.cast or not chrome.cast.isAvailable
+    window.setTimeout(prepareCast, 100)
+    return
+
+  sessionRequest = new chrome.cast.SessionRequest('5C3F0A3C') # Dashcast
+  apiConfig = new chrome.cast.ApiConfig sessionRequest, sessionListener, ->
+  chrome.cast.initialize(apiConfig, onInitSuccess, onError)
+
+startCast = ->
+  console.log "start cast!"
+
+  form = document.getElementById('asform')
+  formData = new FormData(form)
+  params = new URLSearchParams(formData)
+  querystring = params.toString()
+  mtvURL = window.location.href.split('?')[0] + "?" + querystring
+  console.log "We're going here: #{mtvURL}"
+  chrome.cast.requestSession (e) ->
+    castSession = e
+    castSession.sendMessage(DASHCAST_NAMESPACE, { url: mtvURL })
+  , onError
+
 init = ->
   window.logout = logout
   window.onhashchange = processHash
@@ -496,6 +538,7 @@ init = ->
   window.showUser = showUser
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
+  window.startCast = startCast
 
   token = qs('token')
   if token?
@@ -520,5 +563,7 @@ init = ->
 
   socket.on 'identify', (pkt) ->
     receiveIdentity(pkt)
+
+  prepareCast()
 
 window.onload = init

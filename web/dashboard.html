@@ -127,7 +127,6 @@ a {
 window.CLIENT_ID = "!CLIENT_ID!";
 </script>
 
-<div id="castbox"><google-cast-launcher id="castbutton"></google-cast-launcher></div>
 [<a href="#nowplaying" onclick="showPlaying()">Now Playing</a>]
 [<a href="#queue" onclick="showQueue()">Up Next</a>]
 [<a href="#both" onclick="showBoth()">Both</a>]
@@ -143,12 +142,13 @@ window.CLIENT_ID = "!CLIENT_ID!";
     <input type="checkbox" name="sfw"> SFW Only<br>
     <input type="checkbox" name="controls"> Show Controls<br>
     <input type="checkbox" name="hidetitles"> Hide Titles<br>
-    <input type="submit" value="Watch"> <input id="castbutton" type="submit" value="Cast"> <input type="submit" onclick="showWatchLink(); return false;" value="Cancel">
+    <input type="submit" value="Watch"> <input id="castbutton" type="submit" onclick="startCast(); return false;" value="Cast"> <input type="submit" onclick="showWatchLink(); return false;" value="Cancel">
 </form>
 
 <div id="main"></div>
 <div id="identity"></div>
 
+<script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="dashboard.js"></script>
 </body>
