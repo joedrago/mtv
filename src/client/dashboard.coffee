@@ -415,12 +415,12 @@ showUser = ->
   lastClicked = showUser
 
 showWatchForm = ->
-  document.getElementById('aslink').style.display = 'none'
-  document.getElementById('asform').style.display = 'inline-block'
+  # document.getElementById('aslink').style.display = 'none'
+  document.getElementById('asform').style.display = 'block'
   document.getElementById("userinput").focus()
 
 showWatchLink = ->
-  document.getElementById('aslink').style.display = 'inline-block'
+  # document.getElementById('aslink').style.display = 'inline-block'
   document.getElementById('asform').style.display = 'none'
 
 processHash = ->

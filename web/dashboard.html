@@ -82,6 +82,7 @@ a {
 
 #asform {
     display: none;
+    padding-left: 20px;
 }
 
 #userinput {
@@ -115,6 +116,10 @@ a {
     display: block;
 }
 
+#castbutton {
+    display: none;
+}
+
 </style>
 <body>
 
@@ -129,9 +134,17 @@ window.CLIENT_ID = "!CLIENT_ID!";
 [<a href="#all" onclick="showPlaylist()">All</a>]
 [<a href="#stats" onclick="showStats()">Stats</a>]
 [<a href="/help/" class="helplink" target="_blank">Help</a>]
-[<a id="aslink" class="watchlink" onclick="showWatchForm()">Watch</a><form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()"><input size="20" placeholder="Anonymous" id="userinput" type="text" name="user" value=""> <input type="checkbox" name="sfw"> SFW Only <input type="checkbox" name="controls"> Show Ctrls <input type="checkbox" name="hidetitles"> Hide Titles <input type="submit" value="Watch"> <a onclick="showWatchLink()">Cancel</a></form>]
+[<a id="aslink" class="watchlink" onclick="showWatchForm()">Watch</a>]
 <span id="playing"></span>
-<br><br>
+<br>
+<br>
+<form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()">
+    <input size="20" placeholder="Anonymous" id="userinput" type="text" name="user" value=""><br>
+    <input type="checkbox" name="sfw"> SFW Only<br>
+    <input type="checkbox" name="controls"> Show Controls<br>
+    <input type="checkbox" name="hidetitles"> Hide Titles<br>
+    <input type="submit" value="Watch"> <input id="castbutton" type="submit" value="Cast"> <input type="submit" onclick="showWatchLink(); return false;" value="Cancel">
+</form>
 
 <div id="main"></div>
 <div id="identity"></div>
