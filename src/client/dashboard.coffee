@@ -531,7 +531,7 @@ startCast = ->
   console.log "We're going here: #{mtvURL}"
   chrome.cast.requestSession (e) ->
     castSession = e
-    castSession.sendMessage(DASHCAST_NAMESPACE, { url: mtvURL })
+    castSession.sendMessage(DASHCAST_NAMESPACE, { url: mtvURL, force: true })
   , onError
 
 init = ->
