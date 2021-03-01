@@ -1160,6 +1160,10 @@
               return `MTV [opinion]: I don't know what ${args[1]} is.`;
             }
           }
+          if (playlist[e.id] == null) {
+            return `MTV [opinion]: ${e.id} is not in the pool.`;
+          }
+          e = playlist[e.id];
         }
         if (e == null) {
           if (lastPlayed === null) {
@@ -1167,10 +1171,6 @@
           }
           e = lastPlayed;
         }
-        if (playlist[e.id] == null) {
-          return `MTV [opinion]: ${e.id} is not in the pool.`;
-        }
-        e = playlist[e.id];
         if (opinions[name1 = e.id] == null) {
           opinions[name1] = {};
         }

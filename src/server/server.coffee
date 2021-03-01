@@ -850,13 +850,13 @@ run = (args, user) ->
           e = entryFromArg(args[1])
           if not e?
             return "MTV [opinion]: I don't know what #{args[1]} is."
+        if not playlist[e.id]?
+          return "MTV [opinion]: #{e.id} is not in the pool."
+        e = playlist[e.id]
       if not e?
         if lastPlayed == null
           return "MTV: I have no idea what's playing."
         e = lastPlayed
-      if not playlist[e.id]?
-        return "MTV [opinion]: #{e.id} is not in the pool."
-      e = playlist[e.id]
       opinions[e.id] ?= {}
       if cmd == 'none'
         if opinions[e.id][user]?

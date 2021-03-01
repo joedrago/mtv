@@ -61,9 +61,9 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE) 
         return 0
     when SORT_ADDED
       entries.sort (a, b) ->
-        if a.added < b.added
-          return -1
         if a.added > b.added
+          return -1
+        if a.added < b.added
           return 1
         if a.artist.toLowerCase() < b.artist.toLowerCase()
           return -1
