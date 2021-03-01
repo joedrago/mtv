@@ -170,11 +170,11 @@ window.onYouTubePlayerAPIReady = ->
   if qs('controls')
     showControls = 1
 
-  player = new YT.Player 'player', {
+  player = new YT.Player 'mtv-player', {
     width: '100%'
     height: '100%'
     videoId: 'AB7ykOfAgIA' # MTV loading screen, this will be replaced almost immediately
-    playerVars: { 'autoplay': 1, 'controls': showControls }
+    playerVars: { 'autoplay': 1, 'enablejsapi': 1, 'controls': showControls }
     events: {
       onReady: onPlayerReady
       onStateChange: onPlayerStateChange
