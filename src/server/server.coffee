@@ -16,6 +16,9 @@ limiter = new Bottleneck {
 now = ->
   return Math.floor(Date.now() / 1000)
 
+randomString = ->
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+
 # TODO: Switch this sloppy pile of flat maps to a map of objects?
 serverEpoch = now()
 secrets = null
@@ -30,7 +33,6 @@ lastPlayedDuration = 1
 lastPlayed = null
 songEndingTimeout = null
 nobodyWatchingTimeout = null
-isCasting = {}
 isPlaying = {}
 playingName = {}
 sfwOnly = {}
@@ -48,6 +50,7 @@ echoEnabled = false
 companies = {}
 nicknames = {}
 ignored = {}
+discordAuth = {}
 
 getNickname = (user) ->
   if nicknames[user]?
@@ -95,6 +98,8 @@ load = ->
     nicknames = JSON.parse(fs.readFileSync("nicknames.json", 'utf8'))
   if fs.existsSync("ignored.json")
     ignored = JSON.parse(fs.readFileSync("ignored.json", 'utf8'))
+  if fs.existsSync("auth.json")
+    discordAuth = JSON.parse(fs.readFileSync("auth.json", 'utf8'))
   return
 
 savePlaylist = ->
@@ -111,6 +116,9 @@ saveNicknames = ->
 
 saveIgnored = ->
   fs.writeFileSync("ignored.json", JSON.stringify(ignored, null, 2))
+
+saveDiscordAuth = ->
+  fs.writeFileSync("auth.json", JSON.stringify(discordAuth, null, 2))
 
 logOutput = (msg) ->
   output.push msg
@@ -144,12 +152,6 @@ saveState = ->
   fs.writeFileSync("state.json", JSON.stringify(state, null, 2))
   console.log "Saved State: (#{savedQueue.length} in queue, #{savedHistory.length} in history)"
 
-isAnyoneCasting = ->
-  for sid, soc of sockets
-    if isCasting[sid]
-      return true
-  return false
-
 calcOther = ->
   names = []
   count = 0
@@ -177,69 +179,6 @@ calcOther = ->
     names: names
   return other
 
-updateCasts = (id = null) ->
-  if lastPlayed == null
-    return
-
-  if not isAnyoneCasting()
-    return
-
-  ytdl.getInfo(lastPlayed.id).then (info) ->
-    available = ytdl.filterFormats(info.formats, 'audioandvideo')
-    if available.length > 0
-      url = available[0].url
-      for sid, soc of sockets
-        if (id != null) and (id != sid)
-          continue
-
-        soc.emit 'cast', {
-          url: url
-          start: lastPlayed.start
-        }
-
-updateDiscord = ->
-  if not discordEnabled or not lastPlayed?
-    return
-
-  index = discordIndex
-  discordIndex = (discordIndex + 1) % secrets.discordTokens.length
-  do (index) ->
-    discordPath = "/api/channels/#{secrets.discordChannel}"
-    discordPrefix = secrets.discordPrefix
-    if not discordPrefix?
-      discordPrefix = ""
-    postData = JSON.stringify {
-      topic: "#{discordPrefix}#{lastPlayed.title}"
-    }
-
-    options =
-      hostname: 'discord.com'
-      port: 443
-      path: discordPath
-      method: 'PATCH',
-      headers:
-        'Authorization': "Bot #{secrets.discordTokens[index]}"
-        'Content-Type': 'application/json',
-        'Content-Length': postData.length
-    # console.log JSON.stringify(options, null, 2)
-
-    req = https.request options, (res) ->
-      statusCode = res.statusCode
-      reply = ""
-      res.on 'data', (d) ->
-        reply += String(d)
-      res.on 'end', (d) ->
-        if statusCode == 200
-          reply = "OK"
-        console.log "Discord[#{index}] Reply [#{statusCode}]: #{reply}"
-
-    req.on 'error', (error) ->
-      console.error "Discord[#{index}] Error: #{error}"
-
-    console.log "Discord[#{index}] PATCH #{discordPath}: #{postData}"
-    req.write(postData)
-    req.end()
-
 logAutoskip = ->
   if autoskipCount > 0
     l = autoskipList.join(", ")
@@ -251,7 +190,7 @@ logAutoskip = ->
   return
 
 shouldSkip = (e) ->
-  console.log "shouldSkip: e #{JSON.stringify(e)}"
+  # console.log "shouldSkip: e #{JSON.stringify(e)}"
   if e.nsfw
     # console.log "shouldSkip: sfwOnly #{JSON.stringify(sfwOnly)}"
     for sid, soc of sockets
@@ -372,10 +311,8 @@ play = (e) ->
     pkt.end = e.end
     for socketId, socket of sockets
       socket.emit 'play', pkt
-    updateCasts()
     saveState()
     savePlaylist()
-    updateDiscord()
 
   console.log "Playing: #{e.title} [#{e.id}]"
   startTime = e.start
@@ -1096,6 +1033,98 @@ run = (args, user) ->
 
   return "MTV: unknown command #{cmd}"
 
+processOAuth = (code) ->
+  console.log "processOAuth: #{code}"
+  return new Promise (resolve, reject) ->
+    if not code? or (code.length < 1)
+      resolve('')
+      return
+
+    postdata =
+      client_id: secrets.discordClientID
+      client_secret: secrets.discordClientSecret
+      grant_type: 'authorization_code'
+      redirect_uri: secrets.url + '/oauth'
+      code: code
+      scope: 'identify'
+    params = String(new URLSearchParams(postdata))
+
+    options =
+      hostname: 'discord.com'
+      port: 443
+      path: '/api/oauth2/token'
+      method: 'POST'
+      headers:
+        'Content-Length': params.length
+        'Content-Type': 'application/x-www-form-urlencoded'
+    req = https.request options, (res) ->
+      rawJSON = ""
+      res.on 'data', (chunk) ->
+        rawJSON += chunk
+      res.on 'error', ->
+        console.log "Error getting auth"
+        resolve('')
+      res.on 'end', ->
+        data = null
+        try
+          data = JSON.parse(rawJSON)
+        catch
+          console.log "ERROR: Failed to talk to parse JSON: #{rawJSON}"
+          resolve('')
+          return
+
+        # console.log "Discord replied: ", JSON.stringify(data, null, 2)
+        if not data.access_token? or (data.access_token.length < 1) or not data.token_type? or (data.token_type.length < 1)
+          console.log "bad oauth reply (no access_token or token_type):", data
+          resolve('')
+          return
+
+        meOptions =
+          hostname: 'discord.com'
+          port: 443
+          path: '/api/users/@me'
+          headers:
+            'Authorization': "#{data.token_type} #{data.access_token}"
+        # console.log "meOptions:", meOptions
+        meReq = https.request meOptions, (meRes) ->
+          meRawJSON = ""
+          meRes.on 'data', (chunk) ->
+            meRawJSON += chunk
+          meRes.on 'error', ->
+            console.log "Error getting auth"
+            resolve('')
+          meRes.on 'end', ->
+            meData = null
+            try
+              meData = JSON.parse(meRawJSON)
+            catch
+              console.log "ERROR: Failed to talk to parse JSON: #{meRawJSON}"
+              resolve('')
+              return
+
+            # console.log "Me replied:", meData
+            if meData? and meData.username? and meData.discriminator?
+              loop
+                newToken = randomString()
+                if not discordAuth[newToken]?
+                  break
+              discordAuth[newToken] =
+                token: newToken
+                tag: "#{meData.username}##{meData.discriminator}"
+                added: now()
+              console.log "Login [#{newToken}]: #{discordAuth[newToken].tag}"
+              resolve(newToken)
+              saveDiscordAuth()
+            else
+              console.log "ERROR: Giving up on new token, couldn't get username and discriminator:", meData
+              resolve('')
+
+        meReq.end()
+
+    req.write(params)
+    req.end()
+    console.log "sending request:", postdata
+
 splitArtist = (e) ->
   if e.artist?
     return
@@ -1193,8 +1222,8 @@ main = (argv) ->
 
   load()
 
-  if secrets.discordTokens and secrets.discordChannel
-    console.log "Discord enabled, logging in..."
+  if secrets.discordClientID and secrets.discordClientSecret
+    console.log "Discord enabled."
     discordEnabled = true
   else
     console.log "Discord disabled."
@@ -1295,8 +1324,6 @@ main = (argv) ->
     socket.on 'disconnect', ->
       if sockets[socket.id]?
         delete sockets[socket.id]
-      if isCasting[socket.id]?
-        delete isCasting[socket.id]
       if playingName[socket.id]?
         delete playingName[socket.id]
       if isPlaying[socket.id]?
@@ -1305,15 +1332,36 @@ main = (argv) ->
       checkAutoskip()
       checkIfEveryoneLeft()
 
-    socket.on 'castready', (msg) ->
-      console.log "castready!"
-      if msg.id?
-        isCasting[msg.id] = true
-        updateCasts(msg.id)
+    socket.on 'identify', (msg) ->
+      if not discordEnabled
+        socket.emit 'identify', { 'disabled': true }
+        return
+      if msg.token? and discordAuth[msg.token]?
+        reply =
+          tag: discordAuth[msg.token].tag
+        if nicknames[reply.tag]?
+          reply.nickname = nicknames[reply.tag]
+        socket.emit 'identify', reply
+        return
+      socket.emit 'identify', {}
 
   app.get '/', (req, res) ->
     html = fs.readFileSync("#{__dirname}/../web/dashboard.html", "utf8")
+    discordClientID = secrets.discordClientID
+    if not discordClientID?
+      discordClientID = "0"
+    html = html.replace(/!CLIENT_ID!/, discordClientID)
     res.send(html)
+
+  app.get '/oauth', (req, res) ->
+    if req.query? and req.query.code?
+      processOAuth(req.query.code).then (token) ->
+        if token? and (token.length > 0)
+          res.redirect("/?token=#{token}")
+        else
+          res.redirect('/')
+    else
+      res.redirect('/')
 
   app.get '/help', (req, res) ->
     html = fs.readFileSync("#{__dirname}/../web/help.html", "utf8")
