@@ -6,6 +6,8 @@ fs = require 'fs'
 https = require 'https'
 ytdl = require 'ytdl-core'
 
+opinionOrder = ['like', 'meh', 'bleh', 'hate'] # always in this specific order
+
 YOUTUBE_USER = "YouTube"
 AUTOSKIPLIST_COUNT = 3
 
@@ -255,8 +257,30 @@ autoskip = ->
   console.log "autoskip: Nothing to do."
   if echoEnabled and echoNewSong
     echoNewSong = false
-    strs = calcEntryStrings(lastPlayed)
-    logOutput("MTV: Playing: #{strs.description}")
+
+    licensingInfo = calcLicensingInfo(lastPlayed)
+    artist = licensingInfo.artist
+    artist = artist.replace(/^\s+/, "")
+    artist = artist.replace(/\s+$/, "")
+    title = licensingInfo.title
+    title = title.replace(/^\s+/, "")
+    title = title.replace(/\s+$/, "")
+    logText = "#{artist}\n\"#{title}\"\n#{licensingInfo.company}"
+    feelings = []
+    for o in opinionOrder
+      if licensingInfo.opinions[o]?
+        feelings.push o
+    if feelings.length == 0
+      logText += "\nNo Opinions"
+    else
+      for feeling in feelings
+        list = licensingInfo.opinions[feeling]
+        list.sort()
+        logText += "\n#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}: #{list.join(', ')}"
+    logText = "```#{logText}```"
+    logOutput(logText)
+
+    # logOutput("MTV: Playing: #{strs.description}")
   return
 
 checkAutoskip = ->
@@ -809,7 +833,10 @@ run = (args, user) ->
 
     when 'echo'
       echoEnabled = !echoEnabled
-      return "MTV: Echo: #{echoEnabled}"
+      if echoEnabled
+        return "MTV: Now echoing in chat."
+      else
+        return "MTV: Echo disabled."
 
     when 'nsfw', 'sfw'
       if lastPlayed == null
