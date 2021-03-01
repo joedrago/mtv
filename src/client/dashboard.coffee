@@ -12,6 +12,11 @@ castSession = null
 
 opinionOrder = ['like', 'meh', 'bleh', 'hate'] # always in this specific order
 
+now = ->
+  return Math.floor(Date.now() / 1000)
+
+pageEpoch = now()
+
 qs = (name) ->
   url = window.location.href
   name = name.replace(/[\[\]]/g, '\\$&')
@@ -506,7 +511,8 @@ sessionUpdateListener = (isAlive) ->
 
 prepareCast = ->
   if not chrome.cast or not chrome.cast.isAvailable
-    window.setTimeout(prepareCast, 100)
+    if now() < (pageEpoch + 10) # give up after 10 seconds
+      window.setTimeout(prepareCast, 100)
     return
 
   sessionRequest = new chrome.cast.SessionRequest('5C3F0A3C') # Dashcast
