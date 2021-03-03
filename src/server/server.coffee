@@ -186,7 +186,7 @@ logAutoskip = ->
     l = autoskipList.join(", ")
     if autoskipCount > AUTOSKIPLIST_COUNT
       l += ", +#{autoskipCount - AUTOSKIPLIST_COUNT} more"
-    logOutput("MTV: Auto-skipped #{autoskipCount} song#{if autoskipCount == 1 then "" else "s"}: `#{l}`")
+    # logOutput("MTV: Auto-skipped #{autoskipCount} song#{if autoskipCount == 1 then "" else "s"}: `#{l}`")
   autoskipCount = 0
   autoskipList = []
   return
