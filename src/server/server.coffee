@@ -932,7 +932,7 @@ run = (args, user) ->
 
       if args.length < 3
         return "MTV: Syntax: edit [URL/id] [user/start/end/artist/title/nsfw/sfw] [newValue]"
-      property = args[2]
+      property = args[2].toLowerCase()
       editArgs = []
       for i in [3...args.length]
         editArgs.push args[i]
@@ -1158,6 +1158,20 @@ processOAuth = (code) ->
     req.end()
     console.log "sending request:", postdata
 
+trimAllWhitespace = (e) ->
+  ret = false
+  newArtist = e.artist.replace(/^\s*/, "")
+  newArtist = e.artist.replace(/\s*$/, "")
+  if e.artist != newArtist
+    e.artist = newArtist
+    ret = true
+  newTitle = e.title.replace(/^\s*/, "")
+  newTitle = e.title.replace(/\s*$/, "")
+  if e.title != newTitle
+    e.title = newTitle
+    ret = true
+  return ret
+
 splitArtist = (e) ->
   if e.artist?
     return
@@ -1171,7 +1185,7 @@ splitArtist = (e) ->
     artist = matches[1]
     title = matches[2]
 
-  title = title.replace(/[\(\[](Official)?\s?(Music)?\sVideo[\)\]]/i, "")
+  title = title.replace(/[\(\[](Official)?\s?(HD)?\s?(Music)?\sVideo[\)\]]/i, "")
   title = title.replace(/^\s+/, "")
   title = title.replace(/\s+$/, "")
   if title.match(/^".+"$/)
@@ -1190,6 +1204,7 @@ splitArtist = (e) ->
 
   e.artist = artist
   e.title = title
+  trimAllWhitespace(e)
   logOutput("MTV: Calc[`#{e.id}`] Artist: `#{e.artist}`, Title: `#{e.title}`")
   return
 
@@ -1213,6 +1228,8 @@ findMissingYoutubeInfo = ->
     if not v.added?
       v.added = serverEpoch
       needsSave = true
+    if trimAllWhitespace(v)
+      needsSave = true
   for v in queue
     if v.countPlay?
       delete v["countPlay"]
@@ -1228,6 +1245,8 @@ findMissingYoutubeInfo = ->
       needsSave = true
     if not v.added?
       v.added = serverEpoch
+      needsSave = true
+    if trimAllWhitespace(v)
       needsSave = true
   if needsSave
     savePlaylist()
