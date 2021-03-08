@@ -303,9 +303,10 @@ showStats = ->
             <div>&nbsp;</div>
             <div class="statsheader">Songs by Tag:</div>
           """
-          for tagName, tagCount of tagCounts
+          tagNames = Object.keys(tagCounts).sort()
+          for tagName in tagNames
             html += """
-              <div> * <a href="#tag/#{encodeURIComponent(tagName)}">#{tagName}</a>: #{tagCount}</div>
+              <div> * <a href="#tag/#{encodeURIComponent(tagName)}">#{constants.tags[tagName]}</a>: #{tagCounts[tagName]}</div>
             """
 
           # html = "<pre>" + JSON.stringify(userCounts, null, 2) + "</pre>"

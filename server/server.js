@@ -886,7 +886,7 @@
     }
     tagsString = "";
     for (tag in e.tags) {
-      tagsString = `, ${constants.tags[tag]}`;
+      tagsString += `, ${constants.tags[tag]}`;
     }
     ownerNick = getNickname(e.user);
     return {
