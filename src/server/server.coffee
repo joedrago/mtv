@@ -656,7 +656,7 @@ calcEntryStrings = (e) ->
 
   tagsString = ""
   for tag of e.tags
-    tagsString = ", #{constants.tags[tag]}"
+    tagsString += ", #{constants.tags[tag]}"
 
   ownerNick = getNickname(e.user)
 
