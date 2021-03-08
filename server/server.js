@@ -292,8 +292,8 @@
       if (autoskipCount > AUTOSKIPLIST_COUNT) {
         l += `, +${autoskipCount - AUTOSKIPLIST_COUNT} more`;
       }
-      logOutput(`MTV: Auto-skipped ${autoskipCount} song${autoskipCount === 1 ? "" : "s"}: \`${l}\``);
     }
+    // logOutput("MTV: Auto-skipped #{autoskipCount} song#{if autoskipCount == 1 then "" else "s"}: `#{l}`")
     autoskipCount = 0;
     autoskipList = [];
   };
@@ -1040,7 +1040,7 @@
   };
 
   run = async function(args, user) {
-    var anonCount, cmd, companyArgs, concatenatedArgs, count, e, editArgs, extraSkips, i, ignoreArgs, ignoreCmd, ignoreName, k, len, m, name, name1, nameString, newCompany, newNickname, newValue, nicknameArgs, nsfw, oldValue, other, prettyList, property, q, r, ref, ref1, ref2, ref3, ref4, ref5, ret, strs, title, v, w, x, y;
+    var anonCount, cmd, companyArgs, concatenatedArgs, count, e, editArgs, extraSkips, filterFunc, i, i1, ignoreArgs, ignoreCmd, ignoreName, index, j, j1, k, len, len1, len2, m, name, name1, nameString, newCompany, newNickname, newValue, nicknameArgs, nsfw, oldValue, other, playArgs, playQueue, playSubstring, prettyList, property, q, r, ref, ref1, ref2, ref3, ref4, ref5, ref6, ret, strs, subcommand, title, unsortedQueue, v, w, x, y, z;
     cmd = 'who';
     if (args.length > 0) {
       cmd = args[0];
@@ -1330,6 +1330,68 @@
           return requestDashboardRefresh();
         }, 3000);
         return ret;
+      case 'block':
+        if (args.length < 3) {
+          return "MTV: Syntax: block [artist/title] substring";
+        }
+        subcommand = args[1].toLowerCase();
+        playArgs = [];
+        for (i = w = 2, ref3 = args.length; (2 <= ref3 ? w < ref3 : w > ref3); i = 2 <= ref3 ? ++w : --w) {
+          playArgs.push(args[i]);
+        }
+        playSubstring = playArgs.join(" ").toLowerCase();
+        switch (subcommand) {
+          case 'artist':
+          case 'band':
+            filterFunc = function(e, s) {
+              return e.artist.toLowerCase().indexOf(s) !== -1;
+            };
+            break;
+          case 'title':
+          case 'song':
+            filterFunc = function(e, s) {
+              return e.title.toLowerCase().indexOf(s) !== -1;
+            };
+            break;
+          case 'full':
+            filterFunc = function(e, s) {
+              var full;
+              full = e.artist.toLowerCase() + " - " + e.title.toLowerCase();
+              return full.indexOf(s) !== -1;
+            };
+            break;
+          default:
+            return `MTV: Unknown play type: \`${subcommand}\``;
+        }
+        unsortedQueue = [];
+        for (k in playlist) {
+          v = playlist[k];
+          if (filterFunc(v, playSubstring)) {
+            unsortedQueue.push(v);
+            if (unsortedQueue.length > 50) {
+              return `MTV: Too many (over 50) ${subcommand}s match: \`${playSubstring}\``;
+            }
+          }
+        }
+        if (unsortedQueue.length < 1) {
+          return `MTV: No ${subcommand}s match: \`${playSubstring}\``;
+        }
+        playQueue = [unsortedQueue.shift()];
+        for (index = x = 0, len1 = unsortedQueue.length; x < len1; index = ++x) {
+          i = unsortedQueue[index];
+          j = Math.floor(Math.random() * (index + 1));
+          playQueue.push(playQueue[j]);
+          playQueue[j] = i;
+        }
+        for (y = 0, len2 = playQueue.length; y < len2; y++) {
+          v = playQueue[y];
+          queue.unshift(v);
+        }
+        saveState();
+        setTimeout(function() {
+          return requestDashboardRefresh();
+        }, 3000);
+        return `MTV: Queued ${playQueue.length} video${playQueue.length === 1 ? "" : "s"} matching: \`${playSubstring}\``;
       case 'shuffle':
         queue = [];
         e = playNext();
@@ -1345,7 +1407,7 @@
       case 'company':
       case 'label':
         companyArgs = [];
-        for (i = w = 1, ref3 = args.length; (1 <= ref3 ? w < ref3 : w > ref3); i = 1 <= ref3 ? ++w : --w) {
+        for (i = z = 1, ref4 = args.length; (1 <= ref4 ? z < ref4 : z > ref4); i = 1 <= ref4 ? ++z : --z) {
           companyArgs.push(args[i]);
         }
         newCompany = companyArgs.join(" ");
@@ -1363,7 +1425,7 @@
       case 'nickname':
       case 'name':
         nicknameArgs = [];
-        for (i = x = 1, ref4 = args.length; (1 <= ref4 ? x < ref4 : x > ref4); i = 1 <= ref4 ? ++x : --x) {
+        for (i = i1 = 1, ref5 = args.length; (1 <= ref5 ? i1 < ref5 : i1 > ref5); i = 1 <= ref5 ? ++i1 : --i1) {
           nicknameArgs.push(args[i]);
         }
         newNickname = nicknameArgs.join(" ");
@@ -1411,7 +1473,7 @@
           strs = calcEntryStrings(lastPlayed);
           ret = `MTV: Skipped ${strs.description}`;
         }
-        for (i = y = 0, ref5 = extraSkips; (0 <= ref5 ? y < ref5 : y > ref5); i = 0 <= ref5 ? ++y : --y) {
+        for (i = j1 = 0, ref6 = extraSkips; (0 <= ref6 ? j1 < ref6 : j1 > ref6); i = 0 <= ref6 ? ++j1 : --j1) {
           queue.shift();
         }
         e = playNext();
