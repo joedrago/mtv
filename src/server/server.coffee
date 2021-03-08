@@ -5,8 +5,7 @@ iso8601 = require 'iso8601-duration'
 fs = require 'fs'
 https = require 'https'
 ytdl = require 'ytdl-core'
-
-opinionOrder = ['like', 'meh', 'bleh', 'hate'] # always in this specific order
+constants = require '../constants'
 
 YOUTUBE_USER = "YouTube"
 AUTOSKIPLIST_COUNT = 3
@@ -193,7 +192,7 @@ logAutoskip = ->
 
 shouldSkip = (e) ->
   # console.log "shouldSkip: e #{JSON.stringify(e)}"
-  if e.nsfw
+  if e.tags.nsfw
     # console.log "shouldSkip: sfwOnly #{JSON.stringify(sfwOnly)}"
     for sid, soc of sockets
       if not isPlaying[sid]
@@ -223,11 +222,8 @@ shouldSkip = (e) ->
       if not feeling?
         console.log "autoskip: #{user} has no opinion of this song, bailing out."
         return false
-      if feeling == 'like'
-        console.log "autoskip: #{user} likes this song, bailing out."
-        return false
-      if feeling == 'meh'
-        console.log "autoskip: #{user} mehs this song, bailing out."
+      if constants.goodOpinions[feeling]?
+        console.log "autoskip: #{user} #{feeling}s this song, bailing out."
         return false
 
       # any other feeling is autoskip-worthy
@@ -267,7 +263,7 @@ autoskip = ->
     title = title.replace(/\s+$/, "")
     logText = "#{artist}\n\"#{title}\"\n#{licensingInfo.company}"
     feelings = []
-    for o in opinionOrder
+    for o in constants.opinionOrder
       if licensingInfo.opinions[o]?
         feelings.push o
     if feelings.length == 0
@@ -599,6 +595,7 @@ entryFromArg = (arg) ->
     start: startTime
     end: endTime
     added: now()
+    tags: {}
   }
 
 prettyDuration = (duration) ->
@@ -657,9 +654,9 @@ calcEntryStrings = (e) ->
       whoList.sort()
       opinionString += " (#{whoList.join(', ')})"
 
-  nsfwString = ""
-  if e.nsfw
-    nsfwString = ", NSFW"
+  tagsString = ""
+  for tag of e.tags
+    tagsString = ", #{constants.tags[tag]}"
 
   ownerNick = getNickname(e.user)
 
@@ -668,7 +665,7 @@ calcEntryStrings = (e) ->
     title: title
     opinions: opinionTable
     url: url
-    description: "**#{artist}** - **#{title}** `[#{ownerNick}#{nsfwString}, #{prettyDuration(actualDuration)}#{opinionString}]`"
+    description: "**#{artist}** - **#{title}** `[#{ownerNick}#{tagsString}, #{prettyDuration(actualDuration)}#{opinionString}]`"
   }
 
 calcLicensingInfo = (e) ->
@@ -806,7 +803,7 @@ run = (args, user) ->
       strs = calcEntryStrings(lastPlayed)
       return "MTV: #{strs.url}"
 
-    when 'like', 'meh', 'bleh', 'hate', 'none'
+    when constants.opinions[cmd]?, 'none'
       e = null
       if args.length > 1
         if args[1].toLowerCase() == 'last'
@@ -847,8 +844,11 @@ run = (args, user) ->
     when 'nsfw', 'sfw'
       if lastPlayed == null
         return "MTV: I have no idea what's playing."
-      nsfw = (cmd == 'nsfw')
-      lastPlayed.nsfw = nsfw
+      if cmd == 'nsfw'
+        lastPlayed.tags.nsfw = true
+      else
+        if lastPlayed.tags.nsfw?
+          delete lastPlayed.tags.nsfw
       strs = calcEntryStrings(lastPlayed)
       savePlaylist()
       requestDashboardRefresh()
@@ -931,7 +931,7 @@ run = (args, user) ->
         return "MTV: edit: Not in pool already, ignoring"
 
       if args.length < 3
-        return "MTV: Syntax: edit [URL/id] [user/start/end/artist/title/nsfw/sfw] [newValue]"
+        return "MTV: Syntax: edit [URL/id] [user/start/end/artist/title] [newValue]"
       property = args[2].toLowerCase()
       editArgs = []
       for i in [3...args.length]
@@ -956,9 +956,6 @@ run = (args, user) ->
           newValue = concatenatedArgs
         when 'title'
           newValue = concatenatedArgs
-        when 'sfw', 'nsfw'
-          newValue = (property == 'nsfw')
-          property = 'nsfw'
         else
           return "MTV: edit: unknown property: #{property}"
 
@@ -967,6 +964,42 @@ run = (args, user) ->
       savePlaylist()
       requestDashboardRefresh()
       return "MTV: Edited: #{e.id} [#{property}] `#{oldValue}` -> `#{newValue}`"
+
+    when 'tag', 'untag'
+      legalTags = Object.keys(constants.tags).sort().join(", ")
+      if args.length < 2
+        return "MTV [tag]: Please provide a tag. [`#{legalTags}`]"
+      tagName = args[1]
+      if not constants.tags[tagName]?
+        return "MTV [tag]: Please provide an allowed tag.  [`#{legalTags}`]"
+      e = null
+      if args.length > 2
+        if args[2].toLowerCase() == 'last'
+          if history.length < 2
+            return "MTV [opinion]: Can't tag last song; no history."
+          e = history[1]
+        else
+          e = entryFromArg(args[2])
+          if not e?
+            return "MTV [opinion]: I don't know what #{args[2]} is."
+        if not playlist[e.id]?
+          return "MTV [opinion]: #{e.id} is not in the pool."
+        e = playlist[e.id]
+      if not e?
+        if lastPlayed == null
+          return "MTV: I have no idea what's playing."
+        e = lastPlayed
+
+      if cmd == 'tag'
+        e.tags[tagName] = true
+      else
+        if e.tags[tagName]?
+          delete e.tags[tagName]
+      strs = calcEntryStrings(e)
+      savePlaylist()
+      requestDashboardRefresh()
+      checkAutoskip()
+      return "MTV: Tag Updated: #{strs.description}"
 
     when 'queue', 'q'
       e = entryFromArg(args[1])
@@ -991,7 +1024,7 @@ run = (args, user) ->
 
     when 'block'
       if args.length < 3
-        return "MTV: Syntax: block [artist/title] substring"
+        return "MTV: Syntax: block [artist/title/tag] substring"
       subcommand = args[1].toLowerCase()
       playArgs = []
       for i in [2...args.length]
@@ -1002,6 +1035,8 @@ run = (args, user) ->
           filterFunc = (e, s) -> e.artist.toLowerCase().indexOf(s) != -1
         when 'title', 'song'
           filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
+        when 'tag'
+          filterFunc = (e, s) -> e.tags[s]?
         when 'full'
           filterFunc = (e, s) ->
             full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
@@ -1012,7 +1047,7 @@ run = (args, user) ->
       for k,v of playlist
         if filterFunc(v, playSubstring)
           unsortedQueue.push(v)
-          if unsortedQueue.length > 50
+          if (subcommand != 'tag') and (unsortedQueue.length > 50)
             return "MTV: Too many (over 50) #{subcommand}s match: `#{playSubstring}`"
       if unsortedQueue.length < 1
         return "MTV: No #{subcommand}s match: `#{playSubstring}`"
@@ -1270,6 +1305,13 @@ findMissingYoutubeInfo = ->
       needsSave = true
     if trimAllWhitespace(v)
       needsSave = true
+    if not v.tags?
+      v.tags = {}
+      needsSave = true
+    if v.nsfw?
+      delete v.nsfw
+      v.tags.nsfw = true
+      needsSave = true
   for v in queue
     if v.countPlay?
       delete v["countPlay"]
@@ -1287,6 +1329,13 @@ findMissingYoutubeInfo = ->
       v.added = serverEpoch
       needsSave = true
     if trimAllWhitespace(v)
+      needsSave = true
+    if not v.tags?
+      v.tags = {}
+      needsSave = true
+    if v.nsfw?
+      delete v.nsfw
+      v.tags.nsfw = true
       needsSave = true
   if needsSave
     savePlaylist()
