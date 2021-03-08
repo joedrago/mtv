@@ -51,6 +51,15 @@ buildServer = (callback) ->
   coffee.on 'exit', (code) ->
     util.log "Server compilation finished."
     callback?() if code is 0
+  coffee = spawn coffeeName, ['-c', '-o', 'constants.js', 'src/constants.coffee']
+  coffee.stderr.on 'data', (data) ->
+    process.stderr.write data.toString()
+    process.exit(-1)
+  coffee.stdout.on 'data', (data) ->
+    print data.toString()
+  coffee.on 'exit', (code) ->
+    util.log "Server compilation finished."
+    callback?() if code is 0
 
 buildMarkdown = (callback) ->
   files = ['web/help']

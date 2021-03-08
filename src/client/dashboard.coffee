@@ -1,16 +1,19 @@
+constants = require '../constants'
+
 socket = null
 
 DASHCAST_NAMESPACE = 'urn:x-cast:es.offd.dashcast'
 
 lastClicked = null
 lastUser = null
+lastTag = null
 discordTag = null
 discordNickname = null
 
 castAvailable = false
 castSession = null
 
-opinionOrder = ['like', 'meh', 'bleh', 'hate'] # always in this specific order
+opinionOrder = constants.opinionOrder
 
 now = ->
   return Math.floor(Date.now() / 1000)
@@ -58,7 +61,7 @@ SORT_NONE = 0
 SORT_ARTIST_TITLE = 1
 SORT_ADDED = 2
 
-renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE) ->
+renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE, tagFilter = null) ->
   html = ""
 
   if isMap
@@ -96,7 +99,15 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE) 
           return 1
         return 0
 
+  if not firstTitle? and not restTitle? and tagFilter?
+    html += """
+      <div class="restTitle">Tag: #{tagFilter}</div>
+    """
+
   for e, entryIndex in entries
+    if tagFilter? and not e.tags[tagFilter]?
+      continue
+
     artist = e.artist
     if not artist?
       artist = "Unknown"
@@ -113,8 +124,8 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE) 
     url = "https://youtu.be/#{e.id}#{params}"
 
     extraInfo = ""
-    if e.nsfw
-      extraInfo += ", NSFW"
+    for tag of e.tags
+      extraInfo += ", #{constants.tags[tag]}"
     if (e.start != -1) or  (e.end != -1)
       extraInfo += ", #{prettyDuration(e)}"
     if e.opinions?
@@ -144,7 +155,7 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE) 
   return html
 
 
-showList = (firstTitle, restTitle, url, isMap = false, sortMethod = SORT_NONE) ->
+showList = (firstTitle, restTitle, url, isMap = false, sortMethod = SORT_NONE, tagFilter = null) ->
   return new Promise (resolve, reject) ->
     xhttp = new XMLHttpRequest()
     xhttp.onreadystatechange = ->
@@ -152,7 +163,7 @@ showList = (firstTitle, restTitle, url, isMap = false, sortMethod = SORT_NONE) -
            # Typical action to be performed when the document is ready:
            try
              entries = JSON.parse(xhttp.responseText)
-             resolve(renderEntries(firstTitle, restTitle, entries, isMap, sortMethod))
+             resolve(renderEntries(firstTitle, restTitle, entries, isMap, sortMethod, tagFilter))
            catch
              resolve("Error")
     xhttp.open("GET", url, true)
@@ -214,6 +225,11 @@ showRecent = ->
   updateOther()
   lastClicked = showRecent
 
+showTag = ->
+  document.getElementById('main').innerHTML = await showList(null, null, "/info/playlist", true, SORT_ARTIST_TITLE, lastTag)
+  updateOther()
+  lastClicked = showTag
+
 showStats = ->
   html = ""
   xhttp = new XMLHttpRequest()
@@ -230,6 +246,7 @@ showStats = ->
           totalDuration = 0
 
           userCounts = {}
+          tagCounts = {}
           for e in entries
             userCounts[e.nickname] ?= 0
             userCounts[e.nickname] += 1
@@ -241,6 +258,10 @@ showStats = ->
               endTime = e.duration
             duration = endTime - startTime
             totalDuration += duration
+
+            for tagName of e.tags
+              tagCounts[tagName] ?= 0
+              tagCounts[tagName] += 1
 
           userList = Object.keys(userCounts)
           userList.sort (a, b) ->
@@ -276,6 +297,15 @@ showStats = ->
           for user in userList
             html += """
               <div> * <a href="#user/#{encodeURIComponent(user)}">#{user}</a>: #{userCounts[user]}</div>
+            """
+
+          html += """
+            <div>&nbsp;</div>
+            <div class="statsheader">Songs by Tag:</div>
+          """
+          for tagName, tagCount of tagCounts
+            html += """
+              <div> * <a href="#tag/#{encodeURIComponent(tagName)}">#{tagName}</a>: #{tagCount}</div>
             """
 
           # html = "<pre>" + JSON.stringify(userCounts, null, 2) + "</pre>"
@@ -439,6 +469,10 @@ processHash = ->
   if matches = currentHash.match(/^#user\/(.+)/)
     lastUser = decodeURIComponent(matches[1])
     showUser()
+    return
+  if matches = currentHash.match(/^#tag\/(.+)/)
+    lastTag = decodeURIComponent(matches[1])
+    showTag()
     return
   switch currentHash
     when '#queue'
