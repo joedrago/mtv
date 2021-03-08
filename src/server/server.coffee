@@ -989,6 +989,46 @@ run = (args, user) ->
       , 3000)
       return ret
 
+    when 'block'
+      if args.length < 3
+        return "MTV: Syntax: block [artist/title] substring"
+      subcommand = args[1].toLowerCase()
+      playArgs = []
+      for i in [2...args.length]
+        playArgs.push args[i]
+      playSubstring = playArgs.join(" ").toLowerCase()
+      switch subcommand
+        when 'artist', 'band'
+          filterFunc = (e, s) -> e.artist.toLowerCase().indexOf(s) != -1
+        when 'title', 'song'
+          filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
+        when 'full'
+          filterFunc = (e, s) ->
+            full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
+            full.indexOf(s) != -1
+        else
+          return "MTV: Unknown play type: `#{subcommand}`"
+      unsortedQueue = []
+      for k,v of playlist
+        if filterFunc(v, playSubstring)
+          unsortedQueue.push(v)
+          if unsortedQueue.length > 50
+            return "MTV: Too many (over 50) #{subcommand}s match: `#{playSubstring}`"
+      if unsortedQueue.length < 1
+        return "MTV: No #{subcommand}s match: `#{playSubstring}`"
+      playQueue = [ unsortedQueue.shift() ]
+      for i, index in unsortedQueue
+        j = Math.floor(Math.random() * (index + 1))
+        playQueue.push(playQueue[j])
+        playQueue[j] = i
+      for v in playQueue
+        queue.unshift(v)
+      saveState()
+      setTimeout(->
+        requestDashboardRefresh()
+      , 3000)
+      return "MTV: Queued #{playQueue.length} video#{if playQueue.length == 1 then "" else "s"} matching: `#{playSubstring}`"
+
     when 'shuffle'
       queue = []
       e = playNext()
