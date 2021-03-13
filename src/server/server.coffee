@@ -783,9 +783,11 @@ calcEntryStrings = (e) ->
       whoList.sort()
       opinionString += " (#{whoList.join(', ')})"
 
-  tagsString = ""
-  for tag of e.tags
-    tagsString += ", #{constants.tags[tag]}"
+  tagsString = Object.keys(e.tags).sort().map (e) ->
+    constants.tags[e]
+  .join(', ')
+  if tagsString.length > 0
+    tagsString = " - [#{tagsString}]"
 
   ownerNick = getNickname(e.user)
 
@@ -794,7 +796,7 @@ calcEntryStrings = (e) ->
     title: title
     opinions: opinionTable
     url: url
-    description: "**#{artist}** - **#{title}** `[#{ownerNick}#{tagsString}, #{prettyDuration(actualDuration)}#{opinionString}]`"
+    description: "**#{artist}** - **#{title}** `[#{ownerNick}, #{prettyDuration(actualDuration)}#{opinionString}]#{tagsString}`"
   }
 
 calcLicensingInfo = (e) ->
@@ -885,6 +887,11 @@ calcUserInfo = (user) ->
 
   return userInfo
 
+isOpinionCommand = (cmd) ->
+  if cmd == 'none'
+    return true
+  return constants.opinions[cmd]?
+
 run = (args, user) ->
   cmd = 'who'
   if args.length > 0
@@ -896,6 +903,37 @@ run = (args, user) ->
 
   # Sanitize command
   cmd = cmd.replace(/[^a-zA-Z0-9]/g, "")
+
+  if isOpinionCommand(cmd)
+    e = null
+    if args.length > 1
+      if args[1].toLowerCase() == 'last'
+        if history.length < 2
+          return "MTV [opinion]: Can't updated last song; no history."
+        e = history[1]
+      else
+        e = entryFromArg(args[1])
+        if not e?
+          return "MTV [opinion]: I don't know what #{args[1]} is."
+      if not playlist[e.id]?
+        return "MTV [opinion]: #{e.id} is not in the pool."
+      e = playlist[e.id]
+    if not e?
+      if lastPlayed == null
+        return "MTV: I have no idea what's playing."
+      e = lastPlayed
+    opinions[e.id] ?= {}
+    if cmd == 'none'
+      if opinions[e.id][user]?
+        delete opinions[e.id][user]
+    else
+      opinions[e.id][user] = cmd
+    updateOpinion(e)
+    strs = calcEntryStrings(e)
+    saveOpinions()
+    requestDashboardRefresh()
+    checkAutoskip()
+    return "MTV: Updated: #{strs.description}"
 
   switch cmd
 
@@ -931,37 +969,6 @@ run = (args, user) ->
         return "MTV: I have no idea what's playing."
       strs = calcEntryStrings(lastPlayed)
       return "MTV: #{strs.url}"
-
-    when constants.opinions[cmd]?, 'none'
-      e = null
-      if args.length > 1
-        if args[1].toLowerCase() == 'last'
-          if history.length < 2
-            return "MTV [opinion]: Can't updated last song; no history."
-          e = history[1]
-        else
-          e = entryFromArg(args[1])
-          if not e?
-            return "MTV [opinion]: I don't know what #{args[1]} is."
-        if not playlist[e.id]?
-          return "MTV [opinion]: #{e.id} is not in the pool."
-        e = playlist[e.id]
-      if not e?
-        if lastPlayed == null
-          return "MTV: I have no idea what's playing."
-        e = lastPlayed
-      opinions[e.id] ?= {}
-      if cmd == 'none'
-        if opinions[e.id][user]?
-          delete opinions[e.id][user]
-      else
-        opinions[e.id][user] = cmd
-      updateOpinion(e)
-      strs = calcEntryStrings(e)
-      saveOpinions()
-      requestDashboardRefresh()
-      checkAutoskip()
-      return "MTV: Updated: #{strs.description}"
 
     when 'echo'
       echoEnabled = !echoEnabled
@@ -1085,6 +1092,24 @@ run = (args, user) ->
           newValue = concatenatedArgs
         when 'title'
           newValue = concatenatedArgs
+        when 'tag', 'untag'
+          e = playlist[e.id]
+          if not e?
+            return "MTV [edit]: Unknown id"
+          for tagName in editArgs
+            if not constants.tags[tagName]?
+              return "MTV [edit]: Unknown tag: `#{tagName}`"
+          for tagName in editArgs
+            if property == 'tag'
+              e.tags[tagName] = true
+            else
+              if e.tags[tagName]?
+                delete e.tags[tagName]
+          strs = calcEntryStrings(e)
+          savePlaylist()
+          requestDashboardRefresh()
+          checkAutoskip()
+          return "MTV: Tags Updated: #{strs.description}"
         else
           return "MTV: edit: unknown property: #{property}"
 
@@ -1094,41 +1119,32 @@ run = (args, user) ->
       requestDashboardRefresh()
       return "MTV: Edited: #{e.id} [#{property}] `#{oldValue}` -> `#{newValue}`"
 
-    when 'tag', 'untag'
+    when 'tags'
       legalTags = Object.keys(constants.tags).sort().join(", ")
+      return "MTV [tags]: `#{legalTags}`"
+    when 'tag', 'untag'
       if args.length < 2
-        return "MTV [tag]: Please provide a tag. [`#{legalTags}`]"
-      tagName = args[1]
-      if not constants.tags[tagName]?
-        return "MTV [tag]: Please provide an allowed tag.  [`#{legalTags}`]"
-      e = null
-      if args.length > 2
-        if args[2].toLowerCase() == 'last'
-          if history.length < 2
-            return "MTV [opinion]: Can't tag last song; no history."
-          e = history[1]
+        return "MTV [tag]: Please provide a tag."
+      if lastPlayed == null
+        return "MTV: I have no idea what's playing."
+      tagArgs = []
+      for i in [1...args.length]
+        tagArgs.push args[i]
+      for tagName in tagArgs
+        if not constants.tags[tagName]?
+          return "MTV [#{cmd}]: Unknown tag: `#{tagName}`"
+      e = lastPlayed
+      for tagName in tagArgs
+        if cmd == 'tag'
+          e.tags[tagName] = true
         else
-          e = entryFromArg(args[2])
-          if not e?
-            return "MTV [opinion]: I don't know what #{args[2]} is."
-        if not playlist[e.id]?
-          return "MTV [opinion]: #{e.id} is not in the pool."
-        e = playlist[e.id]
-      if not e?
-        if lastPlayed == null
-          return "MTV: I have no idea what's playing."
-        e = lastPlayed
-
-      if cmd == 'tag'
-        e.tags[tagName] = true
-      else
-        if e.tags[tagName]?
-          delete e.tags[tagName]
+          if e.tags[tagName]?
+            delete e.tags[tagName]
       strs = calcEntryStrings(e)
       savePlaylist()
       requestDashboardRefresh()
       checkAutoskip()
-      return "MTV: Tag Updated: #{strs.description}"
+      return "MTV: Tags Updated: #{strs.description}"
 
     when 'queue', 'q'
       e = entryFromArg(args[1])
@@ -1374,16 +1390,18 @@ processOAuth = (code) ->
 
 trimAllWhitespace = (e) ->
   ret = false
-  newArtist = e.artist.replace(/^\s*/, "")
-  newArtist = e.artist.replace(/\s*$/, "")
-  if e.artist != newArtist
-    e.artist = newArtist
-    ret = true
-  newTitle = e.title.replace(/^\s*/, "")
-  newTitle = e.title.replace(/\s*$/, "")
-  if e.title != newTitle
-    e.title = newTitle
-    ret = true
+  if e.artist?
+    newArtist = e.artist.replace(/^\s*/, "")
+    newArtist = e.artist.replace(/\s*$/, "")
+    if e.artist != newArtist
+      e.artist = newArtist
+      ret = true
+  if e.title?
+    newTitle = e.title.replace(/^\s*/, "")
+    newTitle = e.title.replace(/\s*$/, "")
+    if e.title != newTitle
+      e.title = newTitle
+      ret = true
   return ret
 
 splitArtist = (e) ->
