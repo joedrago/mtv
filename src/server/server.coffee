@@ -411,11 +411,13 @@ queueYoutubeTrending = ->
 
             if playlist[e.id]?
               unshuffledTrendingQueue.push(playlist[e.id])
+              e = playlist[e.id]
             else
               e.title = item.snippet.title
               e.thumb = thumbUrl
               e.user = YOUTUBE_USER
               e.duration = parseDuration(item.contentDetails.duration)
+              splitArtist(e)
               unshuffledTrendingQueue.push e
             console.log "Found trending title [#{e.id}]: #{e.title}"
             # savePlaylist()
@@ -430,6 +432,103 @@ queueYoutubeTrending = ->
             queue.unshift e
         resolve()
     req.end()
+
+queueYoutubePlaylist = (playlistId) ->
+  return new Promise (resolve, reject) ->
+    url = "https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=#{encodeURIComponent(playlistId)}&key=#{secrets.youtube}"
+    outerReq = https.request url, (outerRes) ->
+      rawJSON = ""
+      outerRes.on 'data', (chunk) ->
+        rawJSON += chunk
+      outerRes.on 'error', ->
+        console.log "Error getting playlist music"
+        resolve()
+      outerRes.on 'end', ->
+        outerData = null
+        try
+          outerData = JSON.parse(rawJSON)
+        catch
+          console.log "ERROR: Failed to talk to parse JSON: #{rawJSON}"
+          resolve(0)
+          return
+
+        idList = []
+        if outerData.items? and (outerData.items.length > 0)
+          unshuffledPlaylistQueue = []
+          for item in outerData.items
+            if item.snippet.resourceId.kind == 'youtube#video'
+              idList.push item.snippet.resourceId.videoId
+
+        if idList.length == 0
+          console.log "ERROR: idList is empty: #{rawJSON}"
+          resolve(0)
+          return
+        idString = idList.join(',')
+        console.log "idString: #{idString}"
+
+        url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&key=#{secrets.youtube}&id=#{idString}"
+        req = https.request url, (res) ->
+          rawJSON = ""
+          res.on 'data', (chunk) ->
+            rawJSON += chunk
+          res.on 'error', ->
+            console.log "Error getting playlist music"
+            resolve(0)
+          res.on 'end', ->
+            data = null
+            try
+              data = JSON.parse(rawJSON)
+            catch
+              console.log "ERROR: Failed to talk to parse JSON: #{rawJSON}"
+              resolve(0)
+              return
+            saved = false
+            playlistCount = 0
+            if data.items? and (data.items.length > 0)
+              unshuffledPlaylistQueue = []
+              for item in data.items
+                chosenThumb = null
+                for thumbType, thumb of item.snippet.thumbnails
+                  if not chosenThumb?
+                    chosenThumb = thumb
+                    continue
+                  if thumbType == 'medium'
+                    chosenThumb = thumb
+                    break
+                  if chosenThumb.height < thumb.height
+                    chosenThumb = thumb
+                thumbUrl = null
+                if chosenThumb?
+                  thumbUrl = chosenThumb.url
+                if not thumbUrl?
+                  thumbUrl = '/unknown.png'
+                e = entryFromArg(item.id)
+
+                if playlist[e.id]?
+                  unshuffledPlaylistQueue.push(playlist[e.id])
+                  e = playlist[e.id]
+                else
+                  e.title = item.snippet.title
+                  e.thumb = thumbUrl
+                  e.user = YOUTUBE_USER
+                  e.duration = parseDuration(item.contentDetails.duration)
+                  splitArtist(e)
+                  unshuffledPlaylistQueue.push e
+                console.log "Found playlist video title [#{e.id}]: #{e.title}"
+                # savePlaylist()
+                # saved = true
+
+              playlistQueue = [ unshuffledPlaylistQueue.shift() ]
+              for i, index in unshuffledPlaylistQueue
+                j = Math.floor(Math.random() * (index + 1))
+                playlistQueue.push(playlistQueue[j])
+                playlistQueue[j] = i
+              for e in playlistQueue
+                queue.unshift e
+              playlistCount = playlistQueue.length
+            resolve(playlistCount)
+        req.end()
+    outerReq.end()
 
 getYoutubeData = (e) ->
   limiter.schedule ->
@@ -597,6 +696,36 @@ entryFromArg = (arg) ->
     added: now()
     tags: {}
   }
+
+playlistIDFromArg = (arg) ->
+  if not arg?
+    return null
+  arg = String(arg)
+
+  id = null
+
+  if not arg.match("^https?:")
+    return arg
+
+  try
+    url = new URL(arg)
+  catch
+    url = null
+    id = arg
+
+  if not id? and (url.hostname == 'youtu.be') or url.hostname.match(/youtube.com$/)
+    list = url.searchParams.get('list')
+    if list?
+      id = list
+
+  if not id?
+    return null
+  if id.match(/\?/)
+    return null
+  if id.match(/\//)
+    return null
+
+  return id
 
 prettyDuration = (duration) ->
   str = ""
@@ -1077,6 +1206,16 @@ run = (args, user) ->
       strs = calcEntryStrings(e)
       requestDashboardRefresh()
       return "MTV: Queued up the top 50 trending music from youtube. First up: #{strs.description}"
+
+    when 'playlist'
+      playlistID = playlistIDFromArg(args[1])
+      if not playlistID?
+        return "MTV: Unable to figure out playlistID from: `#{args[1]}`"
+      playlistCount = await queueYoutubePlaylist(playlistID)
+      requestDashboardRefresh()
+      if playlistCount == 0
+        return "MTV: Failed to find any videos with playlist ID `#{playlistID}`."
+      return "MTV: Queued up #{playlistCount} videos from playlist ID `#{playlistID}`."
 
     when 'company', 'label'
       companyArgs = []
