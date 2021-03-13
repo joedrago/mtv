@@ -417,7 +417,7 @@ queueYoutubeTrending = ->
               e.thumb = thumbUrl
               e.user = YOUTUBE_USER
               e.duration = parseDuration(item.contentDetails.duration)
-              splitArtist(e)
+              splitArtist(e, false)
               unshuffledTrendingQueue.push e
             console.log "Found trending title [#{e.id}]: #{e.title}"
             # savePlaylist()
@@ -512,7 +512,7 @@ queueYoutubePlaylist = (playlistId) ->
                   e.thumb = thumbUrl
                   e.user = YOUTUBE_USER
                   e.duration = parseDuration(item.contentDetails.duration)
-                  splitArtist(e)
+                  splitArtist(e, false)
                   unshuffledPlaylistQueue.push e
                 console.log "Found playlist video title [#{e.id}]: #{e.title}"
                 # savePlaylist()
@@ -1411,7 +1411,7 @@ trimAllWhitespace = (e) ->
       ret = true
   return ret
 
-splitArtist = (e) ->
+splitArtist = (e, announceCalc = true) ->
   if e.artist?
     return
 
@@ -1444,7 +1444,8 @@ splitArtist = (e) ->
   e.artist = artist
   e.title = title
   trimAllWhitespace(e)
-  logOutput("MTV: Calc[`#{e.id}`] Artist: `#{e.artist}`, Title: `#{e.title}`")
+  if announceCalc
+    logOutput("MTV: Calc[`#{e.id}`] Artist: `#{e.artist}`, Title: `#{e.title}`")
   return
 
 findMissingYoutubeInfo = ->
@@ -1462,7 +1463,7 @@ findMissingYoutubeInfo = ->
       getYoutubeData(v)
       missingTitleCount += 1
     else if not v.artist?
-      splitArtist(v)
+      splitArtist(v, false)
       needsSave = true
     if not v.added?
       v.added = serverEpoch
@@ -1487,7 +1488,7 @@ findMissingYoutubeInfo = ->
       getYoutubeData(v)
       missingTitleCount += 1
     else if not v.artist?
-      splitArtist(v)
+      splitArtist(v, false)
       needsSave = true
     if not v.added?
       v.added = serverEpoch
