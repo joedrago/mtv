@@ -585,7 +585,7 @@
                 e.thumb = thumbUrl;
                 e.user = YOUTUBE_USER;
                 e.duration = parseDuration(item.contentDetails.duration);
-                splitArtist(e);
+                splitArtist(e, false);
                 unshuffledTrendingQueue.push(e);
               }
               console.log(`Found trending title [${e.id}]: ${e.title}`);
@@ -712,7 +712,7 @@
                     e.thumb = thumbUrl;
                     e.user = YOUTUBE_USER;
                     e.duration = parseDuration(item.contentDetails.duration);
-                    splitArtist(e);
+                    splitArtist(e, false);
                     unshuffledPlaylistQueue.push(e);
                   }
                   console.log(`Found playlist video title [${e.id}]: ${e.title}`);
@@ -1878,7 +1878,7 @@
     return ret;
   };
 
-  splitArtist = function(e) {
+  splitArtist = function(e, announceCalc = true) {
     var artist, matches, title;
     if (e.artist != null) {
       return;
@@ -1912,7 +1912,9 @@
     e.artist = artist;
     e.title = title;
     trimAllWhitespace(e);
-    logOutput(`MTV: Calc[\`${e.id}\`] Artist: \`${e.artist}\`, Title: \`${e.title}\``);
+    if (announceCalc) {
+      logOutput(`MTV: Calc[\`${e.id}\`] Artist: \`${e.artist}\`, Title: \`${e.title}\``);
+    }
   };
 
   findMissingYoutubeInfo = function() {
@@ -1934,7 +1936,7 @@
         getYoutubeData(v);
         missingTitleCount += 1;
       } else if (v.artist == null) {
-        splitArtist(v);
+        splitArtist(v, false);
         needsSave = true;
       }
       if (v.added == null) {
@@ -1968,7 +1970,7 @@
         getYoutubeData(v);
         missingTitleCount += 1;
       } else if (v.artist == null) {
-        splitArtist(v);
+        splitArtist(v, false);
         needsSave = true;
       }
       if (v.added == null) {
