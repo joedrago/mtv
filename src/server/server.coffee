@@ -580,6 +580,13 @@ getYoutubeData = (e) ->
               saved = true
           if not saved
             console.log "Nope [#{e.id}]"
+            if playlist[e.id]?
+              delete playlist[e.id]
+            queue = queue.filter (a) -> a.id != e.id
+            history = history.filter (a) -> a.id != e.id
+            savePlaylist()
+            saveState()
+            logOutput("MTV: Auto-removed: `#{e.id}` (invalid YouTube ID)")
           resolve()
       req.end()
 
