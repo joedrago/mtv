@@ -1248,7 +1248,7 @@
           }
         }
         if (playlist[e.id] == null) {
-          return `MTV [opinion]: ${e.id} is not in the pool.`;
+          return `MTV [opinion]: \`${e.id}\` is not in the pool.`;
         }
         e = playlist[e.id];
       }
@@ -1363,7 +1363,7 @@
         playlist[e.id] = e;
         getYoutubeData(e);
         savePlaylist();
-        return `MTV: Added to pool: ${e.id}`;
+        return `MTV: Added to pool: \`${e.id}\``;
       case 'adopt':
         if (lastPlayed === null) {
           return "MTV: I have no idea what's playing.";
@@ -1379,7 +1379,7 @@
         playlist[lastPlayed.id] = lastPlayed;
         savePlaylist();
         requestDashboardRefresh();
-        return `MTV: Added to pool: ${lastPlayed.id}`;
+        return `MTV: Added to pool: \`${lastPlayed.id}\``;
       case 'ignore':
         ignoreCmd = args[1];
         ignoreArgs = [];
@@ -1511,7 +1511,7 @@
         playlist[e.id][property] = newValue;
         savePlaylist();
         requestDashboardRefresh();
-        return `MTV: Edited: ${e.id} [${property}] \`${oldValue}\` -> \`${newValue}\``;
+        return `MTV: Edited: \`${e.id}\` [\`${property}\`] \`${oldValue}\` -> \`${newValue}\``;
       case 'tags':
         legalTags = Object.keys(constants.tags).sort().join(", ");
         return `MTV [tags]: \`${legalTags}\``;
@@ -1565,7 +1565,7 @@
           queue.unshift(playlist[e.id]);
           getYoutubeData(e);
           savePlaylist();
-          ret = `MTV: Queued next and added to pool: ${e.id}`;
+          ret = `MTV: Queued next and added to pool: \`${e.id}\``;
         }
         saveState();
         setTimeout(function() {
@@ -1715,7 +1715,7 @@
           }
           return `MTV: Deleted ${title} from shuffled pool.`;
         } else {
-          return `MTV: ${e.id} is already not in the shuffled pool.`;
+          return `MTV: \`${e.id}\` is already not in the shuffled pool.`;
         }
         break;
       case 'next':
