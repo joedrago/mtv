@@ -807,6 +807,18 @@
             }
             if (!saved) {
               console.log(`Nope [${e.id}]`);
+              if (playlist[e.id] != null) {
+                delete playlist[e.id];
+              }
+              queue = queue.filter(function(a) {
+                return a.id !== e.id;
+              });
+              history = history.filter(function(a) {
+                return a.id !== e.id;
+              });
+              savePlaylist();
+              saveState();
+              logOutput(`MTV: Auto-removed: \`${e.id}\` (invalid YouTube ID)`);
             }
             return resolve();
           });
