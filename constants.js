@@ -23,7 +23,11 @@
       dance: "Dance",
       bet: "BET",
       cmt: "CMT",
-      vh1: "VH1"
+      vh1: "VH1",
+      "70s": "70s",
+      "80s": "80s",
+      disco: "Disco",
+      soultrain: "SoulTrain"
     }
   };
 

@@ -101,7 +101,7 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE, 
 
   if not firstTitle? and not restTitle? and tagFilter?
     html += """
-      <div class="restTitle">Tag: #{tagFilter}</div>
+      <div class="restTitle">Tag: #{if constants.tags[tagFilter]? then constants.tags[tagFilter] else "Unknown"}</div>
     """
 
   for e, entryIndex in entries
