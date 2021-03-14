@@ -1221,7 +1221,7 @@
   };
 
   run = async function(args, user) {
-    var anonCount, cmd, companyArgs, concatenatedArgs, count, e, editArgs, extraSkips, filterFunc, i, i1, ignoreArgs, ignoreCmd, ignoreName, index, j, j1, k, k1, l1, legalTags, len, len1, len2, len3, len4, len5, len6, m, m1, n1, name, name1, nameString, newCompany, newNickname, newValue, nicknameArgs, o1, oldValue, other, playArgs, playQueue, playSubstring, playlistCount, playlistID, prettyList, property, q, r, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ret, strs, subcommand, tagArgs, tagName, title, unsortedQueue, v, w, x, y, z;
+    var anonCount, cmd, companyArgs, concatenatedArgs, count, e, editArgs, extraSkips, filterFunc, i, i1, ignoreArgs, ignoreCmd, ignoreName, index, j, j1, k, k1, l1, legalTags, len, len1, len2, len3, len4, len5, len6, m, m1, n1, name, name1, nameString, newCompany, newNickname, newValue, nicknameArgs, o1, oldValue, other, p1, playArgs, playQueue, playSubstring, playlistCount, playlistID, prettyList, property, q, r, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, repeatCount, ret, strs, subcommand, tagArgs, tagName, title, unsortedQueue, v, w, x, y, z;
     cmd = 'who';
     if (args.length > 0) {
       cmd = args[0];
@@ -1568,9 +1568,7 @@
           ret = `MTV: Queued next and added to pool: \`${e.id}\``;
         }
         saveState();
-        setTimeout(function() {
-          return requestDashboardRefresh();
-        }, 3000);
+        requestDashboardRefresh();
         return ret;
       case 'block':
         if (args.length < 3) {
@@ -1635,9 +1633,7 @@
           queue.unshift(v);
         }
         saveState();
-        setTimeout(function() {
-          return requestDashboardRefresh();
-        }, 3000);
+        requestDashboardRefresh();
         return `MTV: Queued ${playQueue.length} video${playQueue.length === 1 ? "" : "s"} matching: \`${playSubstring}\``;
       case 'shuffle':
         queue = [];
@@ -1718,6 +1714,27 @@
           return `MTV: \`${e.id}\` is already not in the shuffled pool.`;
         }
         break;
+      case 'repeat':
+        if (lastPlayed == null) {
+          return "MTV: I have no idea what's playing.";
+        }
+        repeatCount = 1;
+        if (args.length > 1) {
+          repeatCount = parseInt(args[1]);
+          if (repeatCount < 1) {
+            repeatCount = 1;
+          }
+          if (repeatCount > 10) {
+            repeatCount = 10;
+          }
+        }
+        for (i = o1 = 0, ref7 = repeatCount; (0 <= ref7 ? o1 < ref7 : o1 > ref7); i = 0 <= ref7 ? ++o1 : --o1) {
+          queue.unshift(lastPlayed);
+        }
+        saveState();
+        requestDashboardRefresh();
+        strs = calcEntryStrings(lastPlayed);
+        return `MTV: Re-queued **${repeatCount}**x: ${strs.description}`;
       case 'next':
       case 'skip':
         extraSkips = 0;
@@ -1731,7 +1748,7 @@
           strs = calcEntryStrings(lastPlayed);
           ret = `MTV: Skipped ${strs.description}`;
         }
-        for (i = o1 = 0, ref7 = extraSkips; (0 <= ref7 ? o1 < ref7 : o1 > ref7); i = 0 <= ref7 ? ++o1 : --o1) {
+        for (i = p1 = 0, ref8 = extraSkips; (0 <= ref8 ? p1 < ref8 : p1 > ref8); i = 0 <= ref8 ? ++p1 : --p1) {
           queue.shift();
         }
         e = playNext();

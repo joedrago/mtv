@@ -1169,9 +1169,7 @@ run = (args, user) ->
         savePlaylist()
         ret = "MTV: Queued next and added to pool: `#{e.id}`"
       saveState()
-      setTimeout(->
-        requestDashboardRefresh()
-      , 3000)
+      requestDashboardRefresh()
       return ret
 
     when 'block'
@@ -1211,9 +1209,7 @@ run = (args, user) ->
       for v in playQueue
         queue.unshift(v)
       saveState()
-      setTimeout(->
-        requestDashboardRefresh()
-      , 3000)
+      requestDashboardRefresh()
       return "MTV: Queued #{playQueue.length} video#{if playQueue.length == 1 then "" else "s"} matching: `#{playSubstring}`"
 
     when 'shuffle'
@@ -1284,6 +1280,23 @@ run = (args, user) ->
         return "MTV: Deleted #{title} from shuffled pool."
       else
         return "MTV: `#{e.id}` is already not in the shuffled pool."
+
+    when 'repeat'
+      if not lastPlayed?
+        return "MTV: I have no idea what's playing."
+      repeatCount = 1
+      if args.length > 1
+        repeatCount = parseInt(args[1])
+        if repeatCount < 1
+          repeatCount = 1
+        if repeatCount > 10
+          repeatCount = 10
+      for i in [0...repeatCount]
+        queue.unshift(lastPlayed)
+      saveState()
+      requestDashboardRefresh()
+      strs = calcEntryStrings(lastPlayed)
+      return "MTV: Re-queued **#{repeatCount}**x: #{strs.description}"
 
     when 'next', 'skip'
       extraSkips = 0
