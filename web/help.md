@@ -77,6 +77,9 @@ Alright, so you're finally watching MTV, congrats! Not only that, but this first
     bleh
     hate
 
+    #mtv like https://www.youtube.com/watch?v=dQw4w9WgXcQ
+    #mtv like last
+
 It should reply with something like this:
 
 > MTV: Playing **Some Artist** - **Some Title**  [`bill, 3m44s, 1 like (ted), 1 hate (rufus)`]
@@ -93,6 +96,8 @@ This offers a simple vocabulary for us to hint at each other whether or not some
     skip
 
 This will skip the video for everyone, so this goes both ways. Don't be rude and force skip things a bunch of people are currently enjoying. You can always just click on the video itself to pause this song until the next one plays, for example.
+
+To update your opinion of a video that isn't currently playing, use the `#mtv like ...` syntax shown to supply the video you'd like to update. If you wanted to give your opinion of a video that just ended playback (the last video), use `last` here.
 
 ### Emojis {#emojis}
 
