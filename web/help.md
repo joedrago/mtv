@@ -15,12 +15,17 @@ This should help you get up and running with MTV and Discord.
   * [Adding a New Video (to the "pool")](#add)
   * [Queueing a (New) Video (to the "pool" _and_ the "queue")](#queue)
   * [Skipping the Current Video](#skip)
+  * [Repeating the Current Video](#repeat)
   * [Get Info About the Current Video](#who)
   * [Removing a Video](#remove)
   * [Setting/Removing Your Opinion](#opinions)
   * [Trending / Adopt](#trending)
   * [NSFW / SFW Toggling](#nsfw)
   * [Echo Toggling](#echo)
+  * [Tags](#tag)
+  * [MTV Blocks](#block)
+  * [Queueing Playlists](#playlist)
+  * [Ignore List (Autoskip)](#ignore)
   * [Editing a Video in the Pool](#edit)
 
 ## Introduction {#intro}
@@ -158,6 +163,13 @@ This action behaves identically to `#mtv add`, but also throws it in the front o
 
 This will skip the currently playing songs, or X songs (if X is a number). For example, `#mtv skip 5` will skip the next 5 songs.
 
+### Repeating the Current Video {#repeat}
+
+    #mtv repeat
+    #mtv repeat X
+
+This will re-queue the currently playing song to repeat it once, or X times (if X is a number). For example, `#mtv repeat 5` will queue the current song 5 more times.
+
 ### Get Info About the Current Video {#who}
 
     #mtv
@@ -211,6 +223,42 @@ However, once in a while, you'll find a new gem! If you see a new video that you
 
 MTV doesn't have any clue if a video is NSFW (Not Safe For Work); you have to help it out. The only reason this matters at all on a video is if someone currently watching has "SFW Only" checked, in which no NSFW videos will be shown (they'll all be autoskipped).
 
+### Tags {#tag}
+
+    #mtv tags
+    #mtv tag someTag
+    #mtv tag someTag someOtherTag
+    #mtv untag someTag
+    #mtv untag someTag someOtherTag
+
+Tags categorize videos into officially-allowed tags. To see the current official tag list, use `tags`, then tag/untag the current video with whatever tags are appropriate. To edit tags of a video that are not the current video, use [edit](#edit).
+
+### MTV Blocks {#block}
+
+    #mtv block artist Some Artist
+    #mtv block title  Some Title
+    #mtv block tag    SomeTag
+    #mtv block full   Some Artist - Some Title
+
+MTV Blocks were something MTV used to do where it'd play 3-4 of the same artist back-to-back in a "block". The `block` command simulates that by finding all videos matching the text of an artist/song's name (or a tag), shuffles them, and puts them in the front of the queue.
+
+### Queueing Playlists {#playlist}
+
+    #mtv playlist https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ
+    #mtv playlist RDdQw4w9WgXcQ
+
+This command accepts a valid YouTube playlist URL, shuffles up to 50 of the first entries, and puts them in the front of the queue.
+
+### Ignore List {#ignore}
+
+    #mtv ignore list
+    #mtv ignore add username
+    #mtv ignore remove username
+
+When a watching user's nickname is recognized by MTV, it will consider them during Autoskip, which flags them in the `who` list as `(Auto)`. This means that until that user has offered their opinion on the current video, Autoskip will avoid skipping the song.
+
+If there is a user that is not intending to actively participate in Autoskip (you're/they're AFK or just using MTV as background music), putting the user's nickname in the ignore list will change their tag from `(Auto)` to `(Ignored)`, and will treat them as if the Auto tag isn't on them.
+
 ### Echo Toggling {#echo}
 
     #mtv echo
@@ -226,5 +274,7 @@ This toggles whether or not "echo" is enabled. Echo has the MTV server do the eq
     #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ sfw
     #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ start 60
     #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ end 90
+    #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ tag someTag
+    #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ untag someTag
 
 This is an advanced action! The `edit` action allows you to directly poke at the MTV database -- Please be extra careful with this! Use this to adjust songs that have too-long intros or outros, or have incorrect artist or title names, or have the wrong owner. Do not use this to adopt a song from YouTube when using the `trending` action; use `adopt` for that.

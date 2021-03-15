@@ -83,12 +83,17 @@ code {
 <li><a href="#add">Adding a New Video (to the &quot;pool&quot;)</a></li>
 <li><a href="#queue">Queueing a (New) Video (to the &quot;pool&quot; <em>and</em> the &quot;queue&quot;)</a></li>
 <li><a href="#skip">Skipping the Current Video</a></li>
+<li><a href="#repeat">Repeating the Current Video</a></li>
 <li><a href="#who">Get Info About the Current Video</a></li>
 <li><a href="#remove">Removing a Video</a></li>
 <li><a href="#opinions">Setting/Removing Your Opinion</a></li>
 <li><a href="#trending">Trending / Adopt</a></li>
 <li><a href="#nsfw">NSFW / SFW Toggling</a></li>
 <li><a href="#echo">Echo Toggling</a></li>
+<li><a href="#tag">Tags</a></li>
+<li><a href="#block">MTV Blocks</a></li>
+<li><a href="#playlist">Queueing Playlists</a></li>
+<li><a href="#ignore">Ignore List (Autoskip)</a></li>
 <li><a href="#edit">Editing a Video in the Pool</a></li>
 </ul>
 </li>
@@ -188,6 +193,11 @@ hate
 #mtv skip X
 </code></pre>
 <p>This will skip the currently playing songs, or X songs (if X is a number). For example, <code>#mtv skip 5</code> will skip the next 5 songs.</p>
+<h3 id="repeat">Repeating the Current Video</h3>
+<pre><code>#mtv repeat
+#mtv repeat X
+</code></pre>
+<p>This will re-queue the currently playing song to repeat it once, or X times (if X is a number). For example, <code>#mtv repeat 5</code> will queue the current song 5 more times.</p>
 <h3 id="who">Get Info About the Current Video</h3>
 <pre><code>#mtv
 #mtv who
@@ -229,6 +239,33 @@ sfw
 #mtv sfw
 </code></pre>
 <p>MTV doesn't have any clue if a video is NSFW (Not Safe For Work); you have to help it out. The only reason this matters at all on a video is if someone currently watching has &quot;SFW Only&quot; checked, in which no NSFW videos will be shown (they'll all be autoskipped).</p>
+<h3 id="tag">Tags</h3>
+<pre><code>#mtv tags
+#mtv tag someTag
+#mtv tag someTag someOtherTag
+#mtv untag someTag
+#mtv untag someTag someOtherTag
+</code></pre>
+<p>Tags categorize videos into officially-allowed tags. To see the current official tag list, use <code>tags</code>, then tag/untag the current video with whatever tags are appropriate. To edit tags of a video that are not the current video, use <a href="#edit">edit</a>.</p>
+<h3 id="block">MTV Blocks</h3>
+<pre><code>#mtv block artist Some Artist
+#mtv block title  Some Title
+#mtv block tag    SomeTag
+#mtv block full   Some Artist - Some Title
+</code></pre>
+<p>MTV Blocks were something MTV used to do where it'd play 3-4 of the same artist back-to-back in a &quot;block&quot;. The <code>block</code> command simulates that by finding all videos matching the text of an artist/song's name (or a tag), shuffles them, and puts them in the front of the queue.</p>
+<h3 id="playlist">Queueing Playlists</h3>
+<pre><code>#mtv playlist https://www.youtube.com/watch?v=dQw4w9WgXcQ&amp;list=RDdQw4w9WgXcQ
+#mtv playlist RDdQw4w9WgXcQ
+</code></pre>
+<p>This command accepts a valid YouTube playlist URL, shuffles up to 50 of the first entries, and puts them in the front of the queue.</p>
+<h3 id="ignore">Ignore List</h3>
+<pre><code>#mtv ignore list
+#mtv ignore add username
+#mtv ignore remove username
+</code></pre>
+<p>When a watching user's nickname is recognized by MTV, it will consider them during Autoskip, which flags them in the <code>who</code> list as <code>(Auto)</code>. This means that until that user has offered their opinion on the current video, Autoskip will avoid skipping the song.</p>
+<p>If there is a user that is not intending to actively participate in Autoskip (you're/they're AFK or just using MTV as background music), putting the user's nickname in the ignore list will change their tag from <code>(Auto)</code> to <code>(Ignored)</code>, and will treat them as if the Auto tag isn't on them.</p>
 <h3 id="echo">Echo Toggling</h3>
 <pre><code>#mtv echo
 </code></pre>
@@ -241,6 +278,8 @@ sfw
 #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ sfw
 #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ start 60
 #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ end 90
+#mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ tag someTag
+#mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ untag someTag
 </code></pre>
 <p>This is an advanced action! The <code>edit</code> action allows you to directly poke at the MTV database -- Please be extra careful with this! Use this to adjust songs that have too-long intros or outros, or have incorrect artist or title names, or have the wrong owner. Do not use this to adopt a song from YouTube when using the <code>trending</code> action; use <code>adopt</code> for that.</p>
 
