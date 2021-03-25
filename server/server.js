@@ -1221,7 +1221,7 @@
   };
 
   run = async function(args, user) {
-    var anonCount, cmd, companyArgs, concatenatedArgs, count, e, editArgs, extraSkips, filterFunc, i, i1, ignoreArgs, ignoreCmd, ignoreName, index, j, j1, k, k1, l1, legalTags, len, len1, len2, len3, len4, len5, len6, m, m1, n1, name, name1, nameString, newCompany, newNickname, newValue, nicknameArgs, o1, oldValue, other, p1, playArgs, playQueue, playSubstring, playlistCount, playlistID, prettyList, property, q, r, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, repeatCount, ret, strs, subcommand, tagArgs, tagName, title, unsortedQueue, v, w, x, y, z;
+    var anonCount, cmd, companyArgs, concatenatedArgs, count, e, editArgs, extraSkips, filterFunc, i, i1, ignoreArgs, ignoreCmd, ignoreName, index, j, j1, k, k1, l1, legalTags, len, len1, len2, len3, len4, len5, len6, len7, m, m1, n1, name, name1, nameString, newCompany, newNickname, newValue, nicknameArgs, o1, oldValue, other, p1, playArgs, playQueue, playSubstring, playlistCount, playlistID, prettyList, property, q, q1, r, ref, ref1, ref2, ref3, ref4, ref5, ref6, ref7, ref8, repeatCount, ret, strs, subcommand, substring, substrings, tagArgs, tagName, title, unsortedQueue, v, w, x, y, z;
     cmd = 'who';
     if (args.length > 0) {
       cmd = args[0];
@@ -1609,12 +1609,20 @@
             return `MTV: Unknown play type: \`${subcommand}\``;
         }
         unsortedQueue = [];
-        for (k in playlist) {
-          v = playlist[k];
-          if (filterFunc(v, playSubstring)) {
-            unsortedQueue.push(v);
-            if ((subcommand !== 'tag') && (unsortedQueue.length > 50)) {
-              return `MTV: Too many (over 50) ${subcommand}s match: \`${playSubstring}\``;
+        substrings = playSubstring.split(/[\|\/]/);
+        for (k1 = 0, len5 = substrings.length; k1 < len5; k1++) {
+          substring = substrings[k1];
+          substring = substring.trim();
+          if (substring.length === 0) {
+            continue;
+          }
+          for (k in playlist) {
+            v = playlist[k];
+            if (filterFunc(v, substring)) {
+              unsortedQueue.push(v);
+              if ((subcommand !== 'tag') && (unsortedQueue.length > 100)) {
+                return `MTV: Too many (over 100) ${subcommand}s match: \`${playSubstring}\``;
+              }
             }
           }
         }
@@ -1622,14 +1630,14 @@
           return `MTV: No ${subcommand}s match: \`${playSubstring}\``;
         }
         playQueue = [unsortedQueue.shift()];
-        for (index = k1 = 0, len5 = unsortedQueue.length; k1 < len5; index = ++k1) {
+        for (index = l1 = 0, len6 = unsortedQueue.length; l1 < len6; index = ++l1) {
           i = unsortedQueue[index];
           j = Math.floor(Math.random() * (index + 1));
           playQueue.push(playQueue[j]);
           playQueue[j] = i;
         }
-        for (l1 = 0, len6 = playQueue.length; l1 < len6; l1++) {
-          v = playQueue[l1];
+        for (m1 = 0, len7 = playQueue.length; m1 < len7; m1++) {
+          v = playQueue[m1];
           queue.unshift(v);
         }
         saveState();
@@ -1661,7 +1669,7 @@
       case 'company':
       case 'label':
         companyArgs = [];
-        for (i = m1 = 1, ref5 = args.length; (1 <= ref5 ? m1 < ref5 : m1 > ref5); i = 1 <= ref5 ? ++m1 : --m1) {
+        for (i = n1 = 1, ref5 = args.length; (1 <= ref5 ? n1 < ref5 : n1 > ref5); i = 1 <= ref5 ? ++n1 : --n1) {
           companyArgs.push(args[i]);
         }
         newCompany = companyArgs.join(" ");
@@ -1679,7 +1687,7 @@
       case 'nickname':
       case 'name':
         nicknameArgs = [];
-        for (i = n1 = 1, ref6 = args.length; (1 <= ref6 ? n1 < ref6 : n1 > ref6); i = 1 <= ref6 ? ++n1 : --n1) {
+        for (i = o1 = 1, ref6 = args.length; (1 <= ref6 ? o1 < ref6 : o1 > ref6); i = 1 <= ref6 ? ++o1 : --o1) {
           nicknameArgs.push(args[i]);
         }
         newNickname = nicknameArgs.join(" ");
@@ -1728,7 +1736,7 @@
             repeatCount = 10;
           }
         }
-        for (i = o1 = 0, ref7 = repeatCount; (0 <= ref7 ? o1 < ref7 : o1 > ref7); i = 0 <= ref7 ? ++o1 : --o1) {
+        for (i = p1 = 0, ref7 = repeatCount; (0 <= ref7 ? p1 < ref7 : p1 > ref7); i = 0 <= ref7 ? ++p1 : --p1) {
           queue.unshift(lastPlayed);
         }
         saveState();
@@ -1748,7 +1756,7 @@
           strs = calcEntryStrings(lastPlayed);
           ret = `MTV: Skipped ${strs.description}`;
         }
-        for (i = p1 = 0, ref8 = extraSkips; (0 <= ref8 ? p1 < ref8 : p1 > ref8); i = 0 <= ref8 ? ++p1 : --p1) {
+        for (i = q1 = 0, ref8 = extraSkips; (0 <= ref8 ? q1 < ref8 : q1 > ref8); i = 0 <= ref8 ? ++q1 : --q1) {
           queue.shift();
         }
         e = playNext();
