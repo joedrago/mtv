@@ -1194,11 +1194,16 @@ run = (args, user) ->
         else
           return "MTV: Unknown play type: `#{subcommand}`"
       unsortedQueue = []
-      for k,v of playlist
-        if filterFunc(v, playSubstring)
-          unsortedQueue.push(v)
-          if (subcommand != 'tag') and (unsortedQueue.length > 50)
-            return "MTV: Too many (over 50) #{subcommand}s match: `#{playSubstring}`"
+      substrings = playSubstring.split(/[\|\/]/)
+      for substring in substrings
+        substring = substring.trim()
+        if substring.length == 0
+          continue
+        for k,v of playlist
+          if filterFunc(v, substring)
+            unsortedQueue.push(v)
+            if (subcommand != 'tag') and (unsortedQueue.length > 100)
+              return "MTV: Too many (over 100) #{subcommand}s match: `#{playSubstring}`"
       if unsortedQueue.length < 1
         return "MTV: No #{subcommand}s match: `#{playSubstring}`"
       playQueue = [ unsortedQueue.shift() ]
