@@ -748,7 +748,7 @@
       console.log(`Looking up: ${e.id}`);
       return new Promise(function(resolve, reject) {
         var req, url;
-        url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&key=${secrets.youtube}&id=${e.id}`;
+        url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&key=${secrets.youtube}&id=${encodeURIComponent(e.id)}`;
         req = https.request(url, function(res) {
           var rawJSON;
           rawJSON = "";
