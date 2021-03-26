@@ -7,6 +7,7 @@ https = require 'https'
 ytdl = require 'ytdl-core'
 constants = require '../constants'
 
+MAX_BLOCK_COUNT = 0
 YOUTUBE_USER = "YouTube"
 AUTOSKIPLIST_COUNT = 3
 
@@ -16,6 +17,9 @@ limiter = new Bottleneck {
 
 now = ->
   return Math.floor(Date.now() / 1000)
+
+pad = (s, count) ->
+  return ("                   " + s).slice(-1 * count)
 
 randomString = ->
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
@@ -899,6 +903,45 @@ isOpinionCommand = (cmd) ->
     return true
   return constants.opinions[cmd]?
 
+generateBlock = (blockType, blockSubstring) ->
+  switch blockType
+    when 'artist', 'band'
+      filterFunc = (e, s) -> e.artist.toLowerCase().indexOf(s) != -1
+    when 'title', 'song'
+      filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
+    when 'tag'
+      filterFunc = (e, s) -> e.tags[s]?
+    when 'full'
+      filterFunc = (e, s) ->
+        full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
+        full.indexOf(s) != -1
+    else
+      return "MTV: Unknown play type: `#{blockType}`"
+  counts = []
+  uniqueVideoMap = {}
+  substrings = blockSubstring.split(/[\|\/]/)
+  for substring in substrings
+    substring = substring.trim()
+    if substring.length == 0
+      continue
+    countEntry =
+      substring: substring
+      count: 0
+    counts.push(countEntry)
+    for k,v of playlist
+      if filterFunc(v, substring)
+        countEntry.count += 1
+        uniqueVideoMap[v.id] = true
+    if (MAX_BLOCK_COUNT > 0) and (blockType != 'tag') and (Object.keys(uniqueVideoMap).length > MAX_BLOCK_COUNT)
+      return null
+  unsortedQueue = []
+  for id,v of uniqueVideoMap
+    unsortedQueue.push(playlist[id])
+  return {
+    counts: counts
+    queue: unsortedQueue
+  }
+
 run = (args, user) ->
   cmd = 'who'
   if args.length > 0
@@ -1172,40 +1215,43 @@ run = (args, user) ->
       requestDashboardRefresh()
       return ret
 
-    when 'block'
+    when 'count'
       if args.length < 3
-        return "MTV: Syntax: block [artist/title/tag] substring"
-      subcommand = args[1].toLowerCase()
+        return "MTV: Syntax: count [artist/title/tag] substring"
+      blockType = args[1].toLowerCase()
       playArgs = []
       for i in [2...args.length]
         playArgs.push args[i]
       playSubstring = playArgs.join(" ").toLowerCase()
-      switch subcommand
-        when 'artist', 'band'
-          filterFunc = (e, s) -> e.artist.toLowerCase().indexOf(s) != -1
-        when 'title', 'song'
-          filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
-        when 'tag'
-          filterFunc = (e, s) -> e.tags[s]?
-        when 'full'
-          filterFunc = (e, s) ->
-            full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
-            full.indexOf(s) != -1
-        else
-          return "MTV: Unknown play type: `#{subcommand}`"
-      unsortedQueue = []
-      substrings = playSubstring.split(/[\|\/]/)
-      for substring in substrings
-        substring = substring.trim()
-        if substring.length == 0
-          continue
-        for k,v of playlist
-          if filterFunc(v, substring)
-            unsortedQueue.push(v)
-            if (subcommand != 'tag') and (unsortedQueue.length > 100)
-              return "MTV: Too many (over 100) #{subcommand}s match: `#{playSubstring}`"
+      block = generateBlock(blockType, playSubstring)
+      # console.log "generateBlock counts: ", block.counts
+      if not block?
+        return "MTV: Too many (over #{MAX_BLOCK_COUNT}) #{blockType}s match: `#{playSubstring}`"
+      if block.queue.length < 1
+        return "MTV: No #{blockType}s match: `#{playSubstring}`"
+      output = "MTV: Counted #{block.queue.length} unique video#{if block.queue.length == 1 then "" else "s"} matching: `#{playSubstring}`"
+      if block.counts.length > 1
+        output += "\n```\n"
+        for count in block.counts
+          output += "#{pad(count.count, 5)} : #{count.substring}\n"
+        output += "```"
+      return output
+
+    when 'block'
+      if args.length < 3
+        return "MTV: Syntax: block [artist/title/tag] substring"
+      blockType = args[1].toLowerCase()
+      playArgs = []
+      for i in [2...args.length]
+        playArgs.push args[i]
+      playSubstring = playArgs.join(" ").toLowerCase()
+      block = generateBlock(blockType, playSubstring)
+      # console.log "generateBlock counts: ", block.counts
+      if not block?
+        return "MTV: Too many (over #{MAX_BLOCK_COUNT}) #{blockType}s match: `#{playSubstring}`"
+      unsortedQueue = block.queue
       if unsortedQueue.length < 1
-        return "MTV: No #{subcommand}s match: `#{playSubstring}`"
+        return "MTV: No #{blockType}s match: `#{playSubstring}`"
       playQueue = [ unsortedQueue.shift() ]
       for i, index in unsortedQueue
         j = Math.floor(Math.random() * (index + 1))
@@ -1215,7 +1261,7 @@ run = (args, user) ->
         queue.unshift(v)
       saveState()
       requestDashboardRefresh()
-      return "MTV: Queued #{playQueue.length} video#{if playQueue.length == 1 then "" else "s"} matching: `#{playSubstring}`"
+      return "MTV: Queued #{playQueue.length} unique video#{if playQueue.length == 1 then "" else "s"} matching: `#{playSubstring}`"
 
     when 'shuffle'
       queue = []
