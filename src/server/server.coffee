@@ -535,7 +535,7 @@ getYoutubeData = (e) ->
     e.id = e.id.replace(/\?.+$/, "")
     console.log "Looking up: #{e.id}"
     return new Promise (resolve, reject) ->
-      url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&key=#{secrets.youtube}&id=#{e.id}"
+      url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&key=#{secrets.youtube}&id=#{encodeURIComponent(e.id)}"
       req = https.request url, (res) ->
         rawJSON = ""
         res.on 'data', (chunk) ->
