@@ -1293,7 +1293,7 @@
   };
 
   run = async function(args, user) {
-    var anonCount, block, blockType, cmd, companyArgs, concatenatedArgs, count, e, editArgs, extraSkips, i, i1, ignoreArgs, ignoreCmd, ignoreName, index, j, j1, k, k1, l1, legalTags, len, len1, len2, len3, len4, len5, len6, len7, m, m1, n1, name, name1, nameString, newCompany, newNickname, newValue, nicknameArgs, o1, oldValue, other, p1, playArgs, playQueue, playSubstring, playlistCount, playlistID, prettyList, property, q, q1, r, r1, ref, ref1, ref10, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, repeatCount, ret, strs, tagArgs, tagName, title, unsortedQueue, v, w, x, y, z;
+    var anonCount, block, blockType, cmd, companyArgs, concatenatedArgs, count, e, editArgs, extraSkips, i, i1, ignoreArgs, ignoreCmd, ignoreName, index, j, j1, k, k1, l1, legalTags, len, len1, len2, len3, len4, len5, len6, len7, m, m1, n1, name, name1, nameString, newCompany, newNickname, newValue, nicknameArgs, o1, oldValue, other, outputStr, p1, playArgs, playQueue, playSubstring, playlistCount, playlistID, prettyList, property, q, q1, r, r1, ref, ref1, ref10, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, repeatCount, ret, strs, tagArgs, tagName, title, unsortedQueue, v, w, x, y, z;
     cmd = 'who';
     if (args.length > 0) {
       cmd = args[0];
@@ -1660,17 +1660,17 @@
         if (block.queue.length < 1) {
           return `MTV: No ${blockType}s match: \`${playSubstring}\``;
         }
-        output = `MTV: Counted ${block.queue.length} unique video${block.queue.length === 1 ? "" : "s"} matching: \`${playSubstring}\``;
+        outputStr = `MTV: Counted ${block.queue.length} unique video${block.queue.length === 1 ? "" : "s"} matching: \`${playSubstring}\``;
         if (block.counts.length > 1) {
-          output += "\n```\n";
+          outputStr += "\n```\n";
           ref5 = block.counts;
           for (k1 = 0, len5 = ref5.length; k1 < len5; k1++) {
             count = ref5[k1];
-            output += `${pad(count.count, 5)} : ${count.substring}\n`;
+            outputStr += `${pad(count.count, 5)} : ${count.substring}\n`;
           }
-          output += "```";
+          outputStr += "```";
         }
-        return output;
+        return outputStr;
       case 'block':
         if (args.length < 3) {
           return "MTV: Syntax: block [artist/title/tag] substring";

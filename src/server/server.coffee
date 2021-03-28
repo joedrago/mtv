@@ -1229,13 +1229,13 @@ run = (args, user) ->
         return "MTV: Too many (over #{MAX_BLOCK_COUNT}) #{blockType}s match: `#{playSubstring}`"
       if block.queue.length < 1
         return "MTV: No #{blockType}s match: `#{playSubstring}`"
-      output = "MTV: Counted #{block.queue.length} unique video#{if block.queue.length == 1 then "" else "s"} matching: `#{playSubstring}`"
+      outputStr = "MTV: Counted #{block.queue.length} unique video#{if block.queue.length == 1 then "" else "s"} matching: `#{playSubstring}`"
       if block.counts.length > 1
-        output += "\n```\n"
+        outputStr += "\n```\n"
         for count in block.counts
-          output += "#{pad(count.count, 5)} : #{count.substring}\n"
-        output += "```"
-      return output
+          outputStr += "#{pad(count.count, 5)} : #{count.substring}\n"
+        outputStr += "```"
+      return outputStr
 
     when 'block'
       if args.length < 3
