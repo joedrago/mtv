@@ -3,6 +3,15 @@ socket = null
 playing = false
 serverEpoch = null
 
+soloID = null
+soloFilters = null
+soloDatabase = {}
+soloQueue = []
+soloVideo = null
+soloCount = 0
+soloShowTimeout = null
+soloError = false
+
 endedTimer = null
 overTimers = []
 
@@ -104,18 +113,22 @@ showInfo = (pkt) ->
     title = pkt.title
     title = title.replace(/^\s+/, "")
     title = title.replace(/\s+$/, "")
-    html = "#{artist}\n&#x201C;#{title}&#x201D;\n#{pkt.company}"
-    feelings = []
-    for o in opinionOrder
-      if pkt.opinions[o]?
-        feelings.push o
-    if feelings.length == 0
-      html += "\nNo Opinions"
+    html = "#{artist}\n&#x201C;#{title}&#x201D;"
+    if soloID?
+      html += "\nSolo Mode"
     else
-      for feeling in feelings
-        list = pkt.opinions[feeling]
-        list.sort()
-        html += "\n#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}: #{list.join(', ')}"
+      html += "\n#{pkt.company}"
+      feelings = []
+      for o in opinionOrder
+        if pkt.opinions[o]?
+          feelings.push o
+      if feelings.length == 0
+        html += "\nNo Opinions"
+      else
+        for feeling in feelings
+          list = pkt.opinions[feeling]
+          list.sort()
+          html += "\n#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}: #{list.join(', ')}"
     overElement.innerHTML = html
 
     overTimers.push setTimeout ->
@@ -148,6 +161,9 @@ sendReady = ->
   socket.emit 'ready', { user: user, sfw: sfw }
 
 tick = ->
+  if soloID?
+    return
+
   if not playing and player?
     sendReady()
     return
@@ -157,6 +173,192 @@ tick = ->
   if qs('sfw')
     sfw = true
   socket.emit 'playing', { user: user, sfw: sfw }
+
+# ---------------------------------------------------------------------------------------
+# Solo Mode Engine
+
+soloFatalError = (reason) ->
+  console.log "soloFatalError: #{reason}"
+  document.body.innerHTML = "ERROR: #{reason}"
+  soloError = true
+
+getData = (url) ->
+  return new Promise (resolve, reject) ->
+    xhttp = new XMLHttpRequest()
+    xhttp.onreadystatechange = ->
+        if (@readyState == 4) and (@status == 200)
+           # Typical action to be performed when the document is ready:
+           try
+             entries = JSON.parse(xhttp.responseText)
+             resolve(entries)
+           catch
+             resolve(null)
+    xhttp.open("GET", url, true)
+    xhttp.send()
+
+soloTick = ->
+  if not soloID? or soloError
+    return
+
+  console.log "soloTick()"
+  if not playing and player?
+    soloPlay()
+    return
+
+soloEnding = ->
+  showInfo(soloVideo)
+
+soloInfoBroadcast = ->
+  if socket? and soloID? and soloVideo?
+    nextVideo = null
+    if soloQueue.length > 1
+      nextVideo = soloQueue[0]
+    info =
+      current: soloVideo
+      next: nextVideo
+      index: soloCount - soloQueue.length
+      count: soloCount
+
+    console.log "Broadcast: ", info
+    socket.emit 'solo',{
+      id: soloID
+      cmd: 'info'
+      info: info
+    }
+
+soloPlay = (restart = false) ->
+  if soloError
+    return
+
+  if not restart or not soloVideo?
+    if soloQueue.length == 0
+      console.log "Reshuffling..."
+      unshuffled = []
+      if soloFilters?
+        for id, e of soloDatabase
+          e.allowed = false
+
+        for filter in soloFilters
+          pieces = filter.split(/\s+/)
+          substring = pieces.slice(1).join(" ")
+          negated = false
+          if matches = pieces[0].match(/^!(.+)$/)
+            negated = true
+            pieces[0] = matches[1]
+          switch pieces[0]
+            when 'artist', 'band'
+              filterFunc = (e, s) -> e.artist.toLowerCase().indexOf(s) != -1
+            when 'title', 'song'
+              filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
+            when 'tag'
+              filterFunc = (e, s) -> e.tags[s] == true
+            when 'full'
+              filterFunc = (e, s) ->
+                full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
+                full.indexOf(s) != -1
+            else
+              # skip this filter
+              continue
+
+          for id, e of soloDatabase
+            isMatch = filterFunc(e, substring)
+            if negated
+              isMatch = !isMatch
+            if isMatch
+              e.allowed = true
+
+        for id, e of soloDatabase
+          if e.allowed
+            unshuffled.push e
+      else
+        # Queue it all up
+        for id, e of soloDatabase
+          unshuffled.push e
+
+      if unshuffled.length == 0
+        soloFatalError("No matching songs in the filter!")
+        return
+      soloCount = unshuffled.length
+      soloQueue = [ unshuffled.shift() ]
+      for i, index in unshuffled
+        j = Math.floor(Math.random() * (index + 1))
+        soloQueue.push(soloQueue[j])
+        soloQueue[j] = i
+
+    soloVideo = soloQueue.shift()
+
+  console.log soloVideo
+
+  # debug
+  # soloVideo.start = 10
+  # soloVideo.end = 50
+  # soloVideo.duration = 40
+
+  play(soloVideo, soloVideo.id, soloVideo.start, soloVideo.end)
+
+  soloInfoBroadcast()
+
+  startTime = soloVideo.start
+  if startTime < 0
+    startTime = 0
+  endTime = soloVideo.end
+  if endTime < 0
+    endTime = soloVideo.duration
+  soloDuration = endTime - startTime
+  if soloShowTimeout?
+    clearTimeout(soloShowTimeout)
+    soloShowTimeout = null
+  if soloDuration > 30
+    console.log "Showing info again in #{soloDuration - 15} seconds"
+    soloShowTimeout = setTimeout(soloEnding, (soloDuration - 15) * 1000)
+
+
+soloPause = ->
+  if player?
+    if player.getPlayerState() == 2
+      player.playVideo()
+    else
+      player.pauseVideo()
+
+soloCommand = (pkt) ->
+  if not pkt.cmd?
+    return
+  if pkt.id != soloID
+    return
+
+  console.log "soloCommand: ", pkt
+
+  switch pkt.cmd
+    when 'skip'
+      soloPlay()
+    when 'restart'
+      soloPlay(true)
+    when 'pause'
+      soloPause()
+
+  return
+
+soloStartup = ->
+  filterString = qs('filters')
+  if filterString? and (filterString.length > 0)
+    soloFilters = []
+    rawFilters = filterString.split(/\r?\n/)
+    for filter in rawFilters
+      filter = filter.trim()
+      if filter.length > 0
+        soloFilters.push filter
+    if soloFilters.length == 0
+      # No filters
+      soloFilters = null
+  console.log "Filters:", soloFilters
+  soloDatabase = await getData("/info/playlist")
+  if not soloDatabase?
+    soloFatalError("Cannot get solo database!")
+    return
+
+  setInterval(soloTick, 5000)
+
+# ---------------------------------------------------------------------------------------
 
 youtubeReady = false
 window.onYouTubePlayerAPIReady = ->
@@ -181,22 +383,41 @@ window.onYouTubePlayerAPIReady = ->
     }
   }
 
+  soloID = qs('solo')
+
   socket = io()
-  socket.on 'play', (pkt) ->
-    # console.log pkt
-    play(pkt, pkt.id, pkt.start, pkt.end)
 
-  socket.on 'ending', (pkt) ->
-    # console.log pkt
-    showInfo(pkt)
+  socket.on 'connect', ->
+    if soloID?
+      socket.emit 'solo', { id: soloID }
+      soloInfoBroadcast()
 
-  socket.on 'server', (server) ->
-    if serverEpoch? and (serverEpoch != server.epoch)
-      console.log "Server epoch changed! The server must have rebooted. Requesting fresh video..."
-      sendReady()
-    serverEpoch = server.epoch
+  if soloID?
+    # Solo mode!
 
-  setInterval(tick, 5000)
+    soloStartup()
+
+    socket.on 'solo', (pkt) ->
+      if pkt.cmd?
+        soloCommand(pkt)
+  else
+    # Normal MTV mode
+
+    socket.on 'play', (pkt) ->
+      # console.log pkt
+      play(pkt, pkt.id, pkt.start, pkt.end)
+
+    socket.on 'ending', (pkt) ->
+      # console.log pkt
+      showInfo(pkt)
+
+    socket.on 'server', (server) ->
+      if serverEpoch? and (serverEpoch != server.epoch)
+        console.log "Server epoch changed! The server must have rebooted. Requesting fresh video..."
+        sendReady()
+      serverEpoch = server.epoch
+
+    setInterval(tick, 5000)
 
 setTimeout ->
   # somehow we missed this event, just kick it manually

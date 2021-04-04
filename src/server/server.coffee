@@ -49,6 +49,9 @@ autoskipCount = 0
 autoskipTimeout = null
 autoskipList = []
 
+soloSessions = {}
+soloInfo = {}
+
 echoNewSong = false
 echoEnabled = false
 
@@ -143,6 +146,15 @@ refreshDashboardsIfNeeded = ->
     # console.log "refreshDashboardsIfNeeded(): refreshing..."
     dashboardsRefreshNeeded = false
     refreshDashboards()
+
+soloBroadcast = (sender, msg) ->
+  for sid, soc of sockets
+    if sid == sender
+      continue
+
+    if soloSessions[sid] == msg.id
+      soc.emit 'solo', msg
+  return
 
 saveState = ->
   savedQueue = []
@@ -1627,6 +1639,21 @@ main = (argv) ->
 
     socket.emit('server', { epoch: serverEpoch })
 
+    socket.on 'solo', (msg) ->
+      console.log "received solo message: ", msg
+      if msg.id?
+        if soloSessions[socket.id] != msg.id
+          soloSessions[socket.id] = msg.id
+        if msg.cmd?
+          soloBroadcast(socket.id, msg)
+          if (msg.cmd == 'info') and msg.info?
+            soloInfo[msg.id] = msg.info
+            console.log "Solo Info Update [#{msg.id}]: ", soloInfo[msg.id]
+        else
+          # new connection or re-connection, update their info
+          if soloInfo[msg.id]?
+            socket.emit 'solo', { id: msg.id, cmd: 'info', info: soloInfo[msg.id] }
+
     socket.on 'playing', (msg) ->
       needsRefresh = false
       if not isPlaying[socket.id]
@@ -1705,6 +1732,18 @@ main = (argv) ->
       if isPlaying[socket.id]?
         delete isPlaying[socket.id]
         requestDashboardRefresh()
+      if soloSessions[socket.id]?
+        soloID = soloSessions[socket.id]
+        delete soloSessions[socket.id]
+        removeSoloSession = true
+        for sid, soc of sockets
+          if soloSessions[sid] == soloID
+            removeSoloSession = false
+            break
+        if removeSoloSession
+          console.log "Forgetting solo session: #{soloID}"
+          if soloInfo[soloID]?
+            delete soloInfo[soloID]
       checkAutoskip()
       checkIfEveryoneLeft()
 
@@ -1749,6 +1788,18 @@ main = (argv) ->
 
   app.get '/watch', (req, res) ->
     html = fs.readFileSync("#{__dirname}/../web/client.html", "utf8")
+    res.send(html)
+
+  app.get '/solo', (req, res) ->
+    soloID = req.query.solo
+    if not soloID?
+      loop
+        soloID = randomString()
+        if not soloSessions[soloID]?
+          break
+      res.redirect("/solo?solo=#{soloID}")
+      return
+    html = fs.readFileSync("#{__dirname}/../web/solo.html", "utf8")
     res.send(html)
 
   app.get '/info/playlist', (req, res) ->
