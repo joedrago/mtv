@@ -910,6 +910,16 @@ calcUserInfo = (user) ->
 
   return userInfo
 
+calcUserOpinions = (user) ->
+  user = getUserFromNickname(user)
+  userOpinions = {}
+  for opinion of constants.opinions
+    userOpinions[opinion] = {}
+  for k, e of playlist
+    if opinions[e.id]? and opinions[e.id][user]?
+      userOpinions[opinions[e.id][user]][e.id] = 1
+  return userOpinions
+
 isOpinionCommand = (cmd) ->
   if cmd == 'none'
     return true
@@ -1825,6 +1835,14 @@ main = (argv) ->
       userInfo = calcUserInfo(req.query.user)
       res.type('application/json')
       res.send(JSON.stringify(userInfo, privacyReplacer, 2))
+    else
+      res.send("supply a user")
+
+  app.get '/info/opinions', (req, res) ->
+    if req.query? and req.query.user?
+      userOpinions = calcUserOpinions(req.query.user)
+      res.type('application/json')
+      res.send(JSON.stringify(userOpinions, null, 2))
     else
       res.send("supply a user")
 
