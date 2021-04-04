@@ -1,0 +1,106 @@
+<html>
+<head>
+    <title>MTV Solo</title>
+    <meta name="viewport" id="metaViewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+</head>
+<style>
+body, html {
+    background-color: #000022;
+    color: white;
+
+    font-family: monospace;
+    font-size: 1.2em;
+}
+
+a {
+    text-decoration: none;
+    cursor: pointer;
+
+    color: #aaffaa;
+}
+
+.maintitle {
+    font-size: 1.4em;
+    font-weight: 900;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+#asform {
+    display: none;
+}
+
+.filters {
+    color: #fff;
+    background-color: #333;
+}
+
+#info {
+    margin-top: 20px;
+    margin-bottom: 20px;
+
+    padding: 5px;
+}
+
+.infocounts {
+    color: #fff;
+    font-style: italic;
+    margin-bottom: 20px;
+}
+.infoheading {
+    color: #faa;
+    font-style: italic;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.infoartist {
+    color: #ffa;
+    margin-top: 20px;
+}
+
+.infotitle {
+    color: #aff;
+    margin-bottom: 20px;
+}
+
+.inforeshuffle {
+    color: #aaa;
+    font-style: italic;
+    margin-bottom: 20px;
+}
+
+</style>
+<body>
+
+<div class="maintitle">Solo Mode</div>
+
+<div id="aslink">
+    [<a onclick="showWatchForm(); return false;">Launch</a>]
+</div>
+
+<form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()">
+    <textarea form="asform" id="filters" name="filters" class="filters" style="width: 100%; max-width: 100%;" rows="5"></textarea><br>
+    <input type="hidden" id="soloid" name="solo" value=""><br>
+    <input type="checkbox" id="controls" name="controls"> Show Controls<br>
+    <input type="checkbox" id="hidetitles" name="hidetitles"> Hide Titles<br>
+    <input type="submit" value="Watch"> <input id="castbutton" type="submit" onclick="startCast(); return false;" value="Cast"> <input type="submit" onclick="generatePermalink(); return false;" value="Permalink"> <input type="submit" onclick="showWatchLink(); return false;" value="Cancel">
+</form>
+
+<div id="info">
+    ... Waiting for info ...
+</div>
+
+[<a onclick="soloRestart(); return false;">Restart</a>]
+<br>
+<br>
+[<a onclick="soloPause(); return false;">Pause</a>]
+<br>
+<br>
+[<a onclick="soloSkip(); return false;">Skip</a>]
+
+<script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="solo.js"></script>
+</body>
+</html>
