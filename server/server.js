@@ -763,7 +763,7 @@
           });
           res.on('error', function() {
             console.log(`Error [${e.id}]`);
-            return resolve();
+            return resolve(false);
           });
           return res.on('end', function() {
             var chosenThumb, data, ref, saved, thumb, thumbType, thumbUrl;
@@ -826,7 +826,7 @@
               saveState();
               logOutput(`MTV: Auto-removed: \`${e.id}\` (invalid YouTube ID)`);
             }
-            return resolve();
+            return resolve(saved);
           });
         });
         return req.end();
@@ -1293,7 +1293,7 @@
   };
 
   run = async function(args, user) {
-    var anonCount, block, blockType, cmd, companyArgs, concatenatedArgs, count, e, editArgs, extraSkips, i, i1, ignoreArgs, ignoreCmd, ignoreName, index, j, j1, k, k1, l1, legalTags, len, len1, len2, len3, len4, len5, len6, len7, m, m1, n1, name, name1, nameString, newCompany, newNickname, newValue, nicknameArgs, o1, oldValue, other, outputStr, p1, playArgs, playQueue, playSubstring, playlistCount, playlistID, prettyList, property, q, q1, r, r1, ref, ref1, ref10, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, repeatCount, ret, strs, tagArgs, tagName, title, unsortedQueue, v, w, x, y, z;
+    var anonCount, block, blockType, cmd, companyArgs, concatenatedArgs, count, e, editArgs, extraSkips, i, i1, ignoreArgs, ignoreCmd, ignoreName, index, j, j1, k, k1, l1, legalTags, len, len1, len2, len3, len4, len5, len6, len7, m, m1, n1, name, name1, nameString, newCompany, newNickname, newValue, nicknameArgs, o1, oldValue, other, outputStr, p1, playArgs, playQueue, playSubstring, playlistCount, playlistID, prettyList, property, q, q1, r, r1, ref, ref1, ref10, ref2, ref3, ref4, ref5, ref6, ref7, ref8, ref9, repeatCount, ret, saved, strs, tagArgs, tagName, title, unsortedQueue, v, w, x, y, z;
     cmd = 'who';
     if (args.length > 0) {
       cmd = args[0];
@@ -1433,9 +1433,14 @@
         }
         e.user = user;
         playlist[e.id] = e;
-        getYoutubeData(e);
-        savePlaylist();
-        return `MTV: Added to pool: \`${e.id}\``;
+        saved = (await getYoutubeData(e));
+        if (saved) {
+          savePlaylist();
+          return `MTV: Add[\`${e.id}\`] Artist: \`${e.artist}\`, Title: \`${e.title}\``;
+        } else {
+          return `MTV: add ignoring invalid ID: \`${e.id}\``;
+        }
+        break;
       case 'adopt':
         if (lastPlayed === null) {
           return "MTV: I have no idea what's playing.";
@@ -1635,9 +1640,13 @@
           e.user = user;
           playlist[e.id] = e;
           queue.unshift(playlist[e.id]);
-          getYoutubeData(e);
-          savePlaylist();
-          ret = `MTV: Queued next and added to pool: \`${e.id}\``;
+          saved = (await getYoutubeData(e));
+          if (saved) {
+            savePlaylist();
+            return `MTV: Queue[\`${e.id}\`] Artist: \`${e.artist}\`, Title: \`${e.title}\``;
+          } else {
+            ret = `MTV: queue ignoring invalid ID: \`${e.id}\``;
+          }
         }
         saveState();
         requestDashboardRefresh();
@@ -1998,11 +2007,10 @@
     e.artist = artist;
     e.title = title;
     trimAllWhitespace(e);
-    if (announceCalc) {
-      logOutput(`MTV: Calc[\`${e.id}\`] Artist: \`${e.artist}\`, Title: \`${e.title}\``);
-    }
   };
 
+  // if announceCalc
+  // logOutput("MTV: Calc[`#{e.id}`] Artist: `#{e.artist}`, Title: `#{e.title}`")
   findMissingYoutubeInfo = function() {
     var k, len, m, missingTitleCount, needsSave, v;
     console.log("Checking for missing Youtube info...");

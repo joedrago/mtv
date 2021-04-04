@@ -546,7 +546,7 @@ getYoutubeData = (e) ->
           rawJSON += chunk
         res.on 'error', ->
           console.log "Error [#{e.id}]"
-          resolve()
+          resolve(false)
         res.on 'end', ->
           data = null
           try
@@ -591,7 +591,7 @@ getYoutubeData = (e) ->
             savePlaylist()
             saveState()
             logOutput("MTV: Auto-removed: `#{e.id}` (invalid YouTube ID)")
-          resolve()
+          resolve(saved)
       req.end()
 
 playNext = ->
@@ -1050,9 +1050,12 @@ run = (args, user) ->
         return "MTV: Already in pool: #{strs.description}"
       e.user = user
       playlist[e.id] = e
-      getYoutubeData(e)
-      savePlaylist()
-      return "MTV: Added to pool: `#{e.id}`"
+      saved = await getYoutubeData(e)
+      if saved
+        savePlaylist()
+        return "MTV: Add[`#{e.id}`] Artist: `#{e.artist}`, Title: `#{e.title}`"
+      else
+        return "MTV: add ignoring invalid ID: `#{e.id}`"
 
     when 'adopt'
       if lastPlayed == null
@@ -1208,9 +1211,12 @@ run = (args, user) ->
         e.user = user
         playlist[e.id] = e
         queue.unshift(playlist[e.id])
-        getYoutubeData(e)
-        savePlaylist()
-        ret = "MTV: Queued next and added to pool: `#{e.id}`"
+        saved = await getYoutubeData(e)
+        if saved
+          savePlaylist()
+          return "MTV: Queue[`#{e.id}`] Artist: `#{e.artist}`, Title: `#{e.title}`"
+        else
+          ret = "MTV: queue ignoring invalid ID: `#{e.id}`"
       saveState()
       requestDashboardRefresh()
       return ret
@@ -1508,8 +1514,8 @@ splitArtist = (e, announceCalc = true) ->
   e.artist = artist
   e.title = title
   trimAllWhitespace(e)
-  if announceCalc
-    logOutput("MTV: Calc[`#{e.id}`] Artist: `#{e.artist}`, Title: `#{e.title}`")
+  # if announceCalc
+    # logOutput("MTV: Calc[`#{e.id}`] Artist: `#{e.artist}`, Title: `#{e.title}`")
   return
 
 findMissingYoutubeInfo = ->
