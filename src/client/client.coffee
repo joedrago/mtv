@@ -6,11 +6,13 @@ serverEpoch = null
 soloID = null
 soloFilters = null
 soloDatabase = {}
+soloUnshuffled = []
 soloQueue = []
 soloVideo = null
 soloCount = 0
 soloShowTimeout = null
 soloError = false
+soloOpinions = {}
 
 endedTimer = null
 overTimers = []
@@ -233,54 +235,9 @@ soloPlay = (restart = false) ->
   if not restart or not soloVideo?
     if soloQueue.length == 0
       console.log "Reshuffling..."
-      unshuffled = []
-      if soloFilters?
-        for id, e of soloDatabase
-          e.allowed = false
-
-        for filter in soloFilters
-          pieces = filter.split(/\s+/)
-          substring = pieces.slice(1).join(" ")
-          negated = false
-          if matches = pieces[0].match(/^!(.+)$/)
-            negated = true
-            pieces[0] = matches[1]
-          switch pieces[0]
-            when 'artist', 'band'
-              filterFunc = (e, s) -> e.artist.toLowerCase().indexOf(s) != -1
-            when 'title', 'song'
-              filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
-            when 'tag'
-              filterFunc = (e, s) -> e.tags[s] == true
-            when 'full'
-              filterFunc = (e, s) ->
-                full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
-                full.indexOf(s) != -1
-            else
-              # skip this filter
-              continue
-
-          for id, e of soloDatabase
-            isMatch = filterFunc(e, substring)
-            if negated
-              isMatch = !isMatch
-            if isMatch
-              e.allowed = true
-
-        for id, e of soloDatabase
-          if e.allowed
-            unshuffled.push e
-      else
-        # Queue it all up
-        for id, e of soloDatabase
-          unshuffled.push e
-
-      if unshuffled.length == 0
-        soloFatalError("No matching songs in the filter!")
-        return
-      soloCount = unshuffled.length
-      soloQueue = [ unshuffled.shift() ]
-      for i, index in unshuffled
+      soloQueue = [ soloUnshuffled[0] ]
+      for i, index in soloUnshuffled
+        continue if index == 0
         j = Math.floor(Math.random() * (index + 1))
         soloQueue.push(soloQueue[j])
         soloQueue[j] = i
@@ -338,6 +295,12 @@ soloCommand = (pkt) ->
 
   return
 
+cacheOpinions = (filterUser) ->
+  if not soloOpinions[filterUser]?
+    soloOpinions[filterUser] = await getData("/info/opinions?user=#{encodeURIComponent(filterUser)}")
+    if not soloOpinions[filterUser]?
+      soloFatalError("Cannot get user opinions for #{filterUser}")
+
 soloStartup = ->
   filterString = qs('filters')
   if filterString? and (filterString.length > 0)
@@ -355,6 +318,59 @@ soloStartup = ->
   if not soloDatabase?
     soloFatalError("Cannot get solo database!")
     return
+
+  soloUnshuffled = []
+  if soloFilters?
+    for id, e of soloDatabase
+      e.allowed = false
+
+    for filter in soloFilters
+      pieces = filter.split(/\s+/)
+      substring = pieces.slice(1).join(" ")
+      negated = false
+      if matches = pieces[0].match(/^!(.+)$/)
+        negated = true
+        pieces[0] = matches[1]
+      switch pieces[0]
+        when 'artist', 'band'
+          filterFunc = (e, s) -> e.artist.toLowerCase().indexOf(s) != -1
+        when 'title', 'song'
+          filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
+        when 'tag'
+          filterFunc = (e, s) -> e.tags[s] == true
+        when 'like', 'meh', 'bleh', 'hate'
+          filterOpinion = pieces[0]
+          filterUser = substring
+          await cacheOpinions(filterUser)
+          console.log soloOpinions
+          filterFunc = (e, s) -> soloOpinions[filterUser]?[filterOpinion]?[e.id]?
+        when 'full'
+          filterFunc = (e, s) ->
+            full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
+            full.indexOf(s) != -1
+        else
+          # skip this filter
+          continue
+
+      for id, e of soloDatabase
+        isMatch = filterFunc(e, substring)
+        if negated
+          isMatch = !isMatch
+        if isMatch
+          e.allowed = true
+
+    for id, e of soloDatabase
+      if e.allowed
+        soloUnshuffled.push e
+  else
+    # Queue it all up
+    for id, e of soloDatabase
+      soloUnshuffled.push e
+
+  if soloUnshuffled.length == 0
+    soloFatalError("No matching songs in the filter!")
+    return
+  soloCount = soloUnshuffled.length
 
   setInterval(soloTick, 5000)
 
