@@ -70,13 +70,45 @@ a {
     margin-bottom: 20px;
 }
 
+.blueButton {
+    box-shadow: 3px 4px 0px 0px #1564ad;
+    background:linear-gradient(to bottom, #79bbff 5%, #378de5 100%);
+    background-color:#79bbff;
+    border-radius:5px;
+    border:1px solid #337bc4;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:Arial;
+    font-size:17px;
+    font-weight:bold;
+    padding:12px 44px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #528ecc;
+}
+.blueButton:hover {
+    background:linear-gradient(to bottom, #378de5 5%, #79bbff 100%);
+    background-color:#378de5;
+}
+.blueButton:active {
+    position:relative;
+    top:1px;
+}
+
+.outer {
+    max-width: 800px;
+    margin:auto;
+}
+
 </style>
 <body>
+
+<div class="outer">
 
 <div class="maintitle">Solo Mode</div>
 
 <div id="aslink">
-    [<a onclick="showWatchForm(); return false;">Launch</a>]
+   [<a onclick="showWatchForm(); return false;">Launch</a>]
 </div>
 
 <form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()">
@@ -84,20 +116,25 @@ a {
     <input type="hidden" id="soloid" name="solo" value=""><br>
     <input type="checkbox" id="controls" name="controls"> Show Controls<br>
     <input type="checkbox" id="hidetitles" name="hidetitles"> Hide Titles<br>
-    <input type="submit" value="Watch"> <input id="castbutton" type="submit" onclick="startCast(); return false;" value="Cast"> <input type="submit" onclick="generatePermalink(); return false;" value="Permalink"> <input type="submit" onclick="showWatchLink(); return false;" value="Cancel">
+    <br>
+    <input type="submit" value="Watch"> <input id="castbutton" type="submit" onclick="startCast(); return false;" value="Cast"> <input type="submit" onclick="generatePermalink(); return false;" value="Permalink"> <input type="submit" onclick="showWatchLink(); return false;" value="Close">
 </form>
 
 <div id="info">
     ... Waiting for info ...
 </div>
 
-[<a onclick="soloRestart(); return false;">Restart</a>]
+<center>
+<a class="blueButton" onclick="soloSkip(); return false;">Skip</a>
 <br>
 <br>
-[<a onclick="soloPause(); return false;">Pause</a>]
+<a class="blueButton" onclick="soloPause(); return false;">Pause</a>
 <br>
 <br>
-[<a onclick="soloSkip(); return false;">Skip</a>]
+<a class="blueButton" onclick="soloRestart(); return false;">Restart</a>
+</center>
+
+</div>
 
 <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
 <script src="/socket.io/socket.io.js"></script>
