@@ -211,7 +211,7 @@ soloEnding = ->
 soloInfoBroadcast = ->
   if socket? and soloID? and soloVideo?
     nextVideo = null
-    if soloQueue.length > 1
+    if soloQueue.length > 0
       nextVideo = soloQueue[0]
     info =
       current: soloVideo
