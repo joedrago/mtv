@@ -323,15 +323,27 @@ soloStartup = ->
   if soloFilters?
     for id, e of soloDatabase
       e.allowed = false
+      e.skipped = false
 
     for filter in soloFilters
       pieces = filter.split(/\s+/)
+
+      property = "allowed"
+      if pieces[0] == "skip"
+        property = "skipped"
+        pieces.shift()
+      if pieces.length == 0
+        continue
+
       substring = pieces.slice(1).join(" ")
+
       negated = false
       if matches = pieces[0].match(/^!(.+)$/)
         negated = true
         pieces[0] = matches[1]
-      switch pieces[0]
+
+      command = pieces[0]
+      switch command
         when 'artist', 'band'
           filterFunc = (e, s) -> e.artist.toLowerCase().indexOf(s) != -1
         when 'title', 'song'
@@ -339,7 +351,7 @@ soloStartup = ->
         when 'tag'
           filterFunc = (e, s) -> e.tags[s] == true
         when 'like', 'meh', 'bleh', 'hate'
-          filterOpinion = pieces[0]
+          filterOpinion = command
           filterUser = substring
           await cacheOpinions(filterUser)
           console.log soloOpinions
@@ -348,6 +360,11 @@ soloStartup = ->
           filterFunc = (e, s) ->
             full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
             full.indexOf(s) != -1
+        when 'id', 'ids'
+          idLookup = {}
+          for id in pieces.slice(1)
+            idLookup[id] = true
+          filterFunc = (e, s) -> idLookup[e.id]
         else
           # skip this filter
           continue
@@ -357,10 +374,10 @@ soloStartup = ->
         if negated
           isMatch = !isMatch
         if isMatch
-          e.allowed = true
+          e[property] = true
 
     for id, e of soloDatabase
-      if e.allowed
+      if e.allowed and not e.skipped
         soloUnshuffled.push e
   else
     # Queue it all up
