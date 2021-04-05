@@ -30,6 +30,13 @@ a {
     display: none;
 }
 
+#soloid {
+    font-size: 1.0em;
+    color: #fff;
+    background-color: #333;
+    margin-bottom: 10px;
+}
+
 .filters {
     color: #fff;
     background-color: #333;
@@ -112,8 +119,10 @@ a {
 </div>
 
 <form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()">
+    Solo ID: [<a onclick="newSoloID(); return false;">Generate</a>]<br>
+    <input type="text" id="soloid" name="solo" readonly value=""><br>
+    Filters (leave blank for all songs):<br>
     <textarea form="asform" id="filters" name="filters" class="filters" style="width: 100%; max-width: 100%;" rows="5"></textarea><br>
-    <input type="hidden" id="soloid" name="solo" value=""><br>
     <input type="checkbox" id="controls" name="controls"> Show Controls<br>
     <input type="checkbox" id="hidetitles" name="hidetitles"> Hide Titles<br>
     <br>
