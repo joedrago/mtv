@@ -7,10 +7,17 @@ DASHCAST_NAMESPACE = 'urn:x-cast:es.offd.dashcast'
 soloID = null
 soloInfo = {}
 
+discordToken = null
+discordTag = null
+discordNickname = null
+
 castAvailable = false
 castSession = null
 
-opinionOrder = constants.opinionOrder
+opinionOrder = []
+for o in constants.opinionOrder
+  opinionOrder.push o
+opinionOrder.push('none')
 
 randomString = ->
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
@@ -125,6 +132,30 @@ renderInfo = ->
     html += "<div class=\"inforeshuffle\">(...Reshuffle...)</div>"
   document.getElementById('info').innerHTML = html
 
+clearOpinion = ->
+  document.getElementById('opinions').innerHTML = ""
+
+updateOpinion = (pkt) ->
+  if not soloInfo? or not soloInfo.current? or not (pkt.id == soloInfo.current.id)
+    return
+
+  html = ""
+  for o in opinionOrder by -1
+    capo = o.charAt(0).toUpperCase() + o.slice(1)
+    classes = "obutto"
+    if o == pkt.opinion
+      classes += " chosen"
+    html += """
+      <a class="#{classes}" onclick="setOpinion('#{o}'); return false;">#{capo}</a>
+    """
+  document.getElementById('opinions').innerHTML = html
+
+setOpinion = (opinion) ->
+  if not discordToken? or not soloInfo? or not soloInfo.current? or not soloInfo.current.id?
+    return
+
+  socket.emit 'opinion', { token: discordToken, id: soloInfo.current.id, set: opinion }
+
 soloCommand = (pkt) ->
   if pkt.id != soloID
     return
@@ -135,6 +166,9 @@ soloCommand = (pkt) ->
         console.log "NEW INFO!: ", pkt.info
         soloInfo = pkt.info
         renderInfo()
+        clearOpinion()
+        if discordToken? and soloInfo.current? and soloInfo.current.id?
+          socket.emit 'opinion', { token: discordToken, id: soloInfo.current.id }
 
 updateSoloID = (newSoloID) ->
   soloID = newSoloID
@@ -148,6 +182,48 @@ updateSoloID = (newSoloID) ->
 newSoloID = ->
   updateSoloID(randomString())
 
+logout = ->
+  document.getElementById("identity").innerHTML = "Logging out..."
+  localStorage.removeItem('token')
+  sendIdentity()
+
+sendIdentity = ->
+  discordToken = localStorage.getItem('token')
+  identityPayload = {
+    token: discordToken
+  }
+  console.log "Sending identify: ", identityPayload
+  socket.emit 'identify', identityPayload
+
+receiveIdentity = (pkt) ->
+  console.log "identify response:", pkt
+  if pkt.disabled
+    console.log "Discord auth disabled."
+    document.getElementById("identity").innerHTML = ""
+    return
+
+  if pkt.tag? and (pkt.tag.length > 0)
+    discordTag = pkt.tag
+    discordNicknameString = ""
+    if pkt.nickname?
+      discordNickname = pkt.nickname
+      discordNicknameString = " (#{discordNickname})"
+    html = """
+      #{discordTag}#{discordNicknameString} - [<a onclick="logout()">Logout</a>]
+    """
+  else
+    discordTag = null
+    discordNickname = null
+
+    redirectURL = String(window.location).replace(/#.*$/, "") + "oauth"
+    loginLink = "https://discord.com/api/oauth2/authorize?client_id=#{window.CLIENT_ID}&redirect_uri=#{encodeURIComponent(redirectURL)}&response_type=code&scope=identify"
+    html = """
+      <div class="loginhint">(Login on <a href="/" target="_blank">Dashboard</a> for extra controls)</div>
+    """
+  document.getElementById("identity").innerHTML = html
+  if lastClicked?
+    lastClicked()
+
 init = ->
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
@@ -157,6 +233,8 @@ init = ->
   window.soloPause = soloPause
   window.generatePermalink = generatePermalink
   window.newSoloID = newSoloID
+  window.logout = logout
+  window.setOpinion = setOpinion
 
   updateSoloID(qs('solo'))
 
@@ -172,9 +250,16 @@ init = ->
   socket.on 'connect', ->
     if soloID?
       socket.emit 'solo', { id: soloID }
+      sendIdentity()
 
   socket.on 'solo', (pkt) ->
     soloCommand(pkt)
+
+  socket.on 'identify', (pkt) ->
+    receiveIdentity(pkt)
+
+  socket.on 'opinion', (pkt) ->
+    updateOpinion(pkt)
 
   prepareCast()
 
