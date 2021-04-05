@@ -113,11 +113,11 @@ renderInfo = ->
     return
 
   html = "<div class=\"infocounts\">Track #{soloInfo.index} / #{soloInfo.count}</div>"
-  html += "<div class=\"infoheading\">Current:</div>"
+  html += "<div class=\"infoheading\">Current: [<span class=\"youtubeid\">#{soloInfo.current.id}</span>]</div>"
   html += "<div class=\"infoartist\">#{soloInfo.current.artist}</div>"
   html += "<div class=\"infotitle\">\"#{soloInfo.current.title}\"</div>"
   if soloInfo.next?
-    html += "<div class=\"infoheading\">Next:</div>"
+    html += "<div class=\"infoheading\">Next: [<span class=\"youtubeid\">#{soloInfo.next.id}</span>]</div>"
     html += "<div class=\"infoartist\">#{soloInfo.next.artist}</div>"
     html += "<div class=\"infotitle\">\"#{soloInfo.next.title}\"</div>"
   else
