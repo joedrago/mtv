@@ -12,6 +12,9 @@ castSession = null
 
 opinionOrder = constants.opinionOrder
 
+randomString = ->
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+
 now = ->
   return Math.floor(Date.now() / 1000)
 
@@ -133,6 +136,18 @@ soloCommand = (pkt) ->
         soloInfo = pkt.info
         renderInfo()
 
+updateSoloID = (newSoloID) ->
+  soloID = newSoloID
+  if not soloID?
+    document.body.innerHTML = "ERROR: no solo query parameter"
+    return
+  document.getElementById("soloid").value = soloID
+  if socket?
+    socket.emit 'solo', { id: soloID }
+
+newSoloID = ->
+  updateSoloID(randomString())
+
 init = ->
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
@@ -141,12 +156,9 @@ init = ->
   window.soloRestart = soloRestart
   window.soloPause = soloPause
   window.generatePermalink = generatePermalink
+  window.newSoloID = newSoloID
 
-  soloID = qs('solo')
-  if not soloID?
-    document.body.innerHTML = "ERROR: no solo query parameter"
-    return
-  document.getElementById("soloid").value = soloID
+  updateSoloID(qs('solo'))
 
   qsFilters = qs('filters')
   if qsFilters?
