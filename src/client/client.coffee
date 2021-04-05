@@ -3,6 +3,8 @@ socket = null
 playing = false
 serverEpoch = null
 
+iso8601 = require 'iso8601-duration'
+
 soloID = null
 soloFilters = null
 soloDatabase = {}
@@ -18,6 +20,12 @@ endedTimer = null
 overTimers = []
 
 opinionOrder = ['like', 'meh', 'bleh', 'hate'] # always in this specific order
+
+parseDuration = (s) ->
+  return iso8601.toSeconds(iso8601.parse(s))
+
+now = ->
+  return Math.floor(Date.now() / 1000)
 
 qs = (name) ->
   url = window.location.href
@@ -350,6 +358,17 @@ soloStartup = ->
           filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
         when 'tag'
           filterFunc = (e, s) -> e.tags[s] == true
+        when 'recent', 'since'
+          console.log "parsing '#{substring}'"
+          try
+            durationInSeconds = parseDuration(substring)
+          catch someException
+            soloFatalError("Cannot parse duration: #{substring}")
+            return
+
+          console.log "Duration [#{substring}] - #{durationInSeconds}"
+          since = now() - durationInSeconds
+          filterFunc = (e, s) -> e.added > since
         when 'like', 'meh', 'bleh', 'hate'
           filterOpinion = command
           filterUser = substring
