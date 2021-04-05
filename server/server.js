@@ -2175,7 +2175,7 @@
         epoch: serverEpoch
       });
       socket.on('solo', function(msg) {
-        console.log("received solo message: ", msg);
+        // console.log "received solo message: ", msg
         if (msg.id != null) {
           if (soloSessions[socket.id] !== msg.id) {
             soloSessions[socket.id] = msg.id;
@@ -2183,11 +2183,11 @@
           if (msg.cmd != null) {
             soloBroadcast(socket.id, msg);
             if ((msg.cmd === 'info') && (msg.info != null)) {
-              soloInfo[msg.id] = msg.info;
-              return console.log(`Solo Info Update [${msg.id}]: `, soloInfo[msg.id]);
+              return soloInfo[msg.id] = msg.info;
             }
           } else {
             // new connection or re-connection, update their info
+            // console.log "Solo Info Update [#{msg.id}]: ", soloInfo[msg.id]
             if (soloInfo[msg.id] != null) {
               return socket.emit('solo', {
                 id: msg.id,
@@ -2311,7 +2311,7 @@
         checkAutoskip();
         return checkIfEveryoneLeft();
       });
-      return socket.on('identify', function(msg) {
+      socket.on('identify', function(msg) {
         var reply;
         if (!discordEnabled) {
           socket.emit('identify', {
@@ -2330,6 +2330,32 @@
           return;
         }
         return socket.emit('identify', {});
+      });
+      return socket.on('opinion', function(msg) {
+        var feeling, ref, reply, tag;
+        if ((msg.token != null) && (discordAuth[msg.token] != null) && (msg.id != null) && (playlist[msg.id] != null)) {
+          tag = discordAuth[msg.token].tag;
+          if ((msg.set != null) && ((msg.set === 'none') || constants.opinions[msg.set])) {
+            if (opinions[msg.id] == null) {
+              opinions[msg.id] = {};
+            }
+            if (msg.set === 'none') {
+              delete opinions[msg.id][tag];
+            } else if (constants.opinions[msg.set]) {
+              opinions[msg.id][tag] = msg.set;
+            }
+          }
+          feeling = (ref = opinions[msg.id]) != null ? ref[tag] : void 0;
+          if (feeling == null) {
+            feeling = "none";
+          }
+          reply = {
+            id: msg.id,
+            tag: tag,
+            opinion: feeling
+          };
+          socket.emit('opinion', reply);
+        }
       });
     });
     app.get('/', function(req, res) {
@@ -2371,7 +2397,7 @@
       return res.send(html);
     });
     app.get('/solo', function(req, res) {
-      var html, soloID;
+      var discordClientID, html, soloID;
       soloID = req.query.solo;
       if (soloID == null) {
         while (true) {
@@ -2384,6 +2410,11 @@
         return;
       }
       html = fs.readFileSync(`${__dirname}/../web/solo.html`, "utf8");
+      discordClientID = secrets.discordClientID;
+      if (discordClientID == null) {
+        discordClientID = "0";
+      }
+      html = html.replace(/!CLIENT_ID!/, discordClientID);
       return res.send(html);
     });
     app.get('/info/playlist', function(req, res) {
@@ -2463,7 +2494,7 @@
       return res.send("MTV: wat");
     });
     app.use(express.static('web'));
-    return http.listen(3003, '127.0.0.1', function() {
+    return http.listen(3003, '0.0.0.0', function() {
       return console.log('listening on 127.0.0.1:3003');
     });
   };

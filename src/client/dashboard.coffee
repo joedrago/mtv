@@ -593,7 +593,9 @@ init = ->
   socket = io()
 
   socket.on 'connect', ->
+    # switch which line is commented here to allow identity on the dash
     sendIdentity()
+    # document.getElementById("identity").innerHTML = ""
 
   socket.on 'play', (pkt) ->
     if lastClicked?

@@ -1653,7 +1653,7 @@ main = (argv) ->
     socket.emit('server', { epoch: serverEpoch })
 
     socket.on 'solo', (msg) ->
-      console.log "received solo message: ", msg
+      # console.log "received solo message: ", msg
       if msg.id?
         if soloSessions[socket.id] != msg.id
           soloSessions[socket.id] = msg.id
@@ -1661,7 +1661,7 @@ main = (argv) ->
           soloBroadcast(socket.id, msg)
           if (msg.cmd == 'info') and msg.info?
             soloInfo[msg.id] = msg.info
-            console.log "Solo Info Update [#{msg.id}]: ", soloInfo[msg.id]
+            # console.log "Solo Info Update [#{msg.id}]: ", soloInfo[msg.id]
         else
           # new connection or re-connection, update their info
           if soloInfo[msg.id]?
@@ -1773,6 +1773,26 @@ main = (argv) ->
         return
       socket.emit 'identify', {}
 
+    socket.on 'opinion', (msg) ->
+      if msg.token? and discordAuth[msg.token]? and msg.id? and playlist[msg.id]?
+        tag = discordAuth[msg.token].tag
+        if msg.set? and ((msg.set == 'none') or constants.opinions[msg.set])
+          if not opinions[msg.id]?
+            opinions[msg.id] = {}
+          if msg.set == 'none'
+            delete opinions[msg.id][tag]
+          else if constants.opinions[msg.set]
+            opinions[msg.id][tag] = msg.set
+        feeling = opinions[msg.id]?[tag]
+        if not feeling?
+          feeling = "none"
+        reply =
+          id: msg.id
+          tag: tag
+          opinion: feeling
+        socket.emit 'opinion', reply
+        return
+
   app.get '/', (req, res) ->
     html = fs.readFileSync("#{__dirname}/../web/dashboard.html", "utf8")
     discordClientID = secrets.discordClientID
@@ -1813,6 +1833,10 @@ main = (argv) ->
       res.redirect("/solo?solo=#{soloID}")
       return
     html = fs.readFileSync("#{__dirname}/../web/solo.html", "utf8")
+    discordClientID = secrets.discordClientID
+    if not discordClientID?
+      discordClientID = "0"
+    html = html.replace(/!CLIENT_ID!/, discordClientID)
     res.send(html)
 
   app.get '/info/playlist', (req, res) ->
@@ -1882,7 +1906,7 @@ main = (argv) ->
 
   app.use(express.static('web'))
 
-  http.listen 3003, '127.0.0.1', ->
+  http.listen 3003, '0.0.0.0', ->
     console.log('listening on 127.0.0.1:3003')
 
 module.exports = main
