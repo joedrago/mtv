@@ -76,6 +76,11 @@ privacyReplacer = (k, v) ->
     return undefined
   return v
 
+sanitizeTag = (tagName) ->
+  tagName = tagName.toLowerCase()
+  tagName = tagName.replace(/[^-_a-z0-9]/g, "")
+  return tagName
+
 load = ->
   if fs.existsSync("playlist.json")
     loadedList = JSON.parse(fs.readFileSync("playlist.json", 'utf8'))
@@ -806,9 +811,7 @@ calcEntryStrings = (e) ->
       whoList.sort()
       opinionString += " (#{whoList.join(', ')})"
 
-  tagsString = Object.keys(e.tags).sort().map (e) ->
-    constants.tags[e]
-  .join(', ')
+  tagsString = Object.keys(e.tags).sort().join(', ')
   if tagsString.length > 0
     tagsString = " - [#{tagsString}]"
 
@@ -1172,9 +1175,7 @@ run = (args, user) ->
           if not e?
             return "MTV [edit]: Unknown id"
           for tagName in editArgs
-            if not constants.tags[tagName]?
-              return "MTV [edit]: Unknown tag: `#{tagName}`"
-          for tagName in editArgs
+            tagName = sanitizeTag(tagName)
             if property == 'tag'
               e.tags[tagName] = true
             else
@@ -1195,7 +1196,11 @@ run = (args, user) ->
       return "MTV: Edited: `#{e.id}` [`#{property}`] `#{oldValue}` -> `#{newValue}`"
 
     when 'tags'
-      legalTags = Object.keys(constants.tags).sort().join(", ")
+      knownTags = {}
+      for k,v of playlist
+        for tag of v.tags
+          knownTags[tag] = true
+      legalTags = Object.keys(knownTags).sort().join(", ")
       return "MTV [tags]: `#{legalTags}`"
     when 'tag', 'untag'
       if args.length < 2
@@ -1205,11 +1210,9 @@ run = (args, user) ->
       tagArgs = []
       for i in [1...args.length]
         tagArgs.push args[i]
-      for tagName in tagArgs
-        if not constants.tags[tagName]?
-          return "MTV [#{cmd}]: Unknown tag: `#{tagName}`"
       e = lastPlayed
       for tagName in tagArgs
+        tagName = sanitizeTag(tagName)
         if cmd == 'tag'
           e.tags[tagName] = true
         else
