@@ -101,7 +101,7 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE, 
 
   if not firstTitle? and not restTitle? and tagFilter?
     html += """
-      <div class="restTitle">Tag: #{if constants.tags[tagFilter]? then constants.tags[tagFilter] else "Unknown"}</div>
+      <div class="restTitle">Tag: #{tagFilter}</div>
     """
 
   for e, entryIndex in entries
@@ -125,7 +125,7 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE, 
 
     extraInfo = ""
     for tag of e.tags
-      extraInfo += ", #{constants.tags[tag]}"
+      extraInfo += ", #{tag}"
     if (e.start != -1) or  (e.end != -1)
       extraInfo += ", #{prettyDuration(e)}"
     if e.opinions?
@@ -306,7 +306,7 @@ showStats = ->
           tagNames = Object.keys(tagCounts).sort()
           for tagName in tagNames
             html += """
-              <div> * <a href="#tag/#{encodeURIComponent(tagName)}">#{constants.tags[tagName]}</a>: #{tagCounts[tagName]}</div>
+              <div> * <a href="#tag/#{encodeURIComponent(tagName)}">#{tagName}</a>: #{tagCounts[tagName]}</div>
             """
 
           # html = "<pre>" + JSON.stringify(userCounts, null, 2) + "</pre>"
