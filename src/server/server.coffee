@@ -1807,7 +1807,7 @@ main = (argv) ->
               requestDashboardRefresh()
               checkAutoskip()
               name = getNickname(tag)
-              logOutput("MTV: [Dash] #{name} `#{msg.set}`s: #{strs.description}") # only if echoEnabled?
+              logOutput("MTV: _(Dashboard)_ #{name} `#{msg.set}`: #{strs.description}") # only if echoEnabled?
 
         feeling = opinions[msg.id]?[tag]
         if not feeling?

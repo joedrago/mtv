@@ -2371,7 +2371,7 @@
                 requestDashboardRefresh();
                 checkAutoskip();
                 name = getNickname(tag);
-                logOutput(`MTV: [Dash] ${name} \`${msg.set}\`s: ${strs.description}`);
+                logOutput(`MTV: _(Dashboard)_ ${name} \`${msg.set}\`: ${strs.description}`);
               }
             }
           }
