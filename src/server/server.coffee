@@ -1783,6 +1783,7 @@ main = (argv) ->
             delete opinions[msg.id][tag]
           else if constants.opinions[msg.set]
             opinions[msg.id][tag] = msg.set
+          saveOpinions()
         feeling = opinions[msg.id]?[tag]
         if not feeling?
           feeling = "none"

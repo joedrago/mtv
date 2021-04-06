@@ -2344,6 +2344,7 @@
             } else if (constants.opinions[msg.set]) {
               opinions[msg.id][tag] = msg.set;
             }
+            saveOpinions();
           }
           feeling = (ref = opinions[msg.id]) != null ? ref[tag] : void 0;
           if (feeling == null) {
