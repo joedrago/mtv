@@ -199,6 +199,10 @@ calcOther = ->
   other =
     playing: count
     names: names
+    current:
+      id: lastPlayed.id
+      artist: lastPlayed.artist
+      title: lastPlayed.title
   return other
 
 logAutoskip = ->
@@ -1469,13 +1473,18 @@ processOAuth = (code) ->
 
             # console.log "Me replied:", meData
             if meData? and meData.username? and meData.discriminator?
+              tag = "#{meData.username}##{meData.discriminator}"
+              if not nicknames[tag]?
+                console.log "Warning: Blocking auth on unknown user (no nickname): #{tag}"
+                resolve('')
+                return
               loop
                 newToken = randomString()
                 if not discordAuth[newToken]?
                   break
               discordAuth[newToken] =
                 token: newToken
-                tag: "#{meData.username}##{meData.discriminator}"
+                tag: tag
                 added: now()
               console.log "Login [#{newToken}]: #{discordAuth[newToken].tag}"
               resolve(newToken)
@@ -1777,13 +1786,29 @@ main = (argv) ->
       if msg.token? and discordAuth[msg.token]? and msg.id? and playlist[msg.id]?
         tag = discordAuth[msg.token].tag
         if msg.set? and ((msg.set == 'none') or constants.opinions[msg.set])
-          if not opinions[msg.id]?
-            opinions[msg.id] = {}
-          if msg.set == 'none'
+          needsSave = false
+          if (msg.set == 'none') and opinions[msg.id]? and opinions[msg.id][tag]?
             delete opinions[msg.id][tag]
+            needsSave = true
           else if constants.opinions[msg.set]
-            opinions[msg.id][tag] = msg.set
-          saveOpinions()
+            if opinions[msg.id]?
+              if opinions[msg.id][tag] != msg.set
+                opinions[msg.id][tag] = msg.set
+                needsSave = true
+            else
+              opinions[msg.id] = {}
+              opinions[msg.id][tag] = msg.set
+              needsSave = true
+          if needsSave
+            updateOpinion(lastPlayed)
+            saveOpinions()
+            if msg.src == 'dashboard'
+              strs = calcEntryStrings(lastPlayed)
+              requestDashboardRefresh()
+              checkAutoskip()
+              name = getNickname(tag)
+              logOutput("MTV: [Dash] #{name} `#{msg.set}`s: #{strs.description}") # only if echoEnabled?
+
         feeling = opinions[msg.id]?[tag]
         if not feeling?
           feeling = "none"

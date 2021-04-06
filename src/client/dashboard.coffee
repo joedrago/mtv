@@ -9,11 +9,17 @@ lastUser = null
 lastTag = null
 discordTag = null
 discordNickname = null
+discordToken = null
+lastPlayed = null
 
 castAvailable = false
 castSession = null
 
 opinionOrder = constants.opinionOrder
+opinionButtonOrder = []
+for o in constants.opinionOrder
+  opinionButtonOrder.push o
+opinionButtonOrder.push('none')
 
 now = ->
   return Math.floor(Date.now() / 1000)
@@ -173,8 +179,8 @@ updateOther = ->
   xhttp = new XMLHttpRequest()
   xhttp.onreadystatechange = ->
       if (@readyState == 4) and (@status == 200)
-         # Typical action to be performed when the document is ready:
-         try
+        # Typical action to be performed when the document is ready:
+        try
           other = JSON.parse(xhttp.responseText)
           console.log other
           nameString = ""
@@ -190,8 +196,11 @@ updateOther = ->
             nameString = ": #{nameString}"
 
           document.getElementById("playing").innerHTML = "#{other.playing} Watching#{nameString}"
-         catch
-           # nothing?
+          lastPlayed = other.current
+          if discordToken?
+            socket.emit 'opinion', { token: discordToken, id: lastPlayed.id }
+        catch
+          # nothing?
   xhttp.open("GET", "/info/other", true)
   xhttp.send()
 
@@ -455,6 +464,31 @@ showUser = ->
   updateOther()
   lastClicked = showUser
 
+updateOpinion = (pkt) ->
+  if not discordTag? or not lastPlayed?
+    document.getElementById('remote').innerHTML = ""
+    return
+
+  html = """
+    <div class="opinionname">
+  """
+  for o in opinionButtonOrder by -1
+    capo = o.charAt(0).toUpperCase() + o.slice(1)
+    classes = "obutto"
+    if o == pkt.opinion
+      classes += " chosen"
+    html += """
+      <a class="#{classes}" onclick="setOpinion('#{o}'); return false;">#{capo}</a>
+    """
+  html += " - <span class=\"entryartist\">#{lastPlayed.artist}</span> - <span class=\"entrytitle\">#{lastPlayed.title}</span></div>"
+  document.getElementById('opinions').innerHTML = html
+
+setOpinion = (opinion) ->
+  if not discordToken? or not lastPlayed? or not lastPlayed.id?
+    return
+
+  socket.emit 'opinion', { token: discordToken, id: lastPlayed.id, set: opinion, src: "dashboard" }
+
 showWatchForm = ->
   # document.getElementById('aslink').style.display = 'none'
   document.getElementById('asform').style.display = 'block'
@@ -495,9 +529,9 @@ logout = ->
   sendIdentity()
 
 sendIdentity = ->
-  token = localStorage.getItem('token')
+  discordToken = localStorage.getItem('token')
   identityPayload = {
-    token: token
+    token: discordToken
   }
   console.log "Sending identify: ", identityPayload
   socket.emit 'identify', identityPayload
@@ -521,6 +555,7 @@ receiveIdentity = (pkt) ->
   else
     discordTag = null
     discordNickname = null
+    discordToken = null
 
     redirectURL = String(window.location).replace(/#.*$/, "") + "oauth"
     loginLink = "https://discord.com/api/oauth2/authorize?client_id=#{window.CLIENT_ID}&redirect_uri=#{encodeURIComponent(redirectURL)}&response_type=code&scope=identify"
@@ -581,6 +616,7 @@ init = ->
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
   window.startCast = startCast
+  window.setOpinion = setOpinion
 
   token = qs('token')
   if token?
@@ -607,6 +643,9 @@ init = ->
 
   socket.on 'identify', (pkt) ->
     receiveIdentity(pkt)
+
+  socket.on 'opinion', (pkt) ->
+    updateOpinion(pkt)
 
   prepareCast()
 

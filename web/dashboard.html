@@ -124,6 +124,34 @@ a {
     display: none;
 }
 
+.obutto {
+    width: 30px;
+    background-color:#444444;
+    border-radius:5px;
+    border:1px solid #333333;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:Arial;
+    font-size:10px;
+    font-weight:bold;
+    padding:10px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #528ecc;
+}
+.obutto:active {
+    position:relative;
+    top:1px;
+}
+
+#opinions {
+    margin-bottom: 20px;
+}
+
+.chosen {
+    background-color:#77aa77;
+}
+
 </style>
 <body>
 
@@ -150,6 +178,7 @@ window.CLIENT_ID = "!CLIENT_ID!";
     <input type="submit" value="Watch"> <input id="castbutton" type="submit" onclick="startCast(); return false;" value="Cast"> <input type="submit" onclick="showWatchLink(); return false;" value="Cancel">
 </form>
 
+<div id="opinions"></div>
 <div id="main"></div>
 <div id="identity"></div>
 
