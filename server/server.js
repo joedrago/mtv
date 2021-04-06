@@ -304,7 +304,12 @@
     names.sort();
     other = {
       playing: count,
-      names: names
+      names: names,
+      current: {
+        id: lastPlayed.id,
+        artist: lastPlayed.artist,
+        title: lastPlayed.title
+      }
     };
     return other;
   };
@@ -1945,7 +1950,7 @@
               return resolve('');
             });
             return meRes.on('end', function() {
-              var meData, newToken;
+              var meData, newToken, tag;
               meData = null;
               try {
                 meData = JSON.parse(meRawJSON);
@@ -1956,6 +1961,12 @@
               }
               // console.log "Me replied:", meData
               if ((meData != null) && (meData.username != null) && (meData.discriminator != null)) {
+                tag = `${meData.username}#${meData.discriminator}`;
+                if (nicknames[tag] == null) {
+                  console.log(`Warning: Blocking auth on unknown user (no nickname): ${tag}`);
+                  resolve('');
+                  return;
+                }
                 while (true) {
                   newToken = randomString();
                   if (discordAuth[newToken] == null) {
@@ -1964,7 +1975,7 @@
                 }
                 discordAuth[newToken] = {
                   token: newToken,
-                  tag: `${meData.username}#${meData.discriminator}`,
+                  tag: tag,
                   added: now()
                 };
                 console.log(`Login [${newToken}]: ${discordAuth[newToken].tag}`);
@@ -2332,19 +2343,37 @@
         return socket.emit('identify', {});
       });
       return socket.on('opinion', function(msg) {
-        var feeling, ref, reply, tag;
+        var feeling, name, needsSave, ref, reply, strs, tag;
         if ((msg.token != null) && (discordAuth[msg.token] != null) && (msg.id != null) && (playlist[msg.id] != null)) {
           tag = discordAuth[msg.token].tag;
           if ((msg.set != null) && ((msg.set === 'none') || constants.opinions[msg.set])) {
-            if (opinions[msg.id] == null) {
-              opinions[msg.id] = {};
-            }
-            if (msg.set === 'none') {
+            needsSave = false;
+            if ((msg.set === 'none') && (opinions[msg.id] != null) && (opinions[msg.id][tag] != null)) {
               delete opinions[msg.id][tag];
+              needsSave = true;
             } else if (constants.opinions[msg.set]) {
-              opinions[msg.id][tag] = msg.set;
+              if (opinions[msg.id] != null) {
+                if (opinions[msg.id][tag] !== msg.set) {
+                  opinions[msg.id][tag] = msg.set;
+                  needsSave = true;
+                }
+              } else {
+                opinions[msg.id] = {};
+                opinions[msg.id][tag] = msg.set;
+                needsSave = true;
+              }
             }
-            saveOpinions();
+            if (needsSave) {
+              updateOpinion(lastPlayed);
+              saveOpinions();
+              if (msg.src === 'dashboard') {
+                strs = calcEntryStrings(lastPlayed);
+                requestDashboardRefresh();
+                checkAutoskip();
+                name = getNickname(tag);
+                logOutput(`MTV: [Dash] ${name} \`${msg.set}\`s: ${strs.description}`);
+              }
+            }
           }
           feeling = (ref = opinions[msg.id]) != null ? ref[tag] : void 0;
           if (feeling == null) {

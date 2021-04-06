@@ -185,6 +185,7 @@ newSoloID = ->
 logout = ->
   document.getElementById("identity").innerHTML = "Logging out..."
   localStorage.removeItem('token')
+  discordToken = null
   sendIdentity()
 
 sendIdentity = ->
@@ -214,6 +215,7 @@ receiveIdentity = (pkt) ->
   else
     discordTag = null
     discordNickname = null
+    discordToken = null
 
     redirectURL = String(window.location).replace(/#.*$/, "") + "oauth"
     loginLink = "https://discord.com/api/oauth2/authorize?client_id=#{window.CLIENT_ID}&redirect_uri=#{encodeURIComponent(redirectURL)}&response_type=code&scope=identify"
