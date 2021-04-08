@@ -14,6 +14,9 @@ discordNickname = null
 castAvailable = false
 castSession = null
 
+launchOpen = (localStorage.getItem('launch') == "true")
+console.log "launchOpen: #{launchOpen}"
+
 opinionOrder = []
 for o in constants.opinionOrder
   opinionOrder.push o
@@ -40,11 +43,15 @@ showWatchForm = ->
   document.getElementById('aslink').style.display = 'none'
   document.getElementById('asform').style.display = 'block'
   document.getElementById('castbutton').style.display = 'inline-block'
-  document.getElementById("userinput").focus()
+  document.getElementById("filters").focus()
+  launchOpen = true
+  localStorage.setItem('launch', 'true')
 
 showWatchLink = ->
   document.getElementById('aslink').style.display = 'inline-block'
   document.getElementById('asform').style.display = 'none'
+  launchOpen = false
+  localStorage.setItem('launch', 'false')
 
 onInitSuccess = ->
   console.log "Cast available!"
@@ -120,16 +127,18 @@ renderInfo = ->
     return
 
   html = "<div class=\"infocounts\">Track #{soloInfo.index} / #{soloInfo.count}</div>"
-  html += "<div class=\"infoheading\">Current: [<span class=\"youtubeid\">#{soloInfo.current.id}</span>]</div>"
-  html += "<div class=\"infoartist\">#{soloInfo.current.artist}</div>"
+  # html += "<div class=\"infoheading\">Current: [<span class=\"youtubeid\">#{soloInfo.current.id}</span>]</div>"
+  html += "<div class=\"infothumb\"><a href=\"https://youtu.be/#{encodeURIComponent(soloInfo.current.id)}\"><img width=320 height=180 src=\"#{soloInfo.current.thumb}\"></a></div>"
+  html += "<div class=\"infocurrent infoartist\">#{soloInfo.current.artist}</div>"
   html += "<div class=\"infotitle\">\"#{soloInfo.current.title}\"</div>"
   if soloInfo.next?
-    html += "<div class=\"infoheading\">Next: [<span class=\"youtubeid\">#{soloInfo.next.id}</span>]</div>"
-    html += "<div class=\"infoartist\">#{soloInfo.next.artist}</div>"
-    html += "<div class=\"infotitle\">\"#{soloInfo.next.title}\"</div>"
+    html += "<span class=\"infoheading nextvideo\">Next:</span> "
+    html += "<span class=\"infoartist nextvideo\">#{soloInfo.next.artist}</span>"
+    html += "<span class=\"nextvideo\"> - </span>"
+    html += "<span class=\"infotitle nextvideo\">\"#{soloInfo.next.title}\"</span>"
   else
-    html += "<div class=\"infoheading\">Next:</div>"
-    html += "<div class=\"inforeshuffle\">(...Reshuffle...)</div>"
+    html += "<div class=\"infoheading nextvideo\">Next:</div>"
+    html += "<div class=\"inforeshuffle nextvideo\">(...Reshuffle...)</div>"
   document.getElementById('info').innerHTML = html
 
 clearOpinion = ->
@@ -221,7 +230,7 @@ receiveIdentity = (pkt) ->
     redirectURL = String(window.location).replace(/#.*$/, "") + "oauth"
     loginLink = "https://discord.com/api/oauth2/authorize?client_id=#{window.CLIENT_ID}&redirect_uri=#{encodeURIComponent(redirectURL)}&response_type=code&scope=identify"
     html = """
-      <div class="loginhint">(Login on <a href="/" target="_blank">Dashboard</a> for extra controls)</div>
+      <div class="loginhint">(Login on <a href="/" target="_blank">Dashboard</a>)</div>
     """
   document.getElementById("identity").innerHTML = html
   if lastClicked?
@@ -265,5 +274,10 @@ init = ->
     updateOpinion(pkt)
 
   prepareCast()
+
+  if launchOpen
+    showWatchForm()
+  else
+    showWatchLink()
 
 window.onload = init
