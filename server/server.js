@@ -1246,16 +1246,13 @@
   };
 
   calcUserOpinions = function(user) {
-    var e, k, opinion, userOpinions;
+    var e, k, userOpinions;
     user = getUserFromNickname(user);
     userOpinions = {};
-    for (opinion in constants.opinions) {
-      userOpinions[opinion] = {};
-    }
     for (k in playlist) {
       e = playlist[k];
       if ((opinions[e.id] != null) && (opinions[e.id][user] != null)) {
-        userOpinions[opinions[e.id][user]][e.id] = 1;
+        userOpinions[e.id] = opinions[e.id][user];
       }
     }
     return userOpinions;
