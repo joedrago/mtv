@@ -30,6 +30,10 @@ a {
     display: none;
 }
 
+#aslink {
+    width: 100%;
+}
+
 #soloid {
     font-size: 1.0em;
     color: #fff;
@@ -47,6 +51,8 @@ a {
     margin-bottom: 20px;
 
     padding: 5px;
+
+    text-align: center;
 }
 
 .infocounts {
@@ -54,16 +60,19 @@ a {
     font-style: italic;
     margin-bottom: 20px;
 }
+
 .infoheading {
     color: #faa;
     font-style: italic;
+    margin-top: 10px;
+}
+
+.infocurrent {
     margin-top: 20px;
-    margin-bottom: 20px;
 }
 
 .infoartist {
     color: #ffa;
-    margin-top: 20px;
 }
 
 .infotitle {
@@ -80,6 +89,11 @@ a {
     color: #aaa;
     font-style: italic;
     margin-bottom: 20px;
+}
+
+.infothumb {
+    width: 100%;
+    margin: auto;
 }
 
 .butto {
@@ -150,6 +164,22 @@ a {
     color: #777;
 }
 
+.nextvideo {
+    font-size: 0.6em;
+    font-style: italic;
+}
+
+input[type=submit] {
+    padding:5px 15px;
+    background:#ccc;
+    border:0 none;
+    cursor:pointer;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    font-family: monospace;
+    font-weight: 900;
+}
+
 </style>
 <body>
 
@@ -159,15 +189,15 @@ window.CLIENT_ID = "!CLIENT_ID!";
 
 <div class="outer">
 
-<div class="maintitle">Solo Mode</div>
-
-<div id="identity"></div>
 <br>
 <div id="aslink">
-   [<a onclick="showWatchForm(); return false;">Launch</a>]
+    <center>
+       [<a onclick="showWatchForm(); return false;">Settings / Launch</a>]
+    </center>
 </div>
 
 <form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()">
+    <div id="identity"></div>
     Solo ID: [<a onclick="newSoloID(); return false;">Generate</a>]<br>
     <input type="text" id="soloid" name="solo" readonly value=""><br>
     Filters (leave blank for all songs):<br>
