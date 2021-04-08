@@ -111,13 +111,12 @@ a {
 }
 
 #identity {
-    position: fixed;
-    float: right;
-    margin-top: 10px;
     margin-right: 10px;
     top: 0px;
     right: 0px;
     display: block;
+    text-align: right;
+    float: right;
 }
 
 #castbutton {
@@ -168,6 +167,7 @@ window.CLIENT_ID = "!CLIENT_ID!";
 [<a href="/solo" class="sololink" target="_blank">Solo</a>]
 [<a id="aslink" class="watchlink" onclick="showWatchForm()">Watch</a>]
 <span id="playing"></span>
+<div id="identity"></div>
 <br>
 <br>
 <form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()">
@@ -180,7 +180,6 @@ window.CLIENT_ID = "!CLIENT_ID!";
 
 <div id="opinions"></div>
 <div id="main"></div>
-<div id="identity"></div>
 
 <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
 <script src="/socket.io/socket.io.js"></script>
