@@ -226,7 +226,8 @@ shouldSkip = (e) ->
         console.log "autoskip: #{playingName[sid]} can't watch NSFW content, bailing out."
         return true
 
-  skipIt = false
+  hasOpinionCount = 0
+  weakOpinionCount = 0
   for sid, soc of sockets
     if not isPlaying[sid]
       continue
@@ -244,16 +245,24 @@ shouldSkip = (e) ->
         continue
 
       feeling = opinions[e.id]?[user]
-      if not feeling?
-        console.log "autoskip: #{user} has no opinion of this song, bailing out."
-        return false
-      if constants.goodOpinions[feeling]?
-        console.log "autoskip: #{user} #{feeling}s this song, bailing out."
-        return false
+      if feeling? and constants.badOpinions[feeling]?
+        console.log "autoskip: #{user} #{feeling}s this song, skipping."
+        return true
 
-      # any other feeling is autoskip-worthy
-      skipIt = true
-  return skipIt
+      hasOpinionCount += 1
+      if not feeling?
+        # console.log "autoskip: #{user} has no opinion of this song, bailing out."
+        continue
+      if constants.weakOpinions[feeling]?
+        weakOpinionCount += 1
+      if constants.goodOpinions[feeling]?
+        # console.log "autoskip: #{user} #{feeling}s this song, bailing out."
+        continue # return false
+
+  if (hasOpinionCount > 0) and (hasOpinionCount == weakOpinionCount)
+    console.log "autoskip: Everyone (#{weakOpinionCount}) has a weak opinion, skipping."
+    return true
+  return false
 
 autoskip = ->
   if lastPlayed == null
@@ -943,7 +952,7 @@ generateBlock = (blockType, blockSubstring) ->
         full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
         full.indexOf(s) != -1
     else
-      return "MTV: Unknown play type: `#{blockType}`"
+      return null
   counts = []
   uniqueVideoMap = {}
   substrings = blockSubstring.split(/[\|\/]/)
@@ -1653,7 +1662,7 @@ main = (argv) ->
   app = express()
   http = require('http').createServer(app)
 
-  io = require('socket.io')(http)
+  io = require('socket.io')(http, { pingTimeout: 10000 })
   io.on 'connection', (socket) ->
     sockets[socket.id] = socket
 
