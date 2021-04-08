@@ -181,6 +181,7 @@ updateSoloID = (newSoloID) ->
 
 newSoloID = ->
   updateSoloID(randomString())
+  generatePermalink()
 
 logout = ->
   document.getElementById("identity").innerHTML = "Logging out..."
