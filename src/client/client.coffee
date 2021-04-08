@@ -19,7 +19,7 @@ soloOpinions = {}
 endedTimer = null
 overTimers = []
 
-opinionOrder = ['like', 'meh', 'bleh', 'hate'] # always in this specific order
+opinionOrder = ['love', 'like', 'meh', 'bleh', 'hate'] # always in this specific order
 
 parseDuration = (s) ->
   return iso8601.toSeconds(iso8601.parse(s))
@@ -375,7 +375,7 @@ soloStartup = ->
           console.log "Duration [#{substring}] - #{durationInSeconds}"
           since = now() - durationInSeconds
           filterFunc = (e, s) -> e.added > since
-        when 'like', 'meh', 'bleh', 'hate'
+        when 'love', 'like', 'bleh', 'hate'
           filterOpinion = command
           filterUser = substring
           await cacheOpinions(filterUser)

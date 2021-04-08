@@ -328,7 +328,7 @@
   };
 
   shouldSkip = function(e) {
-    var feeling, ref, sid, skipIt, soc, user;
+    var feeling, hasOpinionCount, ref, sid, soc, user, weakOpinionCount;
     // console.log "shouldSkip: e #{JSON.stringify(e)}"
     if (e.tags.nsfw) {
 // console.log "shouldSkip: sfwOnly #{JSON.stringify(sfwOnly)}"
@@ -343,7 +343,8 @@
         }
       }
     }
-    skipIt = false;
+    hasOpinionCount = 0;
+    weakOpinionCount = 0;
     for (sid in sockets) {
       soc = sockets[sid];
       if (!isPlaying[sid]) {
@@ -365,19 +366,29 @@
           continue;
         }
         feeling = (ref = opinions[e.id]) != null ? ref[user] : void 0;
+        if ((feeling != null) && (constants.badOpinions[feeling] != null)) {
+          console.log(`autoskip: ${user} ${feeling}s this song, skipping.`);
+          return true;
+        }
+        hasOpinionCount += 1;
         if (feeling == null) {
-          console.log(`autoskip: ${user} has no opinion of this song, bailing out.`);
-          return false;
+          // console.log "autoskip: #{user} has no opinion of this song, bailing out."
+          continue;
+        }
+        if (constants.weakOpinions[feeling] != null) {
+          weakOpinionCount += 1;
         }
         if (constants.goodOpinions[feeling] != null) {
-          console.log(`autoskip: ${user} ${feeling}s this song, bailing out.`);
-          return false;
+          // console.log "autoskip: #{user} #{feeling}s this song, bailing out."
+          continue; // return false
         }
-        // any other feeling is autoskip-worthy
-        skipIt = true;
       }
     }
-    return skipIt;
+    if ((hasOpinionCount > 0) && (hasOpinionCount === weakOpinionCount)) {
+      console.log(`autoskip: Everyone (${weakOpinionCount}) has a weak opinion, skipping.`);
+      return true;
+    }
+    return false;
   };
 
   autoskip = function() {
@@ -1293,7 +1304,7 @@
         };
         break;
       default:
-        return `MTV: Unknown play type: \`${blockType}\``;
+        return null;
     }
     counts = [];
     uniqueVideoMap = {};
@@ -2176,7 +2187,9 @@
     playNext();
     app = express();
     http = require('http').createServer(app);
-    io = require('socket.io')(http);
+    io = require('socket.io')(http, {
+      pingTimeout: 10000
+    });
     io.on('connection', function(socket) {
       sockets[socket.id] = socket;
       socket.emit('server', {
