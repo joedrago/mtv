@@ -259,8 +259,8 @@ shouldSkip = (e) ->
         # console.log "autoskip: #{user} #{feeling}s this song, bailing out."
         continue # return false
 
-  if (hasOpinionCount > 0) and (hasOpinionCount == weakOpinionCount)
-    console.log "autoskip: Everyone (#{weakOpinionCount}) has a weak opinion, skipping."
+  if (hasOpinionCount > 1) and (hasOpinionCount == weakOpinionCount)
+    console.log "autoskip: Multiple people are watching, and everyone (#{weakOpinionCount}) has a weak opinion, skipping."
     return true
   return false
 

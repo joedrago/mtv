@@ -384,8 +384,8 @@
         }
       }
     }
-    if ((hasOpinionCount > 0) && (hasOpinionCount === weakOpinionCount)) {
-      console.log(`autoskip: Everyone (${weakOpinionCount}) has a weak opinion, skipping.`);
+    if ((hasOpinionCount > 1) && (hasOpinionCount === weakOpinionCount)) {
+      console.log(`autoskip: Multiple people are watching, and everyone (${weakOpinionCount}) has a weak opinion, skipping.`);
       return true;
     }
     return false;
