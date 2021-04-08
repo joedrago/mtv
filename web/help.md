@@ -72,6 +72,7 @@ Here's what the checkboxes mean:
 
 Alright, so you're finally watching MTV, congrats! Not only that, but this first song is fantastic! Or is it bad? Let's make it official. Type _one_ of these words (with nothing before or after it) into the #mtv channel:
 
+    love
     like
     meh
     bleh
@@ -86,7 +87,8 @@ It should reply with something like this:
 
 Your name will be listed in the appropriate category based on the opinion you chose. Here's what the ratings mean:
 
-* **like** (or **love**) - This song is awesome.
+* **love** - I love everything about this video.
+* **like** - I like when this video is on, but it isn't perfect.
 * **meh** - I'm not really into this song, but I don't really mind it being on. Leave it on or skip it, up to you.
 * **bleh** - I don't like this song, and I'd prefer to never watch it again. Please skip it.
 * **hate** - I hate this song so much, and I'd love it to be skipped as often as possible.
@@ -103,7 +105,8 @@ To update your opinion of a video that isn't currently playing, use the `#mtv li
 
 If you use certain Discord emojis in the #mtv channel (_anywhere in your text_), they will be interpreted as a specific opinion. These are subject to change, but here is a general list:
 
-* **like** - `:heart:`, `:thumbsup:`, `:disguised_face:`, `:smiley_cat:`
+* **love** - `:heart:`, `:disguised_face:`, `:smiley_cat:`
+* **like** - `:thumbsup:`
 * **meh&nbsp;** - `:neutral_face:`, `:rolling_eyes:`
 * **bleh** - `:weary:`
 * **hate** - `:thumbsdown:`, `:frowning:`, `:face_vomiting:`
@@ -197,6 +200,7 @@ This will only remove videos from the pool. This is useful for videos that have 
     meh
     bleh
     hate
+    #mtv love
     #mtv like
     #mtv meh
     #mtv bleh
