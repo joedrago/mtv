@@ -353,10 +353,13 @@ soloStartup = ->
       command = pieces[0]
       switch command
         when 'artist', 'band'
+          substring = substring.toLowerCase()
           filterFunc = (e, s) -> e.artist.toLowerCase().indexOf(s) != -1
         when 'title', 'song'
+          substring = substring.toLowerCase()
           filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
         when 'tag'
+          substring = substring.toLowerCase()
           filterFunc = (e, s) -> e.tags[s] == true
         when 'recent', 'since'
           console.log "parsing '#{substring}'"
@@ -376,6 +379,7 @@ soloStartup = ->
           console.log soloOpinions
           filterFunc = (e, s) -> soloOpinions[filterUser]?[filterOpinion]?[e.id]?
         when 'full'
+          substring = substring.toLowerCase()
           filterFunc = (e, s) ->
             full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
             full.indexOf(s) != -1
