@@ -333,6 +333,7 @@ soloStartup = ->
       e.allowed = false
       e.skipped = false
 
+    allAllowed = true
     for filter in soloFilters
       pieces = filter.split(/\s+/)
 
@@ -342,6 +343,8 @@ soloStartup = ->
         pieces.shift()
       if pieces.length == 0
         continue
+      if property == "allowed"
+        allAllowed = false
 
       substring = pieces.slice(1).join(" ")
 
@@ -376,8 +379,14 @@ soloStartup = ->
           filterOpinion = command
           filterUser = substring
           await cacheOpinions(filterUser)
-          console.log soloOpinions
-          filterFunc = (e, s) -> soloOpinions[filterUser]?[filterOpinion]?[e.id]?
+          # console.log soloOpinions
+          filterFunc = (e, s) -> soloOpinions[filterUser]?[e.id] == filterOpinion
+        when 'none'
+          filterOpinion = undefined
+          filterUser = substring
+          await cacheOpinions(filterUser)
+          # console.log soloOpinions
+          filterFunc = (e, s) -> soloOpinions[filterUser]?[e.id] == filterOpinion
         when 'full'
           substring = substring.toLowerCase()
           filterFunc = (e, s) ->
@@ -400,7 +409,7 @@ soloStartup = ->
           e[property] = true
 
     for id, e of soloDatabase
-      if e.allowed and not e.skipped
+      if (e.allowed or allAllowed) and not e.skipped
         soloUnshuffled.push e
   else
     # Queue it all up

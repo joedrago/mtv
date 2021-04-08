@@ -920,11 +920,9 @@ calcUserInfo = (user) ->
 calcUserOpinions = (user) ->
   user = getUserFromNickname(user)
   userOpinions = {}
-  for opinion of constants.opinions
-    userOpinions[opinion] = {}
   for k, e of playlist
     if opinions[e.id]? and opinions[e.id][user]?
-      userOpinions[opinions[e.id][user]][e.id] = 1
+      userOpinions[e.id] = opinions[e.id][user]
   return userOpinions
 
 isOpinionCommand = (cmd) ->
