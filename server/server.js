@@ -2534,7 +2534,7 @@
       return res.send("MTV: wat");
     });
     app.use(express.static('web'));
-    return http.listen(3003, '0.0.0.0', function() {
+    return http.listen(3003, '127.0.0.1', function() {
       return console.log('listening on 127.0.0.1:3003');
     });
   };
