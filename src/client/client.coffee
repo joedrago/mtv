@@ -7,6 +7,7 @@ iso8601 = require 'iso8601-duration'
 
 soloID = null
 soloFilters = null
+soloLabels = {}
 soloDatabase = {}
 soloUnshuffled = []
 soloQueue = []
@@ -125,6 +126,11 @@ showInfo = (pkt) ->
     title = title.replace(/\s+$/, "")
     html = "#{artist}\n&#x201C;#{title}&#x201D;"
     if soloID?
+      company = soloLabels[pkt.nickname]
+      if not company?
+        company = pkt.nickname.charAt(0).toUpperCase() + pkt.nickname.slice(1)
+        company += " Records"
+      html += "\n#{company}"
       html += "\nSolo Mode"
     else
       html += "\n#{pkt.company}"
@@ -322,6 +328,7 @@ soloStartup = ->
       # No filters
       soloFilters = null
   console.log "Filters:", soloFilters
+  soloLabels = await getData("/info/labels")
   soloDatabase = await getData("/info/playlist")
   if not soloDatabase?
     soloFatalError("Cannot get solo database!")
@@ -361,6 +368,10 @@ soloStartup = ->
         when 'title', 'song'
           substring = substring.toLowerCase()
           filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
+        when 'added'
+          filterFunc = (e, s) -> e.nickname == s
+        when 'untagged'
+          filterFunc = (e, s) -> Object.keys(e.tags).length == 0
         when 'tag'
           substring = substring.toLowerCase()
           filterFunc = (e, s) -> e.tags[s] == true
