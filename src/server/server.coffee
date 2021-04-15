@@ -1906,6 +1906,14 @@ main = (argv) ->
     else
       res.send("supply a user")
 
+  app.get '/info/labels', (req, res) ->
+    labels = {}
+    for user, company of companies
+      nickname = getNickname(user)
+      labels[nickname] = company
+    res.type('application/json')
+    res.send(JSON.stringify(labels, null, 2))
+
   app.get '/info/other', (req, res) ->
     other = calcOther()
     res.type('application/json')

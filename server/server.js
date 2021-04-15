@@ -2495,6 +2495,17 @@
         return res.send("supply a user");
       }
     });
+    app.get('/info/labels', function(req, res) {
+      var company, labels, nickname, user;
+      labels = {};
+      for (user in companies) {
+        company = companies[user];
+        nickname = getNickname(user);
+        labels[nickname] = company;
+      }
+      res.type('application/json');
+      return res.send(JSON.stringify(labels, null, 2));
+    });
     app.get('/info/other', function(req, res) {
       var other;
       other = calcOther();
