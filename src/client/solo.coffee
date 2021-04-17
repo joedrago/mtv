@@ -1,4 +1,5 @@
 constants = require '../constants'
+Clipboard = require 'clipboard'
 
 socket = null
 
@@ -126,20 +127,38 @@ renderInfo = ->
   if not soloInfo? or not soloInfo.current?
     return
 
+  tagsString = Object.keys(soloInfo.current.tags).sort().join(', ')
+
   html = "<div class=\"infocounts\">Track #{soloInfo.index} / #{soloInfo.count}</div>"
   # html += "<div class=\"infoheading\">Current: [<span class=\"youtubeid\">#{soloInfo.current.id}</span>]</div>"
   html += "<div class=\"infothumb\"><a href=\"https://youtu.be/#{encodeURIComponent(soloInfo.current.id)}\"><img width=320 height=180 src=\"#{soloInfo.current.thumb}\"></a></div>"
   html += "<div class=\"infocurrent infoartist\">#{soloInfo.current.artist}</div>"
   html += "<div class=\"infotitle\">\"#{soloInfo.current.title}\"</div>"
+  html += "<div class=\"infotags\">&nbsp;#{tagsString}&nbsp;</div>"
   if soloInfo.next?
     html += "<span class=\"infoheading nextvideo\">Next:</span> "
     html += "<span class=\"infoartist nextvideo\">#{soloInfo.next.artist}</span>"
     html += "<span class=\"nextvideo\"> - </span>"
     html += "<span class=\"infotitle nextvideo\">\"#{soloInfo.next.title}\"</span>"
   else
-    html += "<div class=\"infoheading nextvideo\">Next:</div>"
-    html += "<div class=\"inforeshuffle nextvideo\">(...Reshuffle...)</div>"
+    html += "<span class=\"infoheading nextvideo\">Next:</span> "
+    html += "<span class=\"inforeshuffle nextvideo\">(...Reshuffle...)</span>"
   document.getElementById('info').innerHTML = html
+
+clipboardEdit = ->
+  html = "<a class=\"cbutto copied\" onclick=\"return false\">Copied!</a>"
+  document.getElementById('clipboard').innerHTML = html
+  setTimeout ->
+    renderClipboard()
+  , 2000
+
+renderClipboard = ->
+  if not soloInfo? or not soloInfo.current?
+    return
+
+  html = "<a class=\"cbutto\" data-clipboard-text=\"#mtv edit #{soloInfo.current.id} \" onclick=\"clipboardEdit(); return false\">Edit</a>"
+  document.getElementById('clipboard').innerHTML = html
+  new Clipboard('.cbutto')
 
 clearOpinion = ->
   document.getElementById('opinions').innerHTML = ""
@@ -175,6 +194,7 @@ soloCommand = (pkt) ->
         console.log "NEW INFO!: ", pkt.info
         soloInfo = pkt.info
         renderInfo()
+        renderClipboard()
         clearOpinion()
         if discordToken? and soloInfo.current? and soloInfo.current.id?
           socket.emit 'opinion', { token: discordToken, id: soloInfo.current.id }
@@ -237,16 +257,17 @@ receiveIdentity = (pkt) ->
     lastClicked()
 
 init = ->
+  window.clipboardEdit = clipboardEdit
+  window.generatePermalink = generatePermalink
+  window.logout = logout
+  window.newSoloID = newSoloID
+  window.setOpinion = setOpinion
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
-  window.startCast = startCast
-  window.soloSkip = soloSkip
-  window.soloRestart = soloRestart
   window.soloPause = soloPause
-  window.generatePermalink = generatePermalink
-  window.newSoloID = newSoloID
-  window.logout = logout
-  window.setOpinion = setOpinion
+  window.soloRestart = soloRestart
+  window.soloSkip = soloSkip
+  window.startCast = startCast
 
   updateSoloID(qs('solo'))
 
