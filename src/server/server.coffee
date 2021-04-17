@@ -1947,7 +1947,11 @@ main = (argv) ->
 
   app.use(express.static('web'))
 
-  http.listen 3003, '127.0.0.1', ->
-    console.log('listening on 127.0.0.1:3003')
+  host = '127.0.0.1'
+  if argv.length > 0
+    host = '0.0.0.0'
+
+  http.listen 3003, host, ->
+    console.log("listening on #{host}:3003")
 
 module.exports = main

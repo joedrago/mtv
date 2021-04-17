@@ -12,6 +12,7 @@
   "author": "Joe Drago",
   "devDependencies": {
     "browserify": "^16.5.0",
+    "clipboard": "^2.0.8",
     "coffeeify": "^3.0.1",
     "coffeescript": "^2.4.1",
     "node-watch": "^0.6.3",
