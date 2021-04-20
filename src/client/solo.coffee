@@ -80,6 +80,16 @@ prepareCast = ->
   apiConfig = new chrome.cast.ApiConfig sessionRequest, sessionListener, ->
   chrome.cast.initialize(apiConfig, onInitSuccess, onError)
 
+calcShareURL = ->
+  form = document.getElementById('asform')
+  formData = new FormData(form)
+  params = new URLSearchParams(formData)
+  params.delete("solo")
+  querystring = params.toString()
+  baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
+  mtvURL = baseURL + "?" + querystring
+  return mtvURL
+
 startCast = ->
   console.log "start cast!"
 
@@ -162,6 +172,12 @@ renderClipboard = ->
   html = "<a class=\"cbutto\" data-clipboard-text=\"#mtv edit #{soloInfo.current.id} \" onclick=\"clipboardEdit(); return false\">Edit</a>"
   document.getElementById('clipboard').innerHTML = html
   new Clipboard('.cbutto')
+
+shareClipboard = ->
+  document.getElementById('list').innerHTML = """
+    <div class=\"sharecopied\">Copied to clipboard:</div>
+    <div class=\"shareurl\">#{calcShareURL()}</div>
+  """
 
 showList = ->
   document.getElementById('list').innerHTML = "Please wait..."
@@ -290,6 +306,7 @@ init = ->
   window.showList = showList
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
+  window.shareClipboard = shareClipboard
   window.soloPause = soloPause
   window.soloRestart = soloRestart
   window.soloSkip = soloSkip
@@ -321,6 +338,11 @@ init = ->
     updateOpinion(pkt)
 
   prepareCast()
+
+  new Clipboard '.share', {
+    text: ->
+      return calcShareURL()
+  }
 
   if launchOpen
     showWatchForm()

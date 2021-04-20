@@ -1863,7 +1863,10 @@ main = (argv) ->
         soloID = randomString()
         if not soloSessions[soloID]?
           break
-      res.redirect("/solo?solo=#{soloID}")
+      url = "/solo?solo=#{soloID}"
+      for k,v of req.query
+        url += "&#{encodeURIComponent(k)}=#{encodeURIComponent(v)}"
+      res.redirect(url)
       return
     html = fs.readFileSync("#{__dirname}/../web/solo.html", "utf8")
     discordClientID = secrets.discordClientID
