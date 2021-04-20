@@ -2437,7 +2437,7 @@
       return res.send(html);
     });
     app.get('/solo', function(req, res) {
-      var discordClientID, html, soloID;
+      var discordClientID, html, k, ref, soloID, url, v;
       soloID = req.query.solo;
       if (soloID == null) {
         while (true) {
@@ -2446,7 +2446,13 @@
             break;
           }
         }
-        res.redirect(`/solo?solo=${soloID}`);
+        url = `/solo?solo=${soloID}`;
+        ref = req.query;
+        for (k in ref) {
+          v = ref[k];
+          url += `&${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
+        }
+        res.redirect(url);
         return;
       }
       html = fs.readFileSync(`${__dirname}/../web/solo.html`, "utf8");

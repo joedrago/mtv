@@ -219,6 +219,22 @@ input[type=submit] {
     margin-top: 20px;
 }
 
+.fsub {
+    width: 80px;
+}
+
+.sharecopied {
+    color: #aaa;
+    margin-top: 20px;
+    font-style: italic;
+}
+
+.shareurl {
+    color: #afa;
+    font-family: monospace;
+    font-size: 0.6em;
+}
+
 </style>
 <body>
 
@@ -231,20 +247,26 @@ window.CLIENT_ID = "!CLIENT_ID!";
 <br>
 <div id="aslink">
     <center>
-       [<a onclick="showWatchForm(); return false;">Settings / Launch</a>]
+       [<a onclick="showWatchForm(); event.preventDefault();">Settings / Launch</a>]
     </center>
 </div>
 
 <form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()">
     <div id="identity"></div>
-    Solo ID: [<a onclick="newSoloID(); return false;">Generate</a>]<br>
+    Solo ID: [<a onclick="newSoloID(); event.preventDefault();">Generate</a>]<br>
     <input type="text" id="soloid" name="solo" readonly value=""><br>
     Filters (leave blank for all songs):<br>
     <textarea form="asform" id="filters" name="filters" class="filters" style="width: 100%; max-width: 100%;" rows="5"></textarea><br>
     <input type="checkbox" id="controls" name="controls"> Show Controls<br>
     <input type="checkbox" id="hidetitles" name="hidetitles"> Hide Titles<br>
     <br>
-    <input type="submit" value="Watch"> <input id="castbutton" type="submit" onclick="startCast(); return false;" value="Cast"> <input type="submit" onclick="showList(); return false;" value="List"> <input type="submit" onclick="generatePermalink(); return false;" value="Link"> <input type="submit" onclick="showWatchLink(); return false;" value="Close">
+    <input class="fsub" type="submit" value="Watch">
+    <input id="castbutton" class="fsub" type="submit" onclick="startCast(); event.preventDefault();" value="Cast">
+    <input class="fsub" type="submit" onclick="showList(); event.preventDefault();" value="List">
+    <br><br>
+    <input class="fsub" type="submit" onclick="generatePermalink(); event.preventDefault();" value="Link">
+    <input class="fsub share" type="submit" onclick="shareClipboard(); event.preventDefault();" value="Share">
+    <input class="fsub" type="submit" onclick="showWatchLink(); event.preventDefault();" value="Close">
     <div id="list"></div>
 </form>
 
@@ -253,9 +275,9 @@ window.CLIENT_ID = "!CLIENT_ID!";
 </div>
 
 <center>
-<a class="butto brestart" onclick="soloRestart(); return false;">Restart</a>
-<a class="butto bpause" onclick="soloPause(); return false;">Pause</a>
-<a class="butto bskip" onclick="soloSkip(); return false;">Skip</a>
+<a class="butto brestart" onclick="soloRestart(); event.preventDefault();">Restart</a>
+<a class="butto bpause" onclick="soloPause(); event.preventDefault();">Pause</a>
+<a class="butto bskip" onclick="soloSkip(); event.preventDefault();">Skip</a>
 <div id="opinions"></div>
 <div id="clipboard"></div>
 </center>
