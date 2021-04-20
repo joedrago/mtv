@@ -1,5 +1,6 @@
 constants = require '../constants'
 Clipboard = require 'clipboard'
+filters = require './filters'
 
 socket = null
 
@@ -53,6 +54,8 @@ showWatchLink = ->
   document.getElementById('asform').style.display = 'none'
   launchOpen = false
   localStorage.setItem('launch', 'false')
+
+  document.getElementById('list').innerHTML = ""
 
 onInitSuccess = ->
   console.log "Cast available!"
@@ -160,6 +163,28 @@ renderClipboard = ->
   document.getElementById('clipboard').innerHTML = html
   new Clipboard('.cbutto')
 
+showList = ->
+  document.getElementById('list').innerHTML = "Please wait..."
+
+  filterString = document.getElementById('filters').value;
+  list = await filters.generateList(filterString, true)
+  if not list?
+    document.getElementById('list').innerHTML = "Error. Sorry."
+    return
+
+  html = "<div class=\"listcontainer\">"
+  html += "<div class=\"infocounts\">#{list.length} videos:</div>"
+  for e in list
+    html += "<div>"
+    html += "<span class=\"infoartist nextvideo\">#{e.artist}</span>"
+    html += "<span class=\"nextvideo\"> - </span>"
+    html += "<span class=\"infotitle nextvideo\">\"#{e.title}\"</span>"
+    html += "</div>\n"
+
+  html += "</div>"
+
+  document.getElementById('list').innerHTML = html
+
 clearOpinion = ->
   document.getElementById('opinions').innerHTML = ""
 
@@ -262,6 +287,7 @@ init = ->
   window.logout = logout
   window.newSoloID = newSoloID
   window.setOpinion = setOpinion
+  window.showList = showList
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
   window.soloPause = soloPause

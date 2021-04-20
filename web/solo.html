@@ -191,6 +191,10 @@ a {
     margin-bottom: 20px;
 }
 
+#clipboard {
+    margin-bottom: 20px;
+}
+
 .youtubeid {
     color: #777;
 }
@@ -209,6 +213,10 @@ input[type=submit] {
     border-radius: 5px;
     font-family: monospace;
     font-weight: 900;
+}
+
+.listcontainer {
+    margin-top: 20px;
 }
 
 </style>
@@ -236,7 +244,8 @@ window.CLIENT_ID = "!CLIENT_ID!";
     <input type="checkbox" id="controls" name="controls"> Show Controls<br>
     <input type="checkbox" id="hidetitles" name="hidetitles"> Hide Titles<br>
     <br>
-    <input type="submit" value="Watch"> <input id="castbutton" type="submit" onclick="startCast(); return false;" value="Cast"> <input type="submit" onclick="generatePermalink(); return false;" value="Permalink"> <input type="submit" onclick="showWatchLink(); return false;" value="Close">
+    <input type="submit" value="Watch"> <input id="castbutton" type="submit" onclick="startCast(); return false;" value="Cast"> <input type="submit" onclick="showList(); return false;" value="List"> <input type="submit" onclick="generatePermalink(); return false;" value="Link"> <input type="submit" onclick="showWatchLink(); return false;" value="Close">
+    <div id="list">yeet</div>
 </form>
 
 <div id="info">
