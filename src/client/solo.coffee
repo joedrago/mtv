@@ -106,17 +106,22 @@ startCast = ->
     castSession.sendMessage(DASHCAST_NAMESPACE, { url: mtvURL, force: true })
   , onError
 
-generatePermalink = ->
-  console.log "generatePermalink()"
-
+calcPermalink = ->
   form = document.getElementById('asform')
   formData = new FormData(form)
   params = new URLSearchParams(formData)
   querystring = params.toString()
   baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
   mtvURL = baseURL + "?" + querystring
-  console.log "We're going here: #{mtvURL}"
-  window.location = mtvURL
+  return mtvURL
+
+generatePermalink = ->
+  console.log "generatePermalink()"
+  window.location = calcPermalink()
+
+formChanged = ->
+  console.log "Form changed!"
+  history.replaceState('here', '', calcPermalink())
 
 soloSkip = ->
   socket.emit 'solo', {
@@ -299,7 +304,7 @@ receiveIdentity = (pkt) ->
 
 init = ->
   window.clipboardEdit = clipboardEdit
-  window.generatePermalink = generatePermalink
+  window.formChanged = formChanged
   window.logout = logout
   window.newSoloID = newSoloID
   window.setOpinion = setOpinion
