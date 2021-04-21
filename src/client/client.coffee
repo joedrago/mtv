@@ -15,7 +15,6 @@ soloVideo = null
 soloCount = 0
 soloShowTimeout = null
 soloError = false
-soloOpinions = {}
 
 endedTimer = null
 overTimers = []
@@ -308,12 +307,6 @@ soloCommand = (pkt) ->
       soloPause()
 
   return
-
-cacheOpinions = (filterUser) ->
-  if not soloOpinions[filterUser]?
-    soloOpinions[filterUser] = await getData("/info/opinions?user=#{encodeURIComponent(filterUser)}")
-    if not soloOpinions[filterUser]?
-      soloFatalError("Cannot get user opinions for #{filterUser}")
 
 soloStartup = ->
   soloLabels = await getData("/info/labels")
