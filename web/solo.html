@@ -251,20 +251,18 @@ window.CLIENT_ID = "!CLIENT_ID!";
     </center>
 </div>
 
-<form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()">
+<form id="asform" target="_blank" action="/watch" onchange="formChanged()" onsubmit="showWatchLink()">
     <div id="identity"></div>
     Solo ID: [<a onclick="newSoloID(); event.preventDefault();">Generate</a>]<br>
     <input type="text" id="soloid" name="solo" readonly value=""><br>
     Filters (leave blank for all songs):<br>
-    <textarea form="asform" id="filters" name="filters" class="filters" style="width: 100%; max-width: 100%;" rows="5"></textarea><br>
+    <textarea form="asform" id="filters" name="filters" class="filters" oninput="formChanged()" style="width: 100%; max-width: 100%;" rows="5"></textarea><br>
     <input type="checkbox" id="controls" name="controls"> Show YouTube Controls<br>
     <input type="checkbox" id="hidetitles" name="hidetitles"> Hide Titles<br>
     <br>
     <input class="fsub" type="submit" value="Watch" title="Watch MTV with these settings in a new tab">
     <input id="castbutton" class="fsub" type="submit" onclick="startCast(); event.preventDefault();" value="Cast" title="Begin casting MTV with these settings">
     <input class="fsub" type="submit" onclick="showList(); event.preventDefault();" value="List" title="Show the list of videos matching the current filter">
-    <br><br>
-    <input class="fsub" type="submit" onclick="generatePermalink(); event.preventDefault();" value="Save" title="Save the current filters and settings in the URL (which you can then Bookmark)">
     <input class="fsub share" type="submit" onclick="shareClipboard(); event.preventDefault();" value="Share" title="Share current settings by copying them to the clipboard without the Solo ID">
     <input class="fsub" type="submit" onclick="showWatchLink(); event.preventDefault();" value="Close" title="Close all settings">
     <div id="list"></div>
