@@ -1,4 +1,5 @@
 filterDatabase = null
+filterOpinions = {}
 
 getData = (url) ->
   return new Promise (resolve, reject) ->
@@ -13,6 +14,12 @@ getData = (url) ->
              resolve(null)
     xhttp.open("GET", url, true)
     xhttp.send()
+
+cacheOpinions = (filterUser) ->
+  if not filterOpinions[filterUser]?
+    filterOpinions[filterUser] = await getData("/info/opinions?user=#{encodeURIComponent(filterUser)}")
+    if not filterOpinions[filterUser]?
+      soloFatalError("Cannot get user opinions for #{filterUser}")
 
 generateList = (filterString, sortByArtist = false) ->
   soloFilters = null
@@ -91,14 +98,14 @@ generateList = (filterString, sortByArtist = false) ->
           filterOpinion = command
           filterUser = substring
           await cacheOpinions(filterUser)
-          # console.log soloOpinions
-          filterFunc = (e, s) -> soloOpinions[filterUser]?[e.id] == filterOpinion
+          # console.log filterOpinions
+          filterFunc = (e, s) -> filterOpinions[filterUser]?[e.id] == filterOpinion
         when 'none'
           filterOpinion = undefined
           filterUser = substring
           await cacheOpinions(filterUser)
-          # console.log soloOpinions
-          filterFunc = (e, s) -> soloOpinions[filterUser]?[e.id] == filterOpinion
+          # console.log filterOpinions
+          filterFunc = (e, s) -> filterOpinions[filterUser]?[e.id] == filterOpinion
         when 'full'
           substring = substring.toLowerCase()
           filterFunc = (e, s) ->
