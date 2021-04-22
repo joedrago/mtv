@@ -15,6 +15,7 @@ soloVideo = null
 soloCount = 0
 soloShowTimeout = null
 soloError = false
+soloMirror = false
 
 endedTimer = null
 overTimers = []
@@ -89,6 +90,7 @@ fadeOut = (elem, ms) ->
 # autoplay video
 onPlayerReady = (event) ->
   event.target.playVideo()
+  finishInit()
 
 # when video ends
 onPlayerStateChange = (event) ->
@@ -130,7 +132,10 @@ showInfo = (pkt) ->
         company = pkt.nickname.charAt(0).toUpperCase() + pkt.nickname.slice(1)
         company += " Records"
       html += "\n#{company}"
-      html += "\nSolo Mode"
+      if soloMirror
+        html += "\nMirror Mode"
+      else
+        html += "\nSolo Mode"
     else
       html += "\n#{pkt.company}"
       feelings = []
@@ -212,7 +217,7 @@ getData = (url) ->
     xhttp.send()
 
 soloTick = ->
-  if not soloID? or soloError
+  if not soloID? or soloError or soloMirror
     return
 
   console.log "soloTick()"
@@ -224,7 +229,7 @@ soloEnding = ->
   showInfo(soloVideo)
 
 soloInfoBroadcast = ->
-  if socket? and soloID? and soloVideo?
+  if socket? and soloID? and soloVideo? and not soloMirror
     nextVideo = null
     if soloQueue.length > 0
       nextVideo = soloQueue[0]
@@ -242,7 +247,7 @@ soloInfoBroadcast = ->
     }
 
 soloPlay = (restart = false) ->
-  if soloError
+  if soloError or soloMirror
     return
 
   if not restart or not soloVideo?
@@ -282,7 +287,6 @@ soloPlay = (restart = false) ->
     console.log "Showing info again in #{soloDuration - 15} seconds"
     soloShowTimeout = setTimeout(soloEnding, (soloDuration - 15) * 1000)
 
-
 soloPause = ->
   if player?
     if player.getPlayerState() == 2
@@ -296,7 +300,7 @@ soloCommand = (pkt) ->
   if pkt.id != soloID
     return
 
-  console.log "soloCommand: ", pkt
+  # console.log "soloCommand: ", pkt
 
   switch pkt.cmd
     when 'skip'
@@ -305,11 +309,22 @@ soloCommand = (pkt) ->
       soloPlay(true)
     when 'pause'
       soloPause()
+    when 'info'
+      if soloMirror
+        soloVideo = pkt.info.current
+        if soloVideo?
+          if not player?
+            console.log "no player yet"
+          play(soloVideo, soloVideo.id, soloVideo.start, soloVideo.end)
 
   return
 
 soloStartup = ->
   soloLabels = await getData("/info/labels")
+
+  if qs('mirror')
+    soloMirror = true
+    return
 
   filterString = qs('filters')
   soloUnshuffled = await filters.generateList(filterString)
@@ -349,6 +364,8 @@ window.onYouTubePlayerAPIReady = ->
     }
   }
 
+# called by onPlayerReady
+finishInit = ->
   soloID = qs('solo')
 
   socket = io()

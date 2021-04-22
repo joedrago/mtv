@@ -263,7 +263,9 @@ window.CLIENT_ID = "!CLIENT_ID!";
     <input class="fsub" type="submit" value="Watch" title="Watch MTV with these settings in a new tab">
     <input id="castbutton" class="fsub" type="submit" onclick="startCast(); event.preventDefault();" value="Cast" title="Begin casting MTV with these settings">
     <input class="fsub" type="submit" onclick="showList(); event.preventDefault();" value="List" title="Show the list of videos matching the current filter">
+    <br><br>
     <input class="fsub share" type="submit" onclick="shareClipboard(); event.preventDefault();" value="Share" title="Share current settings by copying them to the clipboard without the Solo ID">
+    <input class="fsub mirror" type="submit" onclick="mirrorClipboard(); event.preventDefault();" value="Mirror" title="Copy a link to a watch mirror of this solo session to the clipboard">
     <input class="fsub" type="submit" onclick="showWatchLink(); event.preventDefault();" value="Close" title="Close all settings">
     <div id="list"></div>
 </form>

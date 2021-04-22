@@ -90,6 +90,17 @@ calcShareURL = ->
   mtvURL = baseURL + "?" + querystring
   return mtvURL
 
+calcMirrorURL = ->
+  form = document.getElementById('asform')
+  formData = new FormData(form)
+  params = new URLSearchParams(formData)
+  params.set("mirror", "on")
+  querystring = params.toString()
+  baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
+  baseURL = baseURL.replace(/solo$/, "")
+  mtvURL = baseURL + "watch?" + querystring
+  return mtvURL
+
 startCast = ->
   console.log "start cast!"
 
@@ -182,6 +193,12 @@ shareClipboard = ->
   document.getElementById('list').innerHTML = """
     <div class=\"sharecopied\">Copied to clipboard:</div>
     <div class=\"shareurl\">#{calcShareURL()}</div>
+  """
+
+mirrorClipboard = ->
+  document.getElementById('list').innerHTML = """
+    <div class=\"sharecopied\">Copied to clipboard:</div>
+    <div class=\"shareurl\">#{calcMirrorURL()}</div>
   """
 
 showList = ->
@@ -306,6 +323,7 @@ init = ->
   window.clipboardEdit = clipboardEdit
   window.formChanged = formChanged
   window.logout = logout
+  window.mirrorClipboard = mirrorClipboard
   window.newSoloID = newSoloID
   window.setOpinion = setOpinion
   window.showList = showList
@@ -347,6 +365,11 @@ init = ->
   new Clipboard '.share', {
     text: ->
       return calcShareURL()
+  }
+
+  new Clipboard '.mirror', {
+    text: ->
+      return calcMirrorURL()
   }
 
   if launchOpen
