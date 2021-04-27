@@ -1226,7 +1226,7 @@ run = (args, user) ->
       for i in [1...args.length]
         playArgs.push args[i]
       playSubstring = playArgs.join(" ")
-      playNewlines = playSubstring.replace(/\//, "\n")
+      playNewlines = playSubstring.replace(/\//g, "\n")
       filters.setServerDatabases(playlist, opinions, getUserFromNickname)
       unsortedQueue = await filters.generateList(playNewlines)
       if not unsortedQueue?
@@ -1878,7 +1878,9 @@ main = (argv) ->
         res.send("MTV: bad secret")
         return
 
-      args = req.body.cmd.split(/\s+/g)
+      args = req.body.cmd.replace(/\n/g, " / ").split(/\s+/g)
+      console.log "cmd : '#{req.body.cmd}'"
+      console.log "args: " + JSON.stringify(args)
       user = req.body.user
       user ?= 'Anonymous'
       response = await run(args, user)

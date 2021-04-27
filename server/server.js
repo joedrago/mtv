@@ -1643,7 +1643,7 @@
           playArgs.push(args[i]);
         }
         playSubstring = playArgs.join(" ");
-        playNewlines = playSubstring.replace(/\//, "\n");
+        playNewlines = playSubstring.replace(/\//g, "\n");
         filters.setServerDatabases(playlist, opinions, getUserFromNickname);
         unsortedQueue = (await filters.generateList(playNewlines));
         if (unsortedQueue == null) {
@@ -2444,7 +2444,9 @@
           res.send("MTV: bad secret");
           return;
         }
-        args = req.body.cmd.split(/\s+/g);
+        args = req.body.cmd.replace(/\n/g, " / ").split(/\s+/g);
+        console.log(`cmd : '${req.body.cmd}'`);
+        console.log("args: " + JSON.stringify(args));
         user = req.body.user;
         if (user == null) {
           user = 'Anonymous';
