@@ -1,6 +1,21 @@
 filterDatabase = null
 filterOpinions = {}
 
+filterServerOpinions = null
+filterGetUserFromNickname = null
+iso8601 = require 'iso8601-duration'
+
+now = ->
+  return Math.floor(Date.now() / 1000)
+
+parseDuration = (s) ->
+  return iso8601.toSeconds(iso8601.parse(s))
+
+setServerDatabases = (db, opinions, getUserFromNickname) ->
+  filterDatabase = db
+  filterServerOpinions = opinions
+  filterGetUserFromNickname = getUserFromNickname
+
 getData = (url) ->
   return new Promise (resolve, reject) ->
     xhttp = new XMLHttpRequest()
@@ -50,7 +65,7 @@ generateList = (filterString, sortByArtist = false) ->
 
     allAllowed = true
     for filter in soloFilters
-      pieces = filter.split(/\s+/)
+      pieces = filter.split(/ +/)
 
       property = "allowed"
       if pieces[0] == "skip"
@@ -68,7 +83,7 @@ generateList = (filterString, sortByArtist = false) ->
         negated = true
         pieces[0] = matches[1]
 
-      command = pieces[0]
+      command = pieces[0].toLowerCase()
       switch command
         when 'artist', 'band'
           substring = substring.toLowerCase()
@@ -88,8 +103,9 @@ generateList = (filterString, sortByArtist = false) ->
           try
             durationInSeconds = parseDuration(substring)
           catch someException
-            soloFatalError("Cannot parse duration: #{substring}")
-            return
+            # soloFatalError("Cannot parse duration: #{substring}")
+            console.log "Duration parsing exception: #{someException}"
+            return null
 
           console.log "Duration [#{substring}] - #{durationInSeconds}"
           since = now() - durationInSeconds
@@ -97,15 +113,21 @@ generateList = (filterString, sortByArtist = false) ->
         when 'love', 'like', 'bleh', 'hate'
           filterOpinion = command
           filterUser = substring
-          await cacheOpinions(filterUser)
-          # console.log filterOpinions
-          filterFunc = (e, s) -> filterOpinions[filterUser]?[e.id] == filterOpinion
+          if filterServerOpinions
+            filterUser = filterGetUserFromNickname(filterUser)
+            filterFunc = (e, s) -> filterServerOpinions[e.id]?[filterUser] == filterOpinion
+          else
+            await cacheOpinions(filterUser)
+            filterFunc = (e, s) -> filterOpinions[filterUser]?[e.id] == filterOpinion
         when 'none'
           filterOpinion = undefined
           filterUser = substring
-          await cacheOpinions(filterUser)
-          # console.log filterOpinions
-          filterFunc = (e, s) -> filterOpinions[filterUser]?[e.id] == filterOpinion
+          if filterServerOpinions
+            filterUser = filterGetUserFromNickname(filterUser)
+            filterFunc = (e, s) -> filterServerOpinions[e.id]?[filterUser] == filterOpinion
+          else
+            await cacheOpinions(filterUser)
+            filterFunc = (e, s) -> filterOpinions[filterUser]?[e.id] == filterOpinion
         when 'full'
           substring = substring.toLowerCase()
           filterFunc = (e, s) ->
@@ -149,4 +171,5 @@ generateList = (filterString, sortByArtist = false) ->
   return soloUnshuffled
 
 module.exports =
+  setServerDatabases: setServerDatabases
   generateList: generateList

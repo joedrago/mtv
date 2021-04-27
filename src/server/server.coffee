@@ -6,6 +6,7 @@ fs = require 'fs'
 https = require 'https'
 ytdl = require 'ytdl-core'
 constants = require '../constants'
+filters = require '../filters'
 
 MAX_BLOCK_COUNT = 0
 YOUTUBE_USER = "YouTube"
@@ -939,45 +940,6 @@ isOpinionCommand = (cmd) ->
     return true
   return constants.opinions[cmd]?
 
-generateBlock = (blockType, blockSubstring) ->
-  switch blockType
-    when 'artist', 'band'
-      filterFunc = (e, s) -> e.artist.toLowerCase().indexOf(s) != -1
-    when 'title', 'song'
-      filterFunc = (e, s) -> e.title.toLowerCase().indexOf(s) != -1
-    when 'tag'
-      filterFunc = (e, s) -> e.tags[s]?
-    when 'full'
-      filterFunc = (e, s) ->
-        full = e.artist.toLowerCase() + " - " + e.title.toLowerCase()
-        full.indexOf(s) != -1
-    else
-      return null
-  counts = []
-  uniqueVideoMap = {}
-  substrings = blockSubstring.split(/[\|\/]/)
-  for substring in substrings
-    substring = substring.trim()
-    if substring.length == 0
-      continue
-    countEntry =
-      substring: substring
-      count: 0
-    counts.push(countEntry)
-    for k,v of playlist
-      if filterFunc(v, substring)
-        countEntry.count += 1
-        uniqueVideoMap[v.id] = true
-    if (MAX_BLOCK_COUNT > 0) and (blockType != 'tag') and (Object.keys(uniqueVideoMap).length > MAX_BLOCK_COUNT)
-      return null
-  unsortedQueue = []
-  for id,v of uniqueVideoMap
-    unsortedQueue.push(playlist[id])
-  return {
-    counts: counts
-    queue: unsortedQueue
-  }
-
 run = (args, user) ->
   cmd = 'who'
   if args.length > 0
@@ -1257,43 +1219,20 @@ run = (args, user) ->
       requestDashboardRefresh()
       return ret
 
-    when 'count'
-      if args.length < 3
-        return "MTV: Syntax: count [artist/title/tag] substring"
-      blockType = args[1].toLowerCase()
-      playArgs = []
-      for i in [2...args.length]
-        playArgs.push args[i]
-      playSubstring = playArgs.join(" ").toLowerCase()
-      block = generateBlock(blockType, playSubstring)
-      # console.log "generateBlock counts: ", block.counts
-      if not block?
-        return "MTV: Too many (over #{MAX_BLOCK_COUNT}) #{blockType}s match: `#{playSubstring}`"
-      if block.queue.length < 1
-        return "MTV: No #{blockType}s match: `#{playSubstring}`"
-      outputStr = "MTV: Counted #{block.queue.length} unique video#{if block.queue.length == 1 then "" else "s"} matching: `#{playSubstring}`"
-      if block.counts.length > 1
-        outputStr += "\n```\n"
-        for count in block.counts
-          outputStr += "#{pad(count.count, 5)} : #{count.substring}\n"
-        outputStr += "```"
-      return outputStr
-
     when 'block'
       if args.length < 3
         return "MTV: Syntax: block [artist/title/tag] substring"
-      blockType = args[1].toLowerCase()
       playArgs = []
-      for i in [2...args.length]
+      for i in [1...args.length]
         playArgs.push args[i]
-      playSubstring = playArgs.join(" ").toLowerCase()
-      block = generateBlock(blockType, playSubstring)
-      # console.log "generateBlock counts: ", block.counts
-      if not block?
-        return "MTV: Too many (over #{MAX_BLOCK_COUNT}) #{blockType}s match: `#{playSubstring}`"
-      unsortedQueue = block.queue
+      playSubstring = playArgs.join(" ")
+      playNewlines = playSubstring.replace(/\//, "\n")
+      filters.setServerDatabases(playlist, opinions, getUserFromNickname)
+      unsortedQueue = await filters.generateList(playNewlines)
+      if not unsortedQueue?
+        return "MTV: Error getting block, sorry."
       if unsortedQueue.length < 1
-        return "MTV: No #{blockType}s match: `#{playSubstring}`"
+        return "MTV: No block matches for: `#{playSubstring}`"
       playQueue = [ unsortedQueue.shift() ]
       for i, index in unsortedQueue
         j = Math.floor(Math.random() * (index + 1))

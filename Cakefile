@@ -52,6 +52,8 @@ buildServer = (callback) ->
   coffee.on 'exit', (code) ->
     util.log "Server compilation finished."
     callback?() if code is 0
+
+buildConstants = (callback) ->
   coffee = spawn coffeeName, ['-c', '-o', 'constants.js', 'src/constants.coffee']
   coffee.stderr.on 'data', (data) ->
     process.stderr.write data.toString()
@@ -59,7 +61,18 @@ buildServer = (callback) ->
   coffee.stdout.on 'data', (data) ->
     print data.toString()
   coffee.on 'exit', (code) ->
-    util.log "Server compilation finished."
+    util.log "Constants compilation finished."
+    callback?() if code is 0
+
+buildFilters = (callback) ->
+  coffee = spawn coffeeName, ['-c', '-o', 'filters.js', 'src/filters.coffee']
+  coffee.stderr.on 'data', (data) ->
+    process.stderr.write data.toString()
+    process.exit(-1)
+  coffee.stdout.on 'data', (data) ->
+    print data.toString()
+  coffee.on 'exit', (code) ->
+    util.log "Filters compilation finished."
     callback?() if code is 0
 
 buildMarkdown = (callback) ->
@@ -80,8 +93,10 @@ buildMarkdown = (callback) ->
 
 buildEverything = ->
   buildServer ->
-    buildClient ->
-      buildMarkdown ->
+    buildConstants ->
+      buildFilters ->
+        buildClient ->
+          buildMarkdown ->
 
 task 'build', 'build JS bundle', (options) ->
   buildEverything()
