@@ -3,7 +3,7 @@ socket = null
 playing = false
 serverEpoch = null
 
-filters = require './filters'
+filters = require '../filters'
 
 iso8601 = require 'iso8601-duration'
 

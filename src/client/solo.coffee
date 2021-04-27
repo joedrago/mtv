@@ -1,6 +1,6 @@
 constants = require '../constants'
 Clipboard = require 'clipboard'
-filters = require './filters'
+filters = require '../filters'
 
 socket = null
 
