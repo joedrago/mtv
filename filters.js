@@ -95,9 +95,14 @@
       for (j = 0, len1 = soloFilters.length; j < len1; j++) {
         filter = soloFilters[j];
         pieces = filter.split(/ +/);
+        negated = false;
         property = "allowed";
         if (pieces[0] === "skip") {
           property = "skipped";
+          pieces.shift();
+        } else if (pieces[0] === "and") {
+          property = "skipped";
+          negated = !negated;
           pieces.shift();
         }
         if (pieces.length === 0) {
@@ -107,9 +112,9 @@
           allAllowed = false;
         }
         substring = pieces.slice(1).join(" ");
-        negated = false;
+        idLookup = null;
         if (matches = pieces[0].match(/^!(.+)$/)) {
-          negated = true;
+          negated = !negated;
           pieces[0] = matches[1];
         }
         command = pieces[0].toLowerCase();
@@ -212,6 +217,9 @@
             ref = pieces.slice(1);
             for (k = 0, len2 = ref.length; k < len2; k++) {
               id = ref[k];
+              if (id.match(/^#/)) {
+                break;
+              }
               idLookup[id] = true;
             }
             filterFunc = function(e, s) {
@@ -222,14 +230,30 @@
             // skip this filter
             continue;
         }
-        for (id in filterDatabase) {
-          e = filterDatabase[id];
-          isMatch = filterFunc(e, substring);
-          if (negated) {
-            isMatch = !isMatch;
+        if (idLookup != null) {
+          for (id in idLookup) {
+            e = filterDatabase[id];
+            if (e == null) {
+              continue;
+            }
+            isMatch = true;
+            if (negated) {
+              isMatch = !isMatch;
+            }
+            if (isMatch) {
+              e[property] = true;
+            }
           }
-          if (isMatch) {
-            e[property] = true;
+        } else {
+          for (id in filterDatabase) {
+            e = filterDatabase[id];
+            isMatch = filterFunc(e, substring);
+            if (negated) {
+              isMatch = !isMatch;
+            }
+            if (isMatch) {
+              e[property] = true;
+            }
           }
         }
       }
