@@ -67,9 +67,14 @@ generateList = (filterString, sortByArtist = false) ->
     for filter in soloFilters
       pieces = filter.split(/ +/)
 
+      negated = false
       property = "allowed"
       if pieces[0] == "skip"
         property = "skipped"
+        pieces.shift()
+      else if pieces[0] == "and"
+        property = "skipped"
+        negated = !negated
         pieces.shift()
       if pieces.length == 0
         continue
@@ -77,10 +82,10 @@ generateList = (filterString, sortByArtist = false) ->
         allAllowed = false
 
       substring = pieces.slice(1).join(" ")
+      idLookup = null
 
-      negated = false
       if matches = pieces[0].match(/^!(.+)$/)
-        negated = true
+        negated = !negated
         pieces[0] = matches[1]
 
       command = pieces[0].toLowerCase()
@@ -136,18 +141,31 @@ generateList = (filterString, sortByArtist = false) ->
         when 'id', 'ids'
           idLookup = {}
           for id in pieces.slice(1)
+            if id.match(/^#/)
+              break
             idLookup[id] = true
           filterFunc = (e, s) -> idLookup[e.id]
         else
           # skip this filter
           continue
 
-      for id, e of filterDatabase
-        isMatch = filterFunc(e, substring)
-        if negated
-          isMatch = !isMatch
-        if isMatch
-          e[property] = true
+      if idLookup?
+        for id of idLookup
+          e = filterDatabase[id]
+          if not e?
+            continue
+          isMatch = true
+          if negated
+            isMatch = !isMatch
+          if isMatch
+            e[property] = true
+      else
+        for id, e of filterDatabase
+          isMatch = filterFunc(e, substring)
+          if negated
+            isMatch = !isMatch
+          if isMatch
+            e[property] = true
 
     for id, e of filterDatabase
       if (e.allowed or allAllowed) and not e.skipped
