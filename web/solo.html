@@ -10,6 +10,8 @@ body, html {
 
     font-family: monospace;
     font-size: 1.2em;
+    margin: 0px;
+    padding: 0px;
 }
 
 a {
@@ -221,6 +223,8 @@ input[type=submit] {
 
 .fsub {
     font-size: 0.6em;
+    width: 80px;
+    margin-top: 10px;
 }
 
 .sharecopied {
@@ -235,12 +239,20 @@ input[type=submit] {
     font-size: 0.6em;
 }
 
+#solovideocontainer {
+    text-align: center;
+}
+
 </style>
 <body>
 
 <script>
 window.CLIENT_ID = "!CLIENT_ID!";
 </script>
+
+<div id="solovideocontainer">
+<div id="mtv-player"></div>
+</div>
 
 <div class="outer">
 
@@ -262,10 +274,12 @@ window.CLIENT_ID = "!CLIENT_ID!";
     <input type="checkbox" id="mirror" name="mirror"> Mirror Mode<br>
     <br>
     <input class="fsub" type="submit" value="Watch" title="Watch MTV with these settings in a new tab">
-    <input id="castbutton" class="fsub" type="submit" onclick="startCast(); event.preventDefault();" value="Cast" title="Begin casting MTV with these settings">
-    <input class="fsub" type="submit" onclick="showList(); event.preventDefault();" value="List" title="Show the list of videos matching the current filter">
-    <input class="fsub share" type="submit" onclick="shareClipboard(); event.preventDefault();" value="Share" title="Share current settings by copying them to the clipboard without the Solo ID">
-    <input class="fsub" type="submit" onclick="showWatchLink(); event.preventDefault();" value="Close" title="Close all settings">
+    <input class="fsub" type="submit" value="Here" onclick="event.preventDefault(); startHere();" title="Watch MTV here">
+    <input id="castbutton" class="fsub" type="submit" onclick="event.preventDefault(); startCast();" value="Cast" title="Begin casting MTV with these settings">
+    <br>
+    <input class="fsub" type="submit" onclick="event.preventDefault(); showList();" value="List" title="Show the list of videos matching the current filter">
+    <input class="fsub share" type="submit" onclick="event.preventDefault(); shareClipboard();" value="Share" title="Share current settings by copying them to the clipboard without the Solo ID">
+    <input class="fsub" type="submit" onclick="event.preventDefault(); showWatchLink();" value="Close" title="Close all settings">
     <div id="list"></div>
 </form>
 
@@ -286,5 +300,6 @@ window.CLIENT_ID = "!CLIENT_ID!";
 <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="solo.js"></script>
+<script src="//www.youtube.com/player_api"></script>
 </body>
 </html>

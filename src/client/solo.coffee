@@ -4,6 +4,16 @@ filters = require '../filters'
 
 socket = null
 
+player = null
+endedTimer = null
+playing = false
+soloUnshuffled = []
+soloQueue = []
+soloTickTimeout = null
+soloVideo = null
+soloError = null
+soloCount = 0
+
 DASHCAST_NAMESPACE = 'urn:x-cast:es.offd.dashcast'
 
 soloID = null
@@ -111,6 +121,152 @@ startCast = ->
     castSession.sendMessage(DASHCAST_NAMESPACE, { url: mtvURL, force: true })
   , onError
 
+# autoplay video
+onPlayerReady = (event) ->
+  event.target.playVideo()
+  startHere()
+
+# when video ends
+onPlayerStateChange = (event) ->
+  if endedTimer?
+    clearTimeout(endedTimer)
+    endedTimer = null
+
+  if event.data == 0
+    console.log "ENDED"
+    endedTimer = setTimeout( ->
+      playing = false
+    , 2000)
+
+play = (pkt, id, startSeconds = null, endSeconds = null) ->
+  console.log "Playing: #{id}"
+  opts = {
+    videoId: id
+  }
+  if startSeconds? and (startSeconds >= 0)
+    opts.startSeconds = startSeconds
+  if endSeconds? and (endSeconds >= 1)
+    opts.endSeconds = endSeconds
+  player.loadVideoById(opts)
+  playing = true
+
+soloInfoBroadcast = ->
+  if socket? and soloID? and soloVideo?
+    nextVideo = null
+    if soloQueue.length > 0
+      nextVideo = soloQueue[0]
+    info =
+      current: soloVideo
+      next: nextVideo
+      index: soloCount - soloQueue.length
+      count: soloCount
+
+    console.log "Broadcast: ", info
+    pkt = {
+      id: soloID
+      cmd: 'info'
+      info: info
+    }
+    socket.emit 'solo', pkt
+    soloCommand(pkt)
+
+soloPlay = (restart = false) ->
+  if not player?
+    return
+  if soloError
+    return
+
+  if not restart or not soloVideo?
+    if soloQueue.length == 0
+      console.log "Reshuffling..."
+      soloQueue = [ soloUnshuffled[0] ]
+      for i, index in soloUnshuffled
+        continue if index == 0
+        j = Math.floor(Math.random() * (index + 1))
+        soloQueue.push(soloQueue[j])
+        soloQueue[j] = i
+
+    soloVideo = soloQueue.shift()
+
+  console.log soloVideo
+
+  # debug
+  # soloVideo.start = 10
+  # soloVideo.end = 50
+  # soloVideo.duration = 40
+
+  play(soloVideo, soloVideo.id, soloVideo.start, soloVideo.end)
+
+  soloInfoBroadcast()
+
+soloTick = ->
+  if not player?
+    return
+
+  if not soloID? or soloError
+    return
+
+  console.log "soloTick()"
+  if not playing and player?
+    soloPlay()
+    return
+
+startHere = ->
+  showWatchLink()
+
+  screenW = window.innerWidth  || document.documentElement.clientWidth  || document.body.clientWidth
+  screenH = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight
+  console.log "screenW #{screenW} screenH #{screenH}"
+
+  roomForButtons = 400
+
+  if screenW < ((screenH - roomForButtons) * 16 / 9)
+    console.log "first"
+    width = screenW
+    height = Math.ceil(width * 9 / 16)
+  else
+    console.log "second"
+    height = Math.ceil(screenH - roomForButtons)
+    width = Math.ceil(height * 16 / 9)
+
+  console.log "YT player width #{width} height #{height}"
+
+  if player?
+    player.setSize(width, height)
+  else
+    showControls = 0
+    if qs('controls')
+      showControls = 1
+
+    player = new YT.Player 'mtv-player', {
+      width: width
+      height: height
+      videoId: 'AB7ykOfAgIA' # MTV loading screen, this will be replaced almost immediately
+      playerVars: { 'autoplay': 1, 'enablejsapi': 1, 'controls': showControls }
+      events: {
+        onReady: onPlayerReady
+        onStateChange: onPlayerStateChange
+      }
+    }
+    return
+
+  filterString = qs('filters')
+  soloUnshuffled = await filters.generateList(filterString)
+  if not soloUnshuffled?
+    soloFatalError("Cannot get solo database!")
+    return
+
+  if soloUnshuffled.length == 0
+    soloFatalError("No matching songs in the filter!")
+    return
+  soloCount = soloUnshuffled.length
+
+  if soloTickTimeout?
+    clearInterval(soloTickTimeout)
+  soloTickTimeout = setInterval(soloTick, 5000)
+  soloQueue = []
+  soloPlay()
+
 calcPermalink = ->
   form = document.getElementById('asform')
   formData = new FormData(form)
@@ -133,18 +289,21 @@ soloSkip = ->
     id: soloID
     cmd: 'skip'
   }
+  soloPlay()
 
 soloRestart = ->
   socket.emit 'solo', {
     id: soloID
     cmd: 'restart'
   }
+  soloPlay(true)
 
 soloPause = ->
   socket.emit 'solo', {
     id: soloID
     cmd: 'pause'
   }
+  pauseInternal()
 
 renderInfo = ->
   if not soloInfo? or not soloInfo.current?
@@ -154,7 +313,8 @@ renderInfo = ->
 
   html = "<div class=\"infocounts\">Track #{soloInfo.index} / #{soloInfo.count}</div>"
   # html += "<div class=\"infoheading\">Current: [<span class=\"youtubeid\">#{soloInfo.current.id}</span>]</div>"
-  html += "<div class=\"infothumb\"><a href=\"https://youtu.be/#{encodeURIComponent(soloInfo.current.id)}\"><img width=320 height=180 src=\"#{soloInfo.current.thumb}\"></a></div>"
+  if not player?
+    html += "<div class=\"infothumb\"><a href=\"https://youtu.be/#{encodeURIComponent(soloInfo.current.id)}\"><img width=320 height=180 src=\"#{soloInfo.current.thumb}\"></a></div>"
   html += "<div class=\"infocurrent infoartist\">#{soloInfo.current.artist}</div>"
   html += "<div class=\"infotitle\">\"#{soloInfo.current.title}\"</div>"
   html += "<div class=\"infotags\">&nbsp;#{tagsString}&nbsp;</div>"
@@ -235,11 +395,24 @@ setOpinion = (opinion) ->
 
   socket.emit 'opinion', { token: discordToken, id: soloInfo.current.id, set: opinion }
 
+pauseInternal = ->
+  if player?
+    if player.getPlayerState() == 2
+      player.playVideo()
+    else
+      player.pauseVideo()
+
 soloCommand = (pkt) ->
   if pkt.id != soloID
     return
   console.log "soloCommand: ", pkt
   switch pkt.cmd
+    when 'skip'
+      soloPlay()
+    when 'restart'
+      soloPlay(true)
+    when 'pause'
+      pauseInternal()
     when 'info'
       if pkt.info?
         console.log "NEW INFO!: ", pkt.info
@@ -307,7 +480,18 @@ receiveIdentity = (pkt) ->
   if lastClicked?
     lastClicked()
 
-init = ->
+youtubeReady = false
+window.onYouTubePlayerAPIReady = ->
+  if youtubeReady
+    return
+  youtubeReady = true
+
+  console.log "onYouTubePlayerAPIReady"
+  setTimeout ->
+    finishInit()
+  , 0
+
+finishInit = ->
   window.clipboardEdit = clipboardEdit
   window.formChanged = formChanged
   window.logout = logout
@@ -321,6 +505,7 @@ init = ->
   window.soloRestart = soloRestart
   window.soloSkip = soloSkip
   window.startCast = startCast
+  window.startHere = startHere
 
   updateSoloID(qs('solo'))
 
@@ -360,4 +545,10 @@ init = ->
   else
     showWatchLink()
 
-window.onload = init
+
+setTimeout ->
+  # somehow we missed this event, just kick it manually
+  if not youtubeReady
+    console.log "kicking Youtube..."
+    window.onYouTubePlayerAPIReady()
+, 3000
