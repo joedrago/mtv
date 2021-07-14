@@ -183,7 +183,8 @@ a {
     background-color:#77aa77;
 }
 
-.outer {
+#outer {
+    z-index: 3;
     max-width: 800px;
     margin:auto;
 }
@@ -239,8 +240,51 @@ input[type=submit] {
     font-size: 0.6em;
 }
 
+
 #solovideocontainer {
-    text-align: center;
+    display: none;
+    z-index: 1;
+    width: 100vw;
+    height: 56.25vw; /* height:width ratio = 9/16 = .5625  */
+    max-height: 100vh;
+    max-width: 177.78vh; /* 16/9 = 1.778 */
+    margin: auto;
+    position: absolute;
+    bottom:0;
+    left:0;right:0;
+}
+
+#solovideocontainer object,
+#solovideocontainer embed,
+#solovideocontainer iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+@media (min-aspect-ratio: 1/1) {
+    .fadey {
+        background-color: #000022;
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        padding: 10px;
+        border: 1px solid white;
+    }
+
+    .fadey {
+        opacity: 0;
+        transition: opacity .5s ease-out;
+        -moz-transition: opacity .5s ease-out;
+        -webkit-transition: opacity .5s ease-out;
+        -o-transition: opacity .5s ease-out;
+    }
+
+    .fadey:hover {
+        opacity: 0.8;
+    }
 }
 
 </style>
@@ -254,7 +298,7 @@ window.CLIENT_ID = "!CLIENT_ID!";
 <div id="mtv-player"></div>
 </div>
 
-<div class="outer">
+<div id="outer">
 
 <br>
 <div id="aslink">

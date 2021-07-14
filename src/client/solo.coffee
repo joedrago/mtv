@@ -214,35 +214,14 @@ soloTick = ->
 startHere = ->
   showWatchLink()
 
-  screenW = window.innerWidth  || document.documentElement.clientWidth  || document.body.clientWidth
-  screenH = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight
-  console.log "screenW #{screenW} screenH #{screenH}"
-
-  roomForButtons = 400
-
-  if screenW < ((screenH - roomForButtons) * 16 / 9)
-    console.log "first"
-    width = screenW
-    height = Math.ceil(width * 9 / 16)
-  else
-    console.log "second"
-    height = Math.ceil(screenH - roomForButtons)
-    width = Math.ceil(height * 16 / 9)
-
-  console.log "YT player width #{width} height #{height}"
-
-  if player?
-    player.setSize(width, height)
-  else
-    showControls = 0
-    if qs('controls')
-      showControls = 1
-
+  if not player?
+    document.getElementById('solovideocontainer').style.display = 'block'
+    document.getElementById('outer').classList.add('fadey')
     player = new YT.Player 'mtv-player', {
-      width: width
-      height: height
+      width: '100%'
+      height: '100%'
       videoId: 'AB7ykOfAgIA' # MTV loading screen, this will be replaced almost immediately
-      playerVars: { 'autoplay': 1, 'enablejsapi': 1, 'controls': showControls }
+      playerVars: { 'autoplay': 1, 'enablejsapi': 1, 'controls': 1 }
       events: {
         onReady: onPlayerReady
         onStateChange: onPlayerStateChange
