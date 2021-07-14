@@ -241,19 +241,6 @@ input[type=submit] {
 }
 
 
-#solovideocontainer {
-    display: none;
-    z-index: 1;
-    width: 100vw;
-    height: 56.25vw; /* height:width ratio = 9/16 = .5625  */
-    max-height: 100vh;
-    max-width: 177.78vh; /* 16/9 = 1.778 */
-    margin: auto;
-    position: absolute;
-    bottom:0;
-    left:0;right:0;
-}
-
 #solovideocontainer object,
 #solovideocontainer embed,
 #solovideocontainer iframe {
@@ -264,7 +251,30 @@ input[type=submit] {
   height: 100%;
 }
 
+#solovideocontainer {
+    display: none;
+    z-index: 1;
+}
+
+@media (max-aspect-ratio: 1/1) {
+    #solovideocontainer {
+        width: 100vw;
+        height: 56.25vw; /* height:width ratio = 9/16 = .5625  */
+        max-height: 100vh;
+        max-width: 177.78vh; /* 16/9 = 1.778 */
+        margin: auto;
+        position: absolute;
+        bottom: 0;
+        left:0;right:0;
+    }
+}
+
 @media (min-aspect-ratio: 1/1) {
+    #solovideocontainer {
+        width: 100%;
+        height: 100%;
+    }
+
     .fadey {
         background-color: #000022;
         position: absolute;
