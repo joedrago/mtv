@@ -602,8 +602,6 @@ finishInit = ->
   if qsFilters?
     document.getElementById("filters").value = qsFilters
 
-  document.getElementById("controls").checked = qs('controls')?
-  document.getElementById("hidetitles").checked = qs('hidetitles')?
   document.getElementById("mirror").checked = qs('mirror')?
 
   socket = io()
