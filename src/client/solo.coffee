@@ -13,6 +13,10 @@ soloTickTimeout = null
 soloVideo = null
 soloError = null
 soloCount = 0
+soloLabels = {}
+
+endedTimer = null
+overTimers = []
 
 DASHCAST_NAMESPACE = 'urn:x-cast:es.offd.dashcast'
 
@@ -50,6 +54,52 @@ qs = (name) ->
   if not results or not results[2]
     return null
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
+
+fadeIn = (elem, ms) ->
+  if not elem?
+    return
+
+  elem.style.opacity = 0
+  elem.style.filter = "alpha(opacity=0)"
+  elem.style.display = "inline-block"
+  elem.style.visibility = "visible"
+
+  if ms? and ms > 0
+    opacity = 0
+    timer = setInterval ->
+      opacity += 50 / ms
+      if opacity >= 1
+        clearInterval(timer)
+        opacity = 1
+
+      elem.style.opacity = opacity
+      elem.style.filter = "alpha(opacity=" + opacity * 100 + ")"
+    , 50
+  else
+    elem.style.opacity = 1
+    elem.style.filter = "alpha(opacity=1)"
+
+fadeOut = (elem, ms) ->
+  if not elem?
+    return
+
+  if ms? and ms > 0
+    opacity = 1
+    timer = setInterval ->
+      opacity -= 50 / ms
+      if opacity <= 0
+        clearInterval(timer)
+        opacity = 0
+        elem.style.display = "none"
+        elem.style.visibility = "hidden"
+      elem.style.opacity = opacity
+      elem.style.filter = "alpha(opacity=" + opacity * 100 + ")"
+    , 50
+  else
+    elem.style.opacity = 0
+    elem.style.filter = "alpha(opacity=0)"
+    elem.style.display = "none"
+    elem.style.visibility = "hidden"
 
 showWatchForm = ->
   document.getElementById('aslink').style.display = 'none'
@@ -138,6 +188,49 @@ onPlayerStateChange = (event) ->
       playing = false
     , 2000)
 
+showInfo = (pkt) ->
+  overElement = document.getElementById("over")
+  overElement.style.display = "none"
+  for t in overTimers
+    clearTimeout(t)
+  overTimers = []
+
+  artist = pkt.artist
+  artist = artist.replace(/^\s+/, "")
+  artist = artist.replace(/\s+$/, "")
+  title = pkt.title
+  title = title.replace(/^\s+/, "")
+  title = title.replace(/\s+$/, "")
+  html = "#{artist}\n&#x201C;#{title}&#x201D;"
+  if soloID?
+    company = soloLabels[pkt.nickname]
+    if not company?
+      company = pkt.nickname.charAt(0).toUpperCase() + pkt.nickname.slice(1)
+      company += " Records"
+    html += "\n#{company}"
+    html += "\nHere Mode"
+  else
+    html += "\n#{pkt.company}"
+    feelings = []
+    for o in opinionOrder
+      if pkt.opinions[o]?
+        feelings.push o
+    if feelings.length == 0
+      html += "\nNo Opinions"
+    else
+      for feeling in feelings
+        list = pkt.opinions[feeling]
+        list.sort()
+        html += "\n#{feeling.charAt(0).toUpperCase() + feeling.slice(1)}: #{list.join(', ')}"
+  overElement.innerHTML = html
+
+  overTimers.push setTimeout ->
+    fadeIn(overElement, 1000)
+  , 3000
+  overTimers.push setTimeout ->
+    fadeOut(overElement, 1000)
+  , 15000
+
 play = (pkt, id, startSeconds = null, endSeconds = null) ->
   console.log "Playing: #{id}"
   opts = {
@@ -149,6 +242,8 @@ play = (pkt, id, startSeconds = null, endSeconds = null) ->
     opts.endSeconds = endSeconds
   player.loadVideoById(opts)
   playing = true
+
+  showInfo(pkt)
 
 soloInfoBroadcast = ->
   if socket? and soloID? and soloVideo?
@@ -211,10 +306,25 @@ soloTick = ->
     soloPlay()
     return
 
+getData = (url) ->
+  return new Promise (resolve, reject) ->
+    xhttp = new XMLHttpRequest()
+    xhttp.onreadystatechange = ->
+        if (@readyState == 4) and (@status == 200)
+           # Typical action to be performed when the document is ready:
+           try
+             entries = JSON.parse(xhttp.responseText)
+             resolve(entries)
+           catch
+             resolve(null)
+    xhttp.open("GET", url, true)
+    xhttp.send()
+
 startHere = ->
   showWatchLink()
 
   if not player?
+    soloLabels = await getData("/info/labels")
     document.getElementById('solovideocontainer').style.display = 'block'
     document.getElementById('outer').classList.add('fadey')
     player = new YT.Player 'mtv-player', {

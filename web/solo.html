@@ -256,7 +256,37 @@ input[type=submit] {
     z-index: 1;
 }
 
+@font-face {
+    font-family: Kabel Black;
+    src: url("Kabel-Black.otf") format("opentype");
+}
+
+#over {
+    float: left;
+    position: fixed;
+    margin-left: 3%;
+    margin-bottom: 3%;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+
+    display: none;
+
+    color: #ffffff;
+
+    font-size: 5vh;
+    font-family: Kabel Black;
+    text-shadow: 0.1em 0.1em #000000;
+    white-space: pre;
+
+    pointer-events: none;
+}
+
 @media (max-aspect-ratio: 1/1) {
+    #over {
+        font-size: 5vw;
+    }
+
     #solovideocontainer {
         width: 100vw;
         height: 56.25vw; /* height:width ratio = 9/16 = .5625  */
@@ -305,6 +335,7 @@ window.CLIENT_ID = "!CLIENT_ID!";
 
 <div id="solovideocontainer">
 <div id="mtv-player"></div>
+<div id="over"></div>
 </div>
 
 <div id="outer">
