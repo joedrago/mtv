@@ -14,6 +14,7 @@ soloVideo = null
 soloError = null
 soloCount = 0
 soloLabels = {}
+soloMirror = false
 
 endedTimer = null
 overTimers = []
@@ -140,14 +141,16 @@ prepareCast = ->
   apiConfig = new chrome.cast.ApiConfig sessionRequest, sessionListener, ->
   chrome.cast.initialize(apiConfig, onInitSuccess, onError)
 
-calcShareURL = ->
+calcShareURL = (mirror) ->
   form = document.getElementById('asform')
   formData = new FormData(form)
   params = new URLSearchParams(formData)
-  if params.get("mirror")?
+  if mirror
+    params.set("mirror", 1)
     params.delete("filters")
   else
     params.delete("solo")
+    params.set("filters", params.get("filters").trim())
   querystring = params.toString()
   baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
   mtvURL = baseURL + "?" + querystring
@@ -208,7 +211,10 @@ showInfo = (pkt) ->
       company = pkt.nickname.charAt(0).toUpperCase() + pkt.nickname.slice(1)
       company += " Records"
     html += "\n#{company}"
-    html += "\nHere Mode"
+    if soloMirror
+      html += "\nMirror Mode"
+    else
+      html += "\nHere Mode"
   else
     html += "\n#{pkt.company}"
     feelings = []
@@ -232,6 +238,8 @@ showInfo = (pkt) ->
   , 15000
 
 play = (pkt, id, startSeconds = null, endSeconds = null) ->
+  if not player?
+    return
   console.log "Playing: #{id}"
   opts = {
     videoId: id
@@ -246,7 +254,7 @@ play = (pkt, id, startSeconds = null, endSeconds = null) ->
   showInfo(pkt)
 
 soloInfoBroadcast = ->
-  if socket? and soloID? and soloVideo?
+  if socket? and soloID? and soloVideo? and not soloMirror
     nextVideo = null
     if soloQueue.length > 0
       nextVideo = soloQueue[0]
@@ -268,7 +276,7 @@ soloInfoBroadcast = ->
 soloPlay = (restart = false) ->
   if not player?
     return
-  if soloError
+  if soloError or soloMirror
     return
 
   if not restart or not soloVideo?
@@ -298,7 +306,7 @@ soloTick = ->
   if not player?
     return
 
-  if not soloID? or soloError
+  if not soloID? or soloError or soloMirror
     return
 
   console.log "soloTick()"
@@ -355,6 +363,8 @@ startHere = ->
   soloTickTimeout = setInterval(soloTick, 5000)
   soloQueue = []
   soloPlay()
+  if soloMirror and soloVideo
+    play(soloVideo, soloVideo.id, soloVideo.start, soloVideo.end)
 
 calcPermalink = ->
   form = document.getElementById('asform')
@@ -432,10 +442,28 @@ renderClipboard = ->
   document.getElementById('clipboard').innerHTML = html
   new Clipboard('.cbutto')
 
-shareClipboard = ->
+clipboardMirror = ->
+  html = "<a class=\"mbutto copied\" onclick=\"return false\">Copied!</a>"
+  document.getElementById('cbmirror').innerHTML = html
+  setTimeout ->
+    renderClipboardMirror()
+  , 2000
+
+renderClipboardMirror = ->
+  if not soloInfo? or not soloInfo.current?
+    return
+
+  html = "<a class=\"mbutto\"onclick=\"clipboardMirror(); return false\">Mirror</a>"
+  document.getElementById('cbmirror').innerHTML = html
+  new Clipboard '.mbutto', {
+    text: ->
+      return calcShareURL(true)
+  }
+
+shareClipboard = (mirror) ->
   document.getElementById('list').innerHTML = """
     <div class=\"sharecopied\">Copied to clipboard:</div>
-    <div class=\"shareurl\">#{calcShareURL()}</div>
+    <div class=\"shareurl\">#{calcShareURL(mirror)}</div>
   """
 
 showList = ->
@@ -508,6 +536,13 @@ soloCommand = (pkt) ->
         soloInfo = pkt.info
         renderInfo()
         renderClipboard()
+        renderClipboardMirror()
+        if soloMirror
+          soloVideo = pkt.info.current
+          if soloVideo?
+            if not player?
+              console.log "no player yet"
+            play(soloVideo, soloVideo.id, soloVideo.start, soloVideo.end)
         clearOpinion()
         if discordToken? and soloInfo.current? and soloInfo.current.id?
           socket.emit 'opinion', { token: discordToken, id: soloInfo.current.id }
@@ -523,6 +558,9 @@ updateSoloID = (newSoloID) ->
 
 newSoloID = ->
   updateSoloID(randomString())
+  document.getElementById("mirror").checked = false
+  document.getElementById('filtersection').style.display = 'block'
+  document.getElementById('mirrornote').style.display = 'none'
   generatePermalink()
 
 logout = ->
@@ -582,6 +620,7 @@ window.onYouTubePlayerAPIReady = ->
 
 finishInit = ->
   window.clipboardEdit = clipboardEdit
+  window.clipboardMirror = clipboardMirror
   window.formChanged = formChanged
   window.logout = logout
   window.newSoloID = newSoloID
@@ -602,7 +641,11 @@ finishInit = ->
   if qsFilters?
     document.getElementById("filters").value = qsFilters
 
-  document.getElementById("mirror").checked = qs('mirror')?
+  soloMirror = qs('mirror')?
+  document.getElementById("mirror").checked = soloMirror
+  if soloMirror
+    document.getElementById('filtersection').style.display = 'none'
+    document.getElementById('mirrornote').style.display = 'block'
 
   socket = io()
 
@@ -623,8 +666,11 @@ finishInit = ->
   prepareCast()
 
   new Clipboard '.share', {
-    text: ->
-      return calcShareURL()
+    text: (trigger) ->
+      mirror = false
+      if trigger.value.match(/Mirror/i)
+        mirror = true
+      return calcShareURL(mirror)
   }
 
   if launchOpen
