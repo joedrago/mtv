@@ -164,6 +164,26 @@ a {
     top:1px;
 }
 
+.mbutto {
+    width: 50px;
+    background-color:#444444;
+    border-radius:5px;
+    border:1px solid #333333;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:Arial;
+    font-size:10px;
+    font-weight:bold;
+    padding:8px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #528ecc;
+}
+.mbutto:active {
+    position:relative;
+    top:1px;
+}
+
 .copied {
     background-color:#77aa77;
 }
@@ -282,6 +302,20 @@ input[type=submit] {
     pointer-events: none;
 }
 
+#mirror {
+    display: none;
+}
+
+#mirrornote {
+    display: none;
+}
+
+.mirrorhint {
+    margin-top: 10px;
+    font-style: italic;
+    font-size: 0.6em;
+}
+
 @media (max-aspect-ratio: 1/1) {
     #over {
         font-size: 5vw;
@@ -351,16 +385,20 @@ window.CLIENT_ID = "!CLIENT_ID!";
     <div id="identity"></div>
     Solo ID: [<a onclick="newSoloID(); event.preventDefault();">Generate</a>]<br>
     <input type="text" id="soloid" name="solo" readonly value=""><br>
+    <div id="mirrornote">Mirror Mode.<br><div class="mirrorhint">(Generate a new ID to disable.)</div></div>
+    <div id="filtersection">
     Filters (leave blank for all songs):<br>
     <textarea form="asform" id="filters" name="filters" class="filters" oninput="formChanged()" style="width: 100%; max-width: 100%;" rows="5"></textarea><br>
-    <input type="checkbox" id="mirror" name="mirror"> Mirror Mode<br>
+    </div>
+    <input type="checkbox" id="mirror" name="mirror">
     <br>
     <input class="fsub" type="submit" value="Watch" title="Watch MTV with these settings in a new tab">
     <input class="fsub" type="submit" value="Here" onclick="event.preventDefault(); startHere();" title="Watch MTV here">
     <input id="castbutton" class="fsub" type="submit" onclick="event.preventDefault(); startCast();" value="Cast" title="Begin casting MTV with these settings">
     <br>
     <input class="fsub" type="submit" onclick="event.preventDefault(); showList();" value="List" title="Show the list of videos matching the current filter">
-    <input class="fsub share" type="submit" onclick="event.preventDefault(); shareClipboard();" value="Share" title="Share current settings by copying them to the clipboard without the Solo ID">
+    <input class="fsub share" type="submit" onclick="event.preventDefault(); shareClipboard(false);" value="Share" title="Share current settings by copying them to the clipboard without the Solo ID">
+    <input class="fsub share" type="submit" onclick="event.preventDefault(); shareClipboard(true);" value="Mirror" title="Share a mirror link of this Solo session.">
     <input class="fsub" type="submit" onclick="event.preventDefault(); showWatchLink();" value="Close" title="Close all settings">
     <div id="list"></div>
 </form>
@@ -374,7 +412,10 @@ window.CLIENT_ID = "!CLIENT_ID!";
 <a class="butto bpause" onclick="soloPause(); event.preventDefault();">Pause</a>
 <a class="butto bskip" onclick="soloSkip(); event.preventDefault();">Skip</a>
 <div id="opinions"></div>
-<div id="clipboard"></div>
+<div>
+<span id="clipboard"></span>
+<span id="cbmirror"></span>
+</div>
 </center>
 
 </div>
