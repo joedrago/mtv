@@ -9,3 +9,4 @@ rp/super_secret.h
 /secrets.json
 /state.json
 /ignored.json
+/userplaylists.json
