@@ -12,8 +12,19 @@ discordNickname = null
 discordToken = null
 lastPlayed = null
 
+searchEnabled = false
+searchSubstring = ""
+
+downloadCache = {}
+cacheEnabled = {
+  "/info/playlist": true
+}
+
 castAvailable = false
 castSession = null
+
+rawMode = false
+rawModeTag = ""
 
 opinionOrder = constants.opinionOrder
 opinionButtonOrder = []
@@ -110,6 +121,8 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE, 
       <div class="restTitle">Tag: #{tagFilter}</div>
     """
 
+  lowercaseSearch = searchSubstring.toLowerCase()
+
   for e, entryIndex in entries
     if tagFilter? and not e.tags[tagFilter]?
       continue
@@ -120,6 +133,11 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE, 
     title = e.title
     if not title?
       title = e.id
+
+    if searchEnabled and (lowercaseSearch.length > 0)
+      if (artist.toLowerCase().indexOf(lowercaseSearch) == -1) and (title.toLowerCase().indexOf(lowercaseSearch) == -1)
+        continue
+
     params = ""
     if e.start >= 0
       params += if params.length == 0 then "?" else "&"
@@ -130,8 +148,14 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE, 
     url = "https://youtu.be/#{e.id}#{params}"
 
     extraInfo = ""
+    tags = []
     for tag of e.tags
       extraInfo += ", #{tag}"
+      tags.push tag
+    if tags.length > 0
+      tagString = " - <span class=\"rawtags\">" + tags.join("</span>, <span class=\"rawtags\">") + "</span>"
+    else
+      tagString = ""
     if (e.start != -1) or  (e.end != -1)
       extraInfo += ", #{prettyDuration(e)}"
     if e.opinions?
@@ -154,21 +178,42 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE, 
     else
       actions = ""
 
-    html += """
-      <div> * <a target="_blank" href="#{url}"><span class="entryartist">#{artist}</span></a><span class="entrymiddle"> - </span><a target="_blank" href="#{url}"><span class="entrytitle">#{title}</span></a> <span class="user">(#{e.nickname}#{extraInfo})</span>#{actions}</div>
+    switch rawMode
+      when "edit"
+        html += """
+          <div><span class=\"selectall\">#mtv edit #{e.id} COMMANDHERE</span> # <a target="_blank" href="#{url}"><span class="entryartist">#{artist}</span></a><span class="entrymiddle"> - </span><a target="_blank" href="#{url}"><span class="entrytitle">#{title}</span></a>#{tagString}</div>
+        """
+      when "solo"
+        html += """
+          <div>id #{e.id} # <a target="_blank" href="#{url}">#{artist} - #{title}</a></div>
+        """
+      when "tag"
+        html += """
+          <div><span class=\"selectall\">#mtv edit #{e.id} tag #{rawModeTag}</span> | <a target="_blank" href="#{url}"><span class="entryartist">#{artist}</span></a><span class="entrymiddle"> - </span><a target="_blank" href="#{url}"><span class="entrytitle">#{title}</span></a>#{tagString}</div>
+        """
+      else
+        html += """
+          <div> * <a target="_blank" href="#{url}"><span class="entryartist">#{artist}</span></a><span class="entrymiddle"> - </span><a target="_blank" href="#{url}"><span class="entrytitle">#{title}</span></a> <span class="user">(#{e.nickname}#{extraInfo})</span>#{actions}</div>
 
-    """
+        """
   return html
 
 
 showList = (firstTitle, restTitle, url, isMap = false, sortMethod = SORT_NONE, tagFilter = null) ->
   return new Promise (resolve, reject) ->
+    if downloadCache[url]?
+      console.log "Using cache: #{url}"
+      resolve(renderEntries(firstTitle, restTitle, downloadCache[url], isMap, sortMethod, tagFilter))
+      return
+    console.log "Downloading: #{url}"
     xhttp = new XMLHttpRequest()
     xhttp.onreadystatechange = ->
         if (@readyState == 4) and (@status == 200)
            # Typical action to be performed when the document is ready:
            try
              entries = JSON.parse(xhttp.responseText)
+             if cacheEnabled[url]
+               downloadCache[url] = entries
              resolve(renderEntries(firstTitle, restTitle, entries, isMap, sortMethod, tagFilter))
            catch
              resolve("Error")
@@ -205,16 +250,19 @@ updateOther = ->
   xhttp.send()
 
 showPlaying = ->
+  enableSearch(false)
   document.getElementById('main').innerHTML = await showList("Now Playing:", "History:", "/info/history")
   updateOther()
   lastClicked = showPlaying
 
 showQueue = ->
+  enableSearch(false)
   document.getElementById('main').innerHTML = await showList("Up Next:", "Queue:", "/info/queue")
   updateOther()
   lastClicked = showQueue
 
 showBoth = ->
+  enableSearch(false)
   leftSide = await showList("Now Playing:", "History:", "/info/history")
   rightSide = await showList("Up Next:", "Queue:", "/info/queue")
   document.getElementById('main').innerHTML = """
@@ -224,17 +272,39 @@ showBoth = ->
   updateOther()
   lastClicked = showBoth
 
+enableSearch = (enabled) ->
+  searchEnabled = enabled
+  if enabled
+    document.getElementById('search').style.display = 'block'
+    searchSubstring = document.getElementById('searchinput').value
+  else
+    document.getElementById('search').style.display = 'none'
+    searchSubstring = ""
+
+
+searchChanged = ->
+  if not searchEnabled
+    return
+  if not downloadCache["/info/playlist"]?
+    return
+  searchSubstring = document.getElementById('searchinput').value
+  document.getElementById('main').innerHTML = await showList(null, null, "/info/playlist", true, SORT_ARTIST_TITLE)
+
 showPlaylist = ->
+  enableSearch(true)
+  downloadCache["/info/playlist"] = null # don't cache if they click on All
   document.getElementById('main').innerHTML = await showList(null, null, "/info/playlist", true, SORT_ARTIST_TITLE)
   updateOther()
   lastClicked = showPlaylist
 
 showRecent = ->
+  enableSearch(false)
   document.getElementById('main').innerHTML = await showList(null, null, "/info/playlist", true, SORT_ADDED)
   updateOther()
   lastClicked = showRecent
 
 showTag = ->
+  enableSearch(false)
   document.getElementById('main').innerHTML = await showList(null, null, "/info/playlist", true, SORT_ARTIST_TITLE, lastTag)
   updateOther()
   lastClicked = showTag
@@ -330,6 +400,7 @@ showStats = ->
   lastClicked = showStats
 
 showUser = ->
+  document.getElementById('search').style.display = 'none'
   html = ""
   xhttp = new XMLHttpRequest()
   xhttp.onreadystatechange = ->
@@ -617,6 +688,13 @@ init = ->
   window.showWatchLink = showWatchLink
   window.startCast = startCast
   window.setOpinion = setOpinion
+  window.searchChanged = searchChanged
+
+  rawMode = qs('raw')
+  if rawMode?
+    if matches = rawMode.match(/^tag_(.+)/)
+      rawMode = "tag"
+      rawModeTag = matches[1]
 
   token = qs('token')
   if token?

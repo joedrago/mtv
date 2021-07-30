@@ -13,7 +13,7 @@ soloTickTimeout = null
 soloVideo = null
 soloError = null
 soloCount = 0
-soloLabels = {}
+soloLabels = null
 soloMirror = false
 
 endedTimer = null
@@ -191,6 +191,18 @@ onPlayerStateChange = (event) ->
       playing = false
     , 2000)
 
+calcLabel = (pkt) ->
+  console.log "soloLabels(1): ", soloLabels
+  if not soloLabels?
+    soloLabels = await getData("/info/labels")
+  company = null
+  if soloLabels?
+    company = soloLabels[pkt.nickname]
+  if not company?
+    company = pkt.nickname.charAt(0).toUpperCase() + pkt.nickname.slice(1)
+    company += " Records"
+  return company
+
 showInfo = (pkt) ->
   overElement = document.getElementById("over")
   overElement.style.display = "none"
@@ -206,10 +218,7 @@ showInfo = (pkt) ->
   title = title.replace(/\s+$/, "")
   html = "#{artist}\n&#x201C;#{title}&#x201D;"
   if soloID?
-    company = soloLabels[pkt.nickname]
-    if not company?
-      company = pkt.nickname.charAt(0).toUpperCase() + pkt.nickname.slice(1)
-      company += " Records"
+    company = await calcLabel(pkt)
     html += "\n#{company}"
     if soloMirror
       html += "\nMirror Mode"
@@ -332,7 +341,6 @@ startHere = ->
   showWatchLink()
 
   if not player?
-    soloLabels = await getData("/info/labels")
     document.getElementById('solovideocontainer').style.display = 'block'
     document.getElementById('outer').classList.add('fadey')
     player = new YT.Player 'mtv-player', {
@@ -409,6 +417,7 @@ renderInfo = ->
     return
 
   tagsString = Object.keys(soloInfo.current.tags).sort().join(', ')
+  company = await calcLabel(soloInfo.current)
 
   html = "<div class=\"infocounts\">Track #{soloInfo.index} / #{soloInfo.count}</div>"
   # html += "<div class=\"infoheading\">Current: [<span class=\"youtubeid\">#{soloInfo.current.id}</span>]</div>"
@@ -416,6 +425,7 @@ renderInfo = ->
     html += "<div class=\"infothumb\"><a href=\"https://youtu.be/#{encodeURIComponent(soloInfo.current.id)}\"><img width=320 height=180 src=\"#{soloInfo.current.thumb}\"></a></div>"
   html += "<div class=\"infocurrent infoartist\">#{soloInfo.current.artist}</div>"
   html += "<div class=\"infotitle\">\"#{soloInfo.current.title}\"</div>"
+  html += "<div class=\"infolabel\">#{company}</div>"
   html += "<div class=\"infotags\">&nbsp;#{tagsString}&nbsp;</div>"
   if soloInfo.next?
     html += "<span class=\"infoheading nextvideo\">Next:</span> "
@@ -534,7 +544,7 @@ soloCommand = (pkt) ->
       if pkt.info?
         console.log "NEW INFO!: ", pkt.info
         soloInfo = pkt.info
-        renderInfo()
+        await renderInfo()
         renderClipboard()
         renderClipboardMirror()
         if soloMirror

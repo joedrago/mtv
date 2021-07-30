@@ -155,6 +155,27 @@ a {
     background-color:#77aa77;
 }
 
+#search {
+    display: none;
+}
+
+#searchinput {
+    font-family: monospace;
+    color: #ffffff;
+    background-color: #222222;
+    margin-bottom: 10px;
+}
+
+.rawtags {
+    color: #faf;
+}
+
+.selectall {
+  -moz-user-select: all;
+  -webkit-user-select: all;
+  -ms-user-select: all;
+}
+
 </style>
 <body>
 
@@ -162,11 +183,11 @@ a {
 window.CLIENT_ID = "!CLIENT_ID!";
 </script>
 
-[<a href="#nowplaying" onclick="showPlaying()">Now Playing</a>]
-[<a href="#queue" onclick="showQueue()">Up Next</a>]
-[<a href="#both" onclick="showBoth()">Both</a>]
-[<a href="#all" onclick="showPlaylist()">All</a>]
-[<a href="#stats" onclick="showStats()">Stats</a>]
+[<a href="#nowplaying">Now Playing</a>]
+[<a href="#queue">Up Next</a>]
+[<a href="#both">Both</a>]
+[<a href="#all">All</a>]
+[<a href="#stats">Stats</a>]
 [<a href="/help/" class="helplink" target="_blank">Help</a>]
 [<a href="/solo" class="sololink">Solo</a>]
 [<a id="aslink" class="watchlink" onclick="showWatchForm()">Watch</a>]
@@ -183,6 +204,9 @@ window.CLIENT_ID = "!CLIENT_ID!";
 </form>
 
 <div id="opinions"></div>
+<div id="search">
+<input size="20" placeholder="Search" id="searchinput" type="text" value="" oninput="searchChanged()"><br>
+</div>
 <div id="main"></div>
 
 <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
