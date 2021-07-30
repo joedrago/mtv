@@ -652,6 +652,7 @@ receiveUserPlaylist = (pkt) ->
     document.getElementById("savename").value = pkt.loadname
   if pkt.filters?
     document.getElementById("filters").value = pkt.filters
+  formChanged()
 
 logout = ->
   document.getElementById("identity").innerHTML = "Logging out..."
