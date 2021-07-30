@@ -573,6 +573,86 @@ newSoloID = ->
   document.getElementById('mirrornote').style.display = 'none'
   generatePermalink()
 
+loadPlaylist = ->
+  combo = document.getElementById("loadname")
+  selected = combo.options[combo.selectedIndex]
+  selectedName = selected.value
+  if not selectedName?
+    return
+  selectedName = selectedName.trim()
+  if selectedName.length < 1
+    return
+  if not confirm("Are you sure you want to load '#{selectedName}'?")
+    return
+  discordToken = localStorage.getItem('token')
+  playlistPayload = {
+    token: discordToken
+    action: "load"
+    loadname: selectedName
+  }
+  socket.emit 'userplaylist', playlistPayload
+
+deletePlaylist = ->
+  combo = document.getElementById("loadname")
+  selected = combo.options[combo.selectedIndex]
+  selectedName = selected.value
+  if not selectedName?
+    return
+  selectedName = selectedName.trim()
+  if selectedName.length < 1
+    return
+  if not confirm("Are you sure you want to load '#{selectedName}'?")
+    return
+  discordToken = localStorage.getItem('token')
+  playlistPayload = {
+    token: discordToken
+    action: "del"
+    delname: selectedName
+  }
+  socket.emit 'userplaylist', playlistPayload
+
+savePlaylist = ->
+  outputName = document.getElementById("savename").value
+  outputName = outputName.trim()
+  outputFilters = document.getElementById("filters").value
+  if outputName.length < 1
+    return
+  if not confirm("Are you sure you want to save '#{outputName}'?")
+    return
+  discordToken = localStorage.getItem('token')
+  playlistPayload = {
+    token: discordToken
+    action: "save"
+    savename: outputName
+    filters: outputFilters
+  }
+  socket.emit 'userplaylist', playlistPayload
+
+requestUserPlaylists = ->
+  discordToken = localStorage.getItem('token')
+  playlistPayload = {
+    token: discordToken
+    action: "list"
+  }
+  socket.emit 'userplaylist', playlistPayload
+
+receiveUserPlaylist = (pkt) ->
+  console.log "receiveUserPlaylist", pkt
+  if pkt.list?
+    combo = document.getElementById("loadname")
+    combo.options.length = 0
+    pkt.list.sort (a, b) ->
+      a.toLowerCase().localeCompare(b.toLowerCase())
+    for name in pkt.list
+      isSelected = (name == pkt.selected)
+      combo.options[combo.options.length] = new Option(name, name, false, isSelected)
+    if pkt.list.length == 0
+      combo.options[combo.options.length] = new Option("None", "")
+  if pkt.loadname?
+    document.getElementById("savename").value = pkt.loadname
+  if pkt.filters?
+    document.getElementById("filters").value = pkt.filters
+
 logout = ->
   document.getElementById("identity").innerHTML = "Logging out..."
   localStorage.removeItem('token')
@@ -603,6 +683,7 @@ receiveIdentity = (pkt) ->
     html = """
       #{discordTag}#{discordNicknameString} - [<a onclick="logout()">Logout</a>]
     """
+    requestUserPlaylists()
   else
     discordTag = null
     discordNickname = null
@@ -613,6 +694,8 @@ receiveIdentity = (pkt) ->
     html = """
       <div class="loginhint">(Login on <a href="/" target="_blank">Dashboard</a>)</div>
     """
+    document.getElementById("loadarea")?.style.display = "none"
+    document.getElementById("savearea")?.style.display = "none"
   document.getElementById("identity").innerHTML = html
   if lastClicked?
     lastClicked()
@@ -631,14 +714,17 @@ window.onYouTubePlayerAPIReady = ->
 finishInit = ->
   window.clipboardEdit = clipboardEdit
   window.clipboardMirror = clipboardMirror
+  window.deletePlaylist = deletePlaylist
   window.formChanged = formChanged
+  window.loadPlaylist = loadPlaylist
   window.logout = logout
   window.newSoloID = newSoloID
+  window.savePlaylist = savePlaylist
   window.setOpinion = setOpinion
+  window.shareClipboard = shareClipboard
   window.showList = showList
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
-  window.shareClipboard = shareClipboard
   window.soloPause = soloPause
   window.soloRestart = soloRestart
   window.soloSkip = soloSkip
@@ -672,6 +758,9 @@ finishInit = ->
 
   socket.on 'opinion', (pkt) ->
     updateOpinion(pkt)
+
+  socket.on 'userplaylist', (pkt) ->
+    receiveUserPlaylist(pkt)
 
   prepareCast()
 

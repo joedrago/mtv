@@ -50,6 +50,8 @@ autoskipCount = 0
 autoskipTimeout = null
 autoskipList = []
 
+userPlaylists = {}
+
 soloSessions = {}
 soloInfo = {}
 
@@ -114,6 +116,8 @@ load = ->
     ignored = JSON.parse(fs.readFileSync("ignored.json", 'utf8'))
   if fs.existsSync("auth.json")
     discordAuth = JSON.parse(fs.readFileSync("auth.json", 'utf8'))
+  if fs.existsSync("userplaylists.json")
+    userPlaylists = JSON.parse(fs.readFileSync("userplaylists.json", 'utf8'))
   return
 
 savePlaylist = ->
@@ -133,6 +137,9 @@ saveIgnored = ->
 
 saveDiscordAuth = ->
   fs.writeFileSync("auth.json", JSON.stringify(discordAuth, null, 2))
+
+saveUserPlaylists = ->
+  fs.writeFileSync("userplaylists.json", JSON.stringify(userPlaylists, null, 2))
 
 logOutput = (msg) ->
   output.push msg
@@ -1727,6 +1734,42 @@ main = (argv) ->
         socket.emit 'identify', reply
         return
       socket.emit 'identify', {}
+
+    socket.on 'userplaylist', (msg) ->
+      if msg.token? and discordAuth[msg.token]? and msg.action?
+        tag = discordAuth[msg.token].tag
+        reply = {}
+        switch msg.action
+          when "save"
+            if not msg.savename? and not msg.filters?
+              return
+            if not userPlaylists[tag]?
+              userPlaylists[tag] = {}
+            userPlaylists[tag][msg.savename] = {
+              filters: msg.filters
+            }
+            reply.selected = msg.savename
+            saveUserPlaylists()
+          when "load"
+            if not msg.loadname?
+              return
+            if not userPlaylists[tag]?[msg.loadname]?
+              return
+            reply.loadname = msg.loadname
+            reply.selected = msg.loadname
+            reply.filters = userPlaylists[tag][msg.loadname].filters
+          when "del"
+            if not msg.delname?
+              return
+            if not userPlaylists[tag]?[msg.delname]?
+              return
+            delete userPlaylists[tag][msg.delname]
+            saveUserPlaylists()
+        reply.list = []
+        if userPlaylists[tag]?
+          for name, upl of userPlaylists[tag]
+            reply.list.push name
+        socket.emit 'userplaylist', reply
 
     socket.on 'opinion', (msg) ->
       if msg.token? and discordAuth[msg.token]? and msg.id? and playlist[msg.id]?

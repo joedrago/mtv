@@ -254,6 +254,11 @@ input[type=submit] {
     margin-top: 10px;
 }
 
+.slsub {
+    font-size: 0.6em;
+    width: 80px;
+}
+
 .sharecopied {
     color: #aaa;
     margin-top: 20px;
@@ -366,6 +371,33 @@ input[type=submit] {
     }
 }
 
+#loadarea {
+    margin: 5px;
+}
+
+#savearea {
+    margin: 5px;
+}
+
+#loadname {
+    width: 180px;
+    color: #fff;
+    font-family: monospace;
+    background-color: #333;
+    margin-top: 10px;
+    border: 1px solid #777;
+    font-size: 0.8em;
+}
+
+#savename {
+    width: 180px;
+    color: #fff;
+    font-family: monospace;
+    background-color: #333;
+    border: 1px solid #777;
+    font-size: 0.8em;
+}
+
 </style>
 <body>
 
@@ -396,6 +428,20 @@ window.CLIENT_ID = "!CLIENT_ID!";
     Filters (leave blank for all songs):<br>
     <textarea form="asform" id="filters" name="filters" class="filters" oninput="formChanged()" style="width: 100%; max-width: 100%;" rows="5"></textarea><br>
     </div>
+
+    <div id="loadarea">
+    <select id="loadname" name="loadname">
+        <option value="">None</option>
+    </select>
+    <input class="slsub" type="submit" value="Load" onclick="event.preventDefault(); loadPlaylist();" title="Load selected playlist">
+    <input class="slsub" type="submit" value="Delete" onclick="event.preventDefault(); deletePlaylist();" title="Delete selected playlist">
+    </div>
+
+    <div id="savearea">
+    <input type="text" id="savename" name="savename" placeholder="New Playlist Name" value="">
+    <input class="slsub" type="submit" value="Save" onclick="event.preventDefault(); savePlaylist();" title="Save selected playlist">
+    </div>
+
     <input type="checkbox" id="mirror" name="mirror">
     <br>
     <input class="fsub" type="submit" value="Watch" title="Watch MTV with these settings in a new tab">
