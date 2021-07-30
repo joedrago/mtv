@@ -151,6 +151,8 @@ calcShareURL = (mirror) ->
   else
     params.delete("solo")
     params.set("filters", params.get("filters").trim())
+  params.delete("savename")
+  params.delete("loadname")
   querystring = params.toString()
   baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
   mtvURL = baseURL + "?" + querystring
