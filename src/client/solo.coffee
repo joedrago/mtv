@@ -380,6 +380,8 @@ calcPermalink = ->
   form = document.getElementById('asform')
   formData = new FormData(form)
   params = new URLSearchParams(formData)
+  params.delete("loadname")
+  params.delete("savename")
   querystring = params.toString()
   baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
   mtvURL = baseURL + "?" + querystring
