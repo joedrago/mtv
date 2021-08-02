@@ -376,6 +376,8 @@ startHere = ->
   if soloMirror and soloVideo
     play(soloVideo, soloVideo.id, soloVideo.start, soloVideo.end)
 
+  document.getElementById("quickmenu").style.display = "none"
+
 calcPermalink = ->
   form = document.getElementById('asform')
   formData = new FormData(form)
@@ -581,13 +583,15 @@ loadPlaylist = ->
   combo = document.getElementById("loadname")
   selected = combo.options[combo.selectedIndex]
   selectedName = selected.value
+  currentFilters = document.getElementById("filters").value
   if not selectedName?
     return
   selectedName = selectedName.trim()
   if selectedName.length < 1
     return
-  if not confirm("Are you sure you want to load '#{selectedName}'?")
-    return
+  if currentFilters.length > 0
+    if not confirm("Are you sure you want to load '#{selectedName}'?")
+      return
   discordToken = localStorage.getItem('token')
   playlistPayload = {
     token: discordToken
