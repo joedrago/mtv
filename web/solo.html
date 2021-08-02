@@ -111,8 +111,7 @@ a {
 }
 
 .butto {
-    width: 60px;
-    background-color:#444444;
+    background-color:#444;
     border-radius:5px;
     border:1px solid #333333;
     display:inline-block;
@@ -194,14 +193,13 @@ a {
     background-color:#77aa77;
 }
 
+.bprev {
+}
 .bpause {
-    background-color:#777777;
 }
 .brestart {
-    background-color:#aa7777;
 }
 .bskip {
-    background-color:#7777aa;
 }
 
 
@@ -464,9 +462,10 @@ window.CLIENT_ID = "!CLIENT_ID!";
 </div>
 
 <center>
-<a class="butto brestart" onclick="soloRestart(); event.preventDefault();">Restart</a>
-<a class="butto bpause" onclick="soloPause(); event.preventDefault();">Pause</a>
-<a class="butto bskip" onclick="soloSkip(); event.preventDefault();">Skip</a>
+<a class="butto bprev" onclick="soloPrev(); event.preventDefault();"><img src="prev.png"></a>
+<a class="butto brestart" onclick="soloRestart(); event.preventDefault();"><img src="restart.png"></a>
+<a class="butto bpause" onclick="soloPause(); event.preventDefault();"><img src="resume.png"></a>
+<a class="butto bskip" onclick="soloSkip(); event.preventDefault();"><img src="next.png"></a>
 <div id="opinions"></div>
 <div>
 <span id="clipboard"></span>

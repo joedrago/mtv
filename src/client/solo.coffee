@@ -9,6 +9,7 @@ endedTimer = null
 playing = false
 soloUnshuffled = []
 soloQueue = []
+soloIndex = 0
 soloTickTimeout = null
 soloVideo = null
 soloError = null
@@ -267,12 +268,12 @@ play = (pkt, id, startSeconds = null, endSeconds = null) ->
 soloInfoBroadcast = ->
   if socket? and soloID? and soloVideo? and not soloMirror
     nextVideo = null
-    if soloQueue.length > 0
-      nextVideo = soloQueue[0]
+    if soloIndex < soloQueue.length - 1
+      nextVideo = soloQueue[soloIndex+1]
     info =
       current: soloVideo
       next: nextVideo
-      index: soloCount - soloQueue.length
+      index: soloIndex + 1
       count: soloCount
 
     console.log "Broadcast: ", info
@@ -284,23 +285,27 @@ soloInfoBroadcast = ->
     socket.emit 'solo', pkt
     soloCommand(pkt)
 
-soloPlay = (restart = false) ->
+soloPlay = (delta = 1) ->
   if not player?
     return
   if soloError or soloMirror
     return
 
-  if not restart or not soloVideo?
-    if soloQueue.length == 0
-      console.log "Reshuffling..."
-      soloQueue = [ soloUnshuffled[0] ]
-      for i, index in soloUnshuffled
-        continue if index == 0
-        j = Math.floor(Math.random() * (index + 1))
-        soloQueue.push(soloQueue[j])
-        soloQueue[j] = i
+  if not soloVideo? or (soloQueue.length == 0) or ((soloIndex + delta) > (soloQueue.length - 1))
+    console.log "Reshuffling..."
+    soloQueue = [ soloUnshuffled[0] ]
+    for i, index in soloUnshuffled
+      continue if index == 0
+      j = Math.floor(Math.random() * (index + 1))
+      soloQueue.push(soloQueue[j])
+      soloQueue[j] = i
+    soloIndex = 0
+  else
+    soloIndex += delta
 
-    soloVideo = soloQueue.shift()
+  if soloIndex < 0
+    soloIndex = 0
+  soloVideo = soloQueue[soloIndex]
 
   console.log soloVideo
 
@@ -404,12 +409,19 @@ soloSkip = ->
   }
   soloPlay()
 
+soloPrev = ->
+  socket.emit 'solo', {
+    id: soloID
+    cmd: 'prev'
+  }
+  soloPlay(-1)
+
 soloRestart = ->
   socket.emit 'solo', {
     id: soloID
     cmd: 'restart'
   }
-  soloPlay(true)
+  soloPlay(0)
 
 soloPause = ->
   socket.emit 'solo', {
@@ -540,10 +552,12 @@ soloCommand = (pkt) ->
     return
   console.log "soloCommand: ", pkt
   switch pkt.cmd
+    when 'prev'
+      soloPlay(-1)
     when 'skip'
-      soloPlay()
+      soloPlay(1)
     when 'restart'
-      soloPlay(true)
+      soloPlay(0)
     when 'pause'
       pauseInternal()
     when 'info'
@@ -735,6 +749,7 @@ finishInit = ->
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
   window.soloPause = soloPause
+  window.soloPrev = soloPrev
   window.soloRestart = soloRestart
   window.soloSkip = soloSkip
   window.startCast = startCast
