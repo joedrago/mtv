@@ -415,7 +415,11 @@ window.CLIENT_ID = "!CLIENT_ID!";
 <br>
 <div id="aslink">
     <center>
-       [<a onclick="showWatchForm(); event.preventDefault();">Settings / Launch</a>]
+       [<a onclick="showWatchForm(); event.preventDefault();">Settings</a>]
+    <div id="quickmenu">
+    <input class="fsub" type="submit" value="Watch" onclick="event.preventDefault(); startHere();" title="Watch MTV">
+    <input id="quickcastbutton" class="fsub" type="submit" onclick="event.preventDefault(); startCast();" value="Cast" title="Begin casting MTV with these settings">
+    </div>
     </center>
 </div>
 
@@ -444,9 +448,9 @@ window.CLIENT_ID = "!CLIENT_ID!";
 
     <input type="checkbox" id="mirror" name="mirror">
     <br>
-    <input class="fsub" type="submit" value="Watch" title="Watch MTV with these settings in a new tab">
-    <input class="fsub" type="submit" value="Here" onclick="event.preventDefault(); startHere();" title="Watch MTV here">
+    <input class="fsub" type="submit" value="Watch" onclick="event.preventDefault(); startHere();" title="Watch MTV">
     <input id="castbutton" class="fsub" type="submit" onclick="event.preventDefault(); startCast();" value="Cast" title="Begin casting MTV with these settings">
+    <input class="fsub" type="submit" value="Tab" title="Watch MTV with these settings in a new tab">
     <br>
     <input class="fsub" type="submit" onclick="event.preventDefault(); showList();" value="List" title="Show the list of videos matching the current filter">
     <input class="fsub share" type="submit" onclick="event.preventDefault(); shareClipboard(false);" value="Share" title="Share current settings by copying them to the clipboard without the Solo ID">
