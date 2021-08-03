@@ -1857,6 +1857,14 @@ main = (argv) ->
     html = html.replace(/!CLIENT_ID!/, discordClientID)
     res.send(html)
 
+  app.get '/p(laylist)?/:nickname/:playlist', (req, res) ->
+    user = getUserFromNickname(req.params.nickname)
+    p = userPlaylists[user]?[req.params.playlist]
+    if p?
+      res.redirect("/solo?filters=#{encodeURIComponent(p.filters)}")
+    else
+      res.redirect('/solo')
+
   app.get '/info/playlist', (req, res) ->
     updateOpinions(playlist, true)
     updateNicknames(playlist, true)
