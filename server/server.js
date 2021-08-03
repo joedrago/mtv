@@ -2429,6 +2429,16 @@
       html = html.replace(/!CLIENT_ID!/, discordClientID);
       return res.send(html);
     });
+    app.get('/p(laylist)?/:nickname/:playlist', function(req, res) {
+      var p, ref, user;
+      user = getUserFromNickname(req.params.nickname);
+      p = (ref = userPlaylists[user]) != null ? ref[req.params.playlist] : void 0;
+      if (p != null) {
+        return res.redirect(`/solo?filters=${encodeURIComponent(p.filters)}`);
+      } else {
+        return res.redirect('/solo');
+      }
+    });
     app.get('/info/playlist', function(req, res) {
       updateOpinions(playlist, true);
       updateNicknames(playlist, true);

@@ -142,6 +142,17 @@ prepareCast = ->
   apiConfig = new chrome.cast.ApiConfig sessionRequest, sessionListener, ->
   chrome.cast.initialize(apiConfig, onInitSuccess, onError)
 
+calcPerma = ->
+  combo = document.getElementById("loadname")
+  selected = combo.options[combo.selectedIndex]
+  selectedName = selected.value
+  if not discordNickname? or (selectedName.length == 0)
+    return ""
+  baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
+  baseURL = baseURL.replace(/solo$/, "p")
+  mtvURL = baseURL + "/#{encodeURIComponent(discordNickname)}/#{encodeURIComponent(selectedName)}"
+  return mtvURL
+
 calcShareURL = (mirror) ->
   form = document.getElementById('asform')
   formData = new FormData(form)
@@ -494,6 +505,12 @@ shareClipboard = (mirror) ->
     <div class=\"shareurl\">#{calcShareURL(mirror)}</div>
   """
 
+sharePerma = (mirror) ->
+  document.getElementById('list').innerHTML = """
+    <div class=\"sharecopied\">Copied to clipboard:</div>
+    <div class=\"shareurl\">#{calcPerma()}</div>
+  """
+
 showList = ->
   document.getElementById('list').innerHTML = "Please wait..."
 
@@ -745,6 +762,7 @@ finishInit = ->
   window.savePlaylist = savePlaylist
   window.setOpinion = setOpinion
   window.shareClipboard = shareClipboard
+  window.sharePerma = sharePerma
   window.showList = showList
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
@@ -790,6 +808,8 @@ finishInit = ->
 
   new Clipboard '.share', {
     text: (trigger) ->
+      if trigger.value.match(/Perma/i)
+        return calcPerma()
       mirror = false
       if trigger.value.match(/Mirror/i)
         mirror = true
