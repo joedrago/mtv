@@ -355,6 +355,24 @@ getData = (url) ->
     xhttp.open("GET", url, true)
     xhttp.send()
 
+mediaButtonsReady = false
+listenForMediaButtons = ->
+  if mediaButtonsReady
+    return
+
+  if not window.navigator?.mediaSession?
+    setTimeout(->
+      listenForMediaButtons()
+    , 1000)
+    return
+
+  mediaButtonsReady = true
+  window.navigator.mediaSession.setActionHandler 'previoustrack', ->
+    soloPrev()
+  window.navigator.mediaSession.setActionHandler 'nexttrack', ->
+    soloSkip()
+  console.log "Media Buttons ready."
+
 startHere = ->
   showWatchLink()
 
@@ -393,6 +411,7 @@ startHere = ->
     play(soloVideo, soloVideo.id, soloVideo.start, soloVideo.end)
 
   document.getElementById("quickmenu").style.display = "none"
+  listenForMediaButtons()
 
 calcPermalink = ->
   form = document.getElementById('asform')
