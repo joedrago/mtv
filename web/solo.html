@@ -450,6 +450,7 @@ window.CLIENT_ID = "!CLIENT_ID!";
     <input class="fsub" type="submit" value="Watch" onclick="event.preventDefault(); startHere();" title="Watch MTV">
     <input id="castbutton" class="fsub" type="submit" onclick="event.preventDefault(); startCast();" value="Cast" title="Begin casting MTV with these settings">
     <input class="fsub" type="submit" value="Tab" title="Watch MTV with these settings in a new tab">
+    <span id="export"></span>
     <br>
     <input class="fsub" type="submit" onclick="event.preventDefault(); showList();" value="List" title="Show the list of videos matching the current filter">
     <input class="fsub share" type="submit" onclick="event.preventDefault(); shareClipboard(false);" value="Share" title="Share current settings by copying them to the clipboard without the Solo ID">
@@ -469,6 +470,7 @@ window.CLIENT_ID = "!CLIENT_ID!";
 <a class="butto bskip" onclick="soloSkip(); event.preventDefault();"><img src="next.png"></a>
 <div id="opinions"></div>
 <div>
+<span id="add"></span>
 <span id="clipboard"></span>
 <span id="cbmirror"></span>
 </div>

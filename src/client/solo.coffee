@@ -35,6 +35,9 @@ castSession = null
 launchOpen = (localStorage.getItem('launch') == "true")
 console.log "launchOpen: #{launchOpen}"
 
+addEnabled = true
+exportEnabled = false
+
 opinionOrder = []
 for o in constants.opinionOrder
   opinionOrder.push o
@@ -500,6 +503,27 @@ renderClipboard = ->
   document.getElementById('clipboard').innerHTML = html
   new Clipboard('.cbutto')
 
+onAdd = ->
+  filterString = String(document.getElementById('filters').value).trim()
+  if filterString.length > 0
+    filterString += "\n"
+  filterString += "id #{soloVideo.id} # #{soloVideo.artist} - #{soloVideo.title}\n"
+  document.getElementById("filters").value = filterString
+  formChanged()
+
+  html = "<a class=\"cbutto copied\" onclick=\"return false\">Added!</a>"
+  document.getElementById('add').innerHTML = html
+  setTimeout ->
+    renderAdd()
+  , 2000
+
+renderAdd = ->
+  if not soloInfo? or not soloInfo.current? or not addEnabled
+    return
+
+  html = "<a class=\"cbutto\" onclick=\"onAdd(); return false\">Add</a>"
+  document.getElementById('add').innerHTML = html
+
 clipboardMirror = ->
   html = "<a class=\"mbutto copied\" onclick=\"return false\">Copied!</a>"
   document.getElementById('cbmirror').innerHTML = html
@@ -533,7 +557,7 @@ sharePerma = (mirror) ->
 showList = ->
   document.getElementById('list').innerHTML = "Please wait..."
 
-  filterString = document.getElementById('filters').value;
+  filterString = document.getElementById('filters').value
   list = await filters.generateList(filterString, true)
   if not list?
     document.getElementById('list').innerHTML = "Error. Sorry."
@@ -551,6 +575,37 @@ showList = ->
   html += "</div>"
 
   document.getElementById('list').innerHTML = html
+
+showExport = ->
+  document.getElementById('list').innerHTML = "Please wait..."
+
+  filterString = document.getElementById('filters').value
+  list = await filters.generateList(filterString, true)
+  if not list?
+    document.getElementById('list').innerHTML = "Error. Sorry."
+    return
+
+  exportedPlaylists = ""
+  ids = []
+  playlistIndex = 1
+  for e in list
+    if ids.length >= 50
+      exportedPlaylists += """
+        <a target="_blank" href="https://www.youtube.com/watch_videos?video_ids=#{ids.join(',')}">Exported Playlist #{playlistIndex} (#{ids.length})</a><br>
+      """
+      playlistIndex += 1
+      ids = []
+    ids.push e.id
+  if ids.length > 0
+    exportedPlaylists += """
+      <a target="_blank" href="https://www.youtube.com/watch_videos?video_ids=#{ids.join(',')}">Exported Playlist #{playlistIndex} (#{ids.length})</a><br>
+    """
+
+  document.getElementById('list').innerHTML = """
+    <div class=\"listcontainer\">
+      #{exportedPlaylists}
+    </div>
+  """
 
 clearOpinion = ->
   document.getElementById('opinions').innerHTML = ""
@@ -601,6 +656,7 @@ soloCommand = (pkt) ->
         console.log "NEW INFO!: ", pkt.info
         soloInfo = pkt.info
         await renderInfo()
+        renderAdd()
         renderClipboard()
         renderClipboardMirror()
         if soloMirror
@@ -778,10 +834,12 @@ finishInit = ->
   window.loadPlaylist = loadPlaylist
   window.logout = logout
   window.newSoloID = newSoloID
+  window.onAdd = onAdd
   window.savePlaylist = savePlaylist
   window.setOpinion = setOpinion
   window.shareClipboard = shareClipboard
   window.sharePerma = sharePerma
+  window.showExport = showExport
   window.showList = showList
   window.showWatchForm = showWatchForm
   window.showWatchLink = showWatchLink
@@ -791,6 +849,16 @@ finishInit = ->
   window.soloSkip = soloSkip
   window.startCast = startCast
   window.startHere = startHere
+
+  # addEnabled = qs('add')?
+  # console.log "Add Enabled: #{addEnabled}"
+
+  exportEnabled = qs('export')?
+  console.log "Export Enabled: #{exportEnabled}"
+  if exportEnabled
+    document.getElementById('export').innerHTML = """
+      <input class="fsub" type="submit" value="Export" onclick="event.preventDefault(); showExport();" title="Export lists into clickable playlists">
+    """
 
   updateSoloID(qs('solo'))
 
