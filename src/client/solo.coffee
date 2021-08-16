@@ -504,10 +504,14 @@ renderClipboard = ->
   new Clipboard('.cbutto')
 
 onAdd = ->
+  if not soloInfo?.current?
+    return
+
+  vid = soloInfo.current
   filterString = String(document.getElementById('filters').value).trim()
   if filterString.length > 0
     filterString += "\n"
-  filterString += "id #{soloVideo.id} # #{soloVideo.artist} - #{soloVideo.title}\n"
+  filterString += "id #{vid.id} # #{vid.artist} - #{vid.title}\n"
   document.getElementById("filters").value = filterString
   formChanged()
 
