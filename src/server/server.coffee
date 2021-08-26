@@ -1871,6 +1871,24 @@ main = (argv) ->
     res.type('application/json')
     res.send(JSON.stringify(playlist, privacyReplacer, 2))
 
+  app.get '/info/userplaylists', (req, res) ->
+    publicPlaylists = []
+    for tag, userMap of userPlaylists
+      nickname = nicknames[tag]
+      if not nickname?
+        continue
+      for playlistName, pl of userMap
+        if pl.filters.match(/^private\b/) or pl.filters.match(/[\r\n]private\b/)
+          # private!
+          continue
+        publicPlaylists.push {
+          nickname: nickname
+          name: playlistName
+          filters: pl.filters
+        }
+    res.type('application/json')
+    res.send(JSON.stringify(publicPlaylists, null, 2))
+
   app.get '/info/queue', (req, res) ->
     updateOpinions(queue)
     updateNicknames(queue)

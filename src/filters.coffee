@@ -66,6 +66,8 @@ generateList = (filterString, sortByArtist = false) ->
     allAllowed = true
     for filter in soloFilters
       pieces = filter.split(/ +/)
+      if pieces[0] == "private"
+        continue
 
       negated = false
       property = "allowed"
