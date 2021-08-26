@@ -95,6 +95,9 @@
       for (j = 0, len1 = soloFilters.length; j < len1; j++) {
         filter = soloFilters[j];
         pieces = filter.split(/ +/);
+        if (pieces[0] === "private") {
+          continue;
+        }
         negated = false;
         property = "allowed";
         if (pieces[0] === "skip") {

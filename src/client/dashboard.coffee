@@ -309,6 +309,50 @@ showTag = ->
   updateOther()
   lastClicked = showTag
 
+showLists = ->
+  html = ""
+  xhttp = new XMLHttpRequest()
+  xhttp.onreadystatechange = ->
+    if (@readyState == 4) and (@status == 200)
+       # Typical action to be performed when the document is ready:
+       try
+          entries = JSON.parse(xhttp.responseText)
+          entries.sort (a, b) ->
+            if a.nickname < b.nickname
+              return -1
+            if a.nickname > b.nickname
+              return 1
+            if a.name.toLowerCase() < b.name.toLowerCase()
+              return -1
+            if a.name.toLowerCase() > b.name.toLowerCase()
+              return 1
+            return 0
+
+          html += """
+            <div>&nbsp;</div>
+            <div class="statsheader">Public User Playlists:</div>
+          """
+
+          lastNickname = null
+          for e in entries
+            if lastNickname? and (lastNickname != e.nickname)
+              html += """
+                <div>&nbsp;</div>
+              """
+            html += """
+              <div> * <a href="/p/#{encodeURIComponent(e.nickname)}/#{encodeURIComponent(e.name)}"><span class="entryartist">#{e.nickname}</span></a><span class="entrymiddle"> - </span><a href="/p/#{encodeURIComponent(e.nickname)}/#{encodeURIComponent(e.name)}"><span class="entrytitle">#{e.name}</span></a></div>
+            """
+            lastNickname = e.nickname
+
+       catch
+         html = "Error!"
+    document.getElementById("main").innerHTML = html
+  xhttp.open("GET", "/info/userplaylists", true)
+  xhttp.send()
+
+  updateOther()
+  lastClicked = showLists
+
 showStats = ->
   html = ""
   xhttp = new XMLHttpRequest()
@@ -589,6 +633,8 @@ processHash = ->
       showRecent()
     when '#both'
       showBoth()
+    when '#lists'
+      showLists()
     when '#stats'
       showStats()
     else
@@ -682,6 +728,7 @@ init = ->
   window.showPlaying = showPlaying
   window.showPlaylist = showPlaylist
   window.showQueue = showQueue
+  window.showLists = showLists
   window.showStats = showStats
   window.showUser = showUser
   window.showWatchForm = showWatchForm

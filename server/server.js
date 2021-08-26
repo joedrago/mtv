@@ -2445,6 +2445,31 @@
       res.type('application/json');
       return res.send(JSON.stringify(playlist, privacyReplacer, 2));
     });
+    app.get('/info/userplaylists', function(req, res) {
+      var nickname, pl, playlistName, publicPlaylists, tag, userMap;
+      publicPlaylists = [];
+      for (tag in userPlaylists) {
+        userMap = userPlaylists[tag];
+        nickname = nicknames[tag];
+        if (nickname == null) {
+          continue;
+        }
+        for (playlistName in userMap) {
+          pl = userMap[playlistName];
+          if (pl.filters.match(/^private\b/) || pl.filters.match(/[\r\n]private\b/)) {
+            // private!
+            continue;
+          }
+          publicPlaylists.push({
+            nickname: nickname,
+            name: playlistName,
+            filters: pl.filters
+          });
+        }
+      }
+      res.type('application/json');
+      return res.send(JSON.stringify(publicPlaylists, null, 2));
+    });
     app.get('/info/queue', function(req, res) {
       updateOpinions(queue);
       updateNicknames(queue);
