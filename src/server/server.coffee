@@ -1861,7 +1861,7 @@ main = (argv) ->
     user = getUserFromNickname(req.params.nickname)
     p = userPlaylists[user]?[req.params.playlist]
     if p?
-      res.redirect("/solo?filters=#{encodeURIComponent(p.filters)}")
+      res.redirect("/solo?name=#{encodeURIComponent(req.params.playlist)}&filters=#{encodeURIComponent(p.filters)}")
     else
       res.redirect('/solo')
 
