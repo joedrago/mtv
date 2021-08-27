@@ -38,6 +38,8 @@ console.log "launchOpen: #{launchOpen}"
 addEnabled = true
 exportEnabled = false
 
+currentPlaylistName = null
+
 opinionOrder = []
 for o in constants.opinionOrder
   opinionOrder.push o
@@ -376,6 +378,14 @@ listenForMediaButtons = ->
     soloSkip()
   console.log "Media Buttons ready."
 
+renderPlaylistName = ->
+  if not currentPlaylistName?
+    document.getElementById('playlistname').innerHTML = ""
+    document.title = "MTV Solo"
+    return
+  document.getElementById('playlistname').innerHTML = currentPlaylistName
+  document.title = "MTV Solo: #{currentPlaylistName}"
+
 startHere = ->
   showWatchLink()
 
@@ -422,6 +432,8 @@ calcPermalink = ->
   params = new URLSearchParams(formData)
   params.delete("loadname")
   params.delete("savename")
+  if currentPlaylistName?
+    params.set("name", currentPlaylistName)
   querystring = params.toString()
   baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
   mtvURL = baseURL + "?" + querystring
@@ -434,6 +446,7 @@ generatePermalink = ->
 formChanged = ->
   console.log "Form changed!"
   history.replaceState('here', '', calcPermalink())
+  renderPlaylistName()
 
 soloSkip = ->
   socket.emit 'solo', {
@@ -708,6 +721,7 @@ loadPlaylist = ->
     action: "load"
     loadname: selectedName
   }
+  currentPlaylistName = selectedName
   socket.emit 'userplaylist', playlistPayload
 
 deletePlaylist = ->
@@ -744,6 +758,7 @@ savePlaylist = ->
     savename: outputName
     filters: outputFilters
   }
+  currentPlaylistName = outputName
   socket.emit 'userplaylist', playlistPayload
 
 requestUserPlaylists = ->
@@ -856,6 +871,10 @@ finishInit = ->
 
   # addEnabled = qs('add')?
   # console.log "Add Enabled: #{addEnabled}"
+
+  currentPlaylistName = qs('name')
+  if currentPlaylistName?
+    document.getElementById("savename").value = currentPlaylistName
 
   exportEnabled = qs('export')?
   console.log "Export Enabled: #{exportEnabled}"

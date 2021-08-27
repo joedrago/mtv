@@ -2434,7 +2434,7 @@
       user = getUserFromNickname(req.params.nickname);
       p = (ref = userPlaylists[user]) != null ? ref[req.params.playlist] : void 0;
       if (p != null) {
-        return res.redirect(`/solo?filters=${encodeURIComponent(p.filters)}`);
+        return res.redirect(`/solo?name=${encodeURIComponent(req.params.playlist)}&filters=${encodeURIComponent(p.filters)}`);
       } else {
         return res.redirect('/solo');
       }

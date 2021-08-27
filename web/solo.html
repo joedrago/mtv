@@ -396,6 +396,13 @@ input[type=submit] {
     font-size: 0.8em;
 }
 
+#playlistname {
+    font-size: 1.2em;
+    font-style: italic;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
 </style>
 <body>
 
@@ -413,7 +420,10 @@ window.CLIENT_ID = "!CLIENT_ID!";
 <br>
 <div id="aslink">
     <center>
+    <div id="playlistname"></div>
+    <div>
        [<a onclick="showWatchForm(); event.preventDefault();">Settings</a>]
+    </div>
     <div id="quickmenu">
     <input class="fsub" type="submit" value="Watch" onclick="event.preventDefault(); startHere();" title="Watch MTV">
     <input id="quickcastbutton" class="fsub" type="submit" onclick="event.preventDefault(); startCast();" value="Cast" title="Begin casting MTV with these settings">
