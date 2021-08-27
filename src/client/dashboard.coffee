@@ -680,8 +680,8 @@ receiveIdentity = (pkt) ->
       [<a href="#{loginLink}">Login</a>]
     """
   document.getElementById("identity").innerHTML = html
-  if lastClicked?
-    lastClicked()
+#  if lastClicked?
+#    lastClicked()
 
 onInitSuccess = ->
   console.log "Cast available!"

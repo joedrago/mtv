@@ -32,7 +32,7 @@ discordNickname = null
 castAvailable = false
 castSession = null
 
-launchOpen = (localStorage.getItem('launch') == "true")
+launchOpen = false # (localStorage.getItem('launch') == "true")
 console.log "launchOpen: #{launchOpen}"
 
 addEnabled = true
