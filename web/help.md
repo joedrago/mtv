@@ -303,7 +303,7 @@ The [Solo page](/solo) offers a way to watch MTV without being social in Discord
 
 ### Filters {#filters}
 
-Filters are how you decide what ends up on your personal Solo MTV channel. If you press `Settings` on the Solo page, you will your current `Solo ID`, an empty `Filters` box, and a few additional buttons for saving/loading playlists and sharing your Solo experience.
+Filters are how you decide what ends up on your personal Solo MTV channel. If you press `Settings` on the Solo page, you will see your current `Solo ID`, an empty `Filters` box, and a few additional buttons for saving/loading playlists and sharing your Solo experience.
 
 By default, an empty Filters list simply means _no filters, just shuffle everything MTV offers_. Most likely though, you've given your opinion on some videos by now, and you would prefer to not see some of them ever again. Or perhaps you just want to see videos from the last week, or videos by a certain artist (or two), or everything by a specific artist _except_ that one song, etc. All of this is possible, and here's how it works.
 
