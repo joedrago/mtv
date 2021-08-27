@@ -27,6 +27,11 @@ This should help you get up and running with MTV and Discord.
   * [Queueing Playlists](#playlist)
   * [Ignore List (Autoskip)](#ignore)
   * [Editing a Video in the Pool](#edit)
+* [Solo Mode](#solo)
+  * [Basics](#solobasics)
+  * [Filters](#filters)
+  * [Playlists](#playlists)
+  * [Mirrors](#mirrors)
 
 ## Introduction {#intro}
 
@@ -287,3 +292,78 @@ This toggles whether or not "echo" is enabled. Echo has the MTV server do the eq
     #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ untag someTag
 
 This is an advanced action! The `edit` action allows you to directly poke at the MTV database -- Please be extra careful with this! Use this to adjust songs that have too-long intros or outros, or have incorrect artist or title names, or have the wrong owner. Do not use this to adopt a song from YouTube when using the `trending` action; use `adopt` for that.
+
+## Solo {#solo}
+
+### Basics {#solobasics}
+
+The [Solo page](/solo) offers a way to watch MTV without being social in Discord, and have full control over what videos show up. This can be leveraged to find new/recent videos, videos you haven't yet voted on, or simply make a playlist for yourself (or to share)! When you first visit the page, it will generate you a `Solo ID` which you can see as your own private MTV channel. You can simply hit `Watch` or `Cast`, and MTV will shuffle all of its videos just for you and play them privately. The Solo webpage will then turn into a remote control, where you can skip videos, restart, go back to a previous video, or (if logged in) even give your opinion!
+
+**Note:** To see the full set of solo controls, make sure you're logged in on the [main dashboard](/). Simply choose `Login` in the top right and let MTV know who you are in Discord. If you do this correctly, you should see your Discord name and nickname in the top left of the Dashboard. If this doesn't work, ask in the MTV Discord channel. The most common error is that you haven't yet set your nickname in Discord. Once you're logged in, refresh the [Solo page](/solo).
+
+### Filters {#filters}
+
+Filters are how you decide what ends up on your personal Solo MTV channel. If you press `Settings` on the Solo page, you will your current `Solo ID`, an empty `Filters` box, and a few additional buttons for saving/loading playlists and sharing your Solo experience.
+
+By default, an empty Filters list simply means _no filters, just shuffle everything MTV offers_. Most likely though, you've given your opinion on some videos by now, and you would prefer to not see some of them ever again. Or perhaps you just want to see videos from the last week, or videos by a certain artist (or two), or everything by a specific artist _except_ that one song, etc. All of this is possible, and here's how it works.
+
+The filter system works by first taking all of the videos available on MTV and marking each one as "**not allowed**" and "**not skipped**". Then each line of the Filters box is a rule which either marks a handful of videos as **allowed**, or the rule marks a handful of videos as **skipped**. When all of the filters are done, any video that is **allowed** and _not_ **skipped** goes in your playlist.
+
+Let's try a few examples:
+
+Let's say you want to listen to some 2Pac. You can use the `artist` filter like this:
+
+    artist 2Pac
+
+This filter marks all songs that have `2Pac` somewhere in the artist's name as **allowed**. When MTV is done reading this single filter, it looks over the list and finds 14 videos, and starts to play them.
+
+**Note:** You can use the `List` button to see what the filters choose in order to help dial in your playlist.
+
+This looks great, but maybe you also want to add some RUN DMC to the list. Simply add another `artist` rule (capitalization is ignored for the artists):
+
+    artist 2Pac
+    artist run dmc
+
+Now we're up to 19 videos! Let's say you look at the list and realize that there's a Digital Underground song mixed in there (as 2Pac features on one of their songs), and you didn't want that. This is where the `skip` prefix comes into play:
+
+    artist 2Pac
+    artist run dmc
+    skip artist digital underground
+
+
+The `skip` prefix simply runs whatever rule is after it, but instead of marking videos as **allowed**, it marks them as **skipped**. When the final list is then made, anything marked **skipped** is skipped over, and don't show up in your playlist.
+
+Here's the full list of available rules:
+
+* **artist** - search the artist's name for these words
+
+* **title** - search the song title for these words
+
+* **added** - added by this specific nickname
+
+* **since** - Only show videos since a duration, given in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601#Durations) format. For example, `since P2W` filters videos added in the last two weeks.
+
+* **tag** - Video has a specific [tag](#tag)
+
+* **untagged** - Video has no tags at all
+
+* **love**, **like**, **meh**, **bleh**, **hate** - Give a specific user (like `love joe`) to filter videos with this opinion by this specific nickname
+
+* **none** - Give a specific user (like `none joe`) to filter videos in which this nickname has no opinion
+
+* **id** - Give one or more specific videos by ID
+
+* **private** - This playlist should not be listed publicly on MTV's [Lists](/#lists) page.
+
+
+(TODO: add more complicated examples)
+
+### Playlists {#playlists}
+
+If you're [logged in](#solobasics), you should be able to type in a name for the playlist you've created and hit `Save`, and it'll save the playlist server-side under your nickname. You can then use the `Load` button in the future to load your playlist, or share a permalink to it by name to someone else using the `Perma` button. If you don't want your playlist to show up in the [Lists](/#lists) page, make sure one of your filters is the word `private` on its own line.
+
+### Mirrors {#mirrors}
+
+Solo sessions don't need to be completely antisocial!
+
+If you start a solo session (using `Watch` or `Cast`), you can create a "mirror link" using the `Mirror` button in the settings, and send it to friends. When they open the link, their UI will not show the Filters box, but when they choose `Watch` or `Cast`, they'll simply mimic whatever your current Solo session watches. This includes skipping tracks, restarting, etc. You can even change your filters and hit `Watch` again and their mirror will autoupdate! As long as you're both using the same `Solo ID`, this will all work. They can also give their opinion and control next/previous/restart.

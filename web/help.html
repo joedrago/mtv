@@ -97,6 +97,14 @@ code {
 <li><a href="#edit">Editing a Video in the Pool</a></li>
 </ul>
 </li>
+<li><a href="#solo">Solo Mode</a>
+<ul>
+<li><a href="#solobasics">Basics</a></li>
+<li><a href="#filters">Filters</a></li>
+<li><a href="#playlists">Playlists</a></li>
+<li><a href="#mirrors">Mirrors</a></li>
+</ul>
+</li>
 </ul>
 <h2 id="intro">Introduction</h2>
 <p>MTV is a living playlist of music videos, known as the &quot;pool&quot;. The MTV server takes all of the videos in this pool, shuffles them once into what is called the &quot;queue&quot;, and then plays the entire queue in order. When the queue runs out, the server then takes the pool (which may have changed) and repeats the process. Everyone watching is synchronized to the same part of the currently playing song, so we can talk about it in Discord as it plays.</p>
@@ -290,6 +298,69 @@ sfw
 #mtv edit https://www.youtube.com/watch?v=dQw4w9WgXcQ untag someTag
 </code></pre>
 <p>This is an advanced action! The <code>edit</code> action allows you to directly poke at the MTV database -- Please be extra careful with this! Use this to adjust songs that have too-long intros or outros, or have incorrect artist or title names, or have the wrong owner. Do not use this to adopt a song from YouTube when using the <code>trending</code> action; use <code>adopt</code> for that.</p>
+<h2 id="solo">Solo</h2>
+<h3 id="solobasics">Basics</h3>
+<p>The <a href="/solo">Solo page</a> offers a way to watch MTV without being social in Discord, and have full control over what videos show up. This can be leveraged to find new/recent videos, videos you haven't yet voted on, or simply make a playlist for yourself (or to share)! When you first visit the page, it will generate you a <code>Solo ID</code> which you can see as your own private MTV channel. You can simply hit <code>Watch</code> or <code>Cast</code>, and MTV will shuffle all of its videos just for you and play them privately. The Solo webpage will then turn into a remote control, where you can skip videos, restart, go back to a previous video, or (if logged in) even give your opinion!</p>
+<p><strong>Note:</strong> To see the full set of solo controls, make sure you're logged in on the <a href="/">main dashboard</a>. Simply choose <code>Login</code> in the top right and let MTV know who you are in Discord. If you do this correctly, you should see your Discord name and nickname in the top left of the Dashboard. If this doesn't work, ask in the MTV Discord channel. The most common error is that you haven't yet set your nickname in Discord. Once you're logged in, refresh the <a href="/solo">Solo page</a>.</p>
+<h3 id="filters">Filters</h3>
+<p>Filters are how you decide what ends up on your personal Solo MTV channel. If you press <code>Settings</code> on the Solo page, you will your current <code>Solo ID</code>, an empty <code>Filters</code> box, and a few additional buttons for saving/loading playlists and sharing your Solo experience.</p>
+<p>By default, an empty Filters list simply means <em>no filters, just shuffle everything MTV offers</em>. Most likely though, you've given your opinion on some videos by now, and you would prefer to not see some of them ever again. Or perhaps you just want to see videos from the last week, or videos by a certain artist (or two), or everything by a specific artist <em>except</em> that one song, etc. All of this is possible, and here's how it works.</p>
+<p>The filter system works by first taking all of the videos available on MTV and marking each one as &quot;<strong>not allowed</strong>&quot; and &quot;<strong>not skipped</strong>&quot;. Then each line of the Filters box is a rule which either marks a handful of videos as <strong>allowed</strong>, or the rule marks a handful of videos as <strong>skipped</strong>. When all of the filters are done, any video that is <strong>allowed</strong> and <em>not</em> <strong>skipped</strong> goes in your playlist.</p>
+<p>Let's try a few examples:</p>
+<p>Let's say you want to listen to some 2Pac. You can use the <code>artist</code> filter like this:</p>
+<pre><code>artist 2Pac
+</code></pre>
+<p>This filter marks all songs that have <code>2Pac</code> somewhere in the artist's name as <strong>allowed</strong>. When MTV is done reading this single filter, it looks over the list and finds 14 videos, and starts to play them.</p>
+<p><strong>Note:</strong> You can use the <code>List</code> button to see what the filters choose in order to help dial in your playlist.</p>
+<p>This looks great, but maybe you also want to add some RUN DMC to the list. Simply add another <code>artist</code> rule (capitalization is ignored for the artists):</p>
+<pre><code>artist 2Pac
+artist run dmc
+</code></pre>
+<p>Now we're up to 19 videos! Let's say you look at the list and realize that there's a Digital Underground song mixed in there (as 2Pac features on one of their songs), and you didn't want that. This is where the <code>skip</code> prefix comes into play:</p>
+<pre><code>artist 2Pac
+artist run dmc
+skip artist digital underground
+</code></pre>
+<p>The <code>skip</code> prefix simply runs whatever rule is after it, but instead of marking videos as <strong>allowed</strong>, it marks them as <strong>skipped</strong>. When the final list is then made, anything marked <strong>skipped</strong> is skipped over, and don't show up in your playlist.</p>
+<p>Here's the full list of available rules:</p>
+<ul>
+<li>
+<p><strong>artist</strong> - search the artist's name for these words</p>
+</li>
+<li>
+<p><strong>title</strong> - search the song title for these words</p>
+</li>
+<li>
+<p><strong>added</strong> - added by this specific nickname</p>
+</li>
+<li>
+<p><strong>since</strong> - Only show videos since a duration, given in <a href="https://en.wikipedia.org/wiki/ISO_8601#Durations">ISO 8601</a> format. For example, <code>since P2W</code> filters videos added in the last two weeks.</p>
+</li>
+<li>
+<p><strong>tag</strong> - Video has a specific <a href="#tag">tag</a></p>
+</li>
+<li>
+<p><strong>untagged</strong> - Video has no tags at all</p>
+</li>
+<li>
+<p><strong>love</strong>, <strong>like</strong>, <strong>meh</strong>, <strong>bleh</strong>, <strong>hate</strong> - Give a specific user (like <code>love joe</code>) to filter videos with this opinion by this specific nickname</p>
+</li>
+<li>
+<p><strong>none</strong> - Give a specific user (like <code>none joe</code>) to filter videos in which this nickname has no opinion</p>
+</li>
+<li>
+<p><strong>id</strong> - Give one or more specific videos by ID</p>
+</li>
+<li>
+<p><strong>private</strong> - This playlist should not be listed publicly on MTV's <a href="/#lists">Lists</a> page.</p>
+</li>
+</ul>
+<p>(TODO: add more complicated examples)</p>
+<h3 id="playlists">Playlists</h3>
+<p>If you're <a href="#solobasics">logged in</a>, you should be able to type in a name for the playlist you've created and hit <code>Save</code>, and it'll save the playlist server-side under your nickname. You can then use the <code>Load</code> button in the future to load your playlist, or share a permalink to it by name to someone else using the <code>Perma</code> button. If you don't want your playlist to show up in the <a href="/#lists">Lists</a> page, make sure one of your filters is the word <code>private</code> on its own line.</p>
+<h3 id="mirrors">Mirrors</h3>
+<p>Solo sessions don't need to be completely antisocial!</p>
+<p>If you start a solo session (using <code>Watch</code> or <code>Cast</code>), you can create a &quot;mirror link&quot; using the <code>Mirror</code> button in the settings, and send it to friends. When they open the link, their UI will not show the Filters box, but when they choose <code>Watch</code> or <code>Cast</code>, they'll simply mimic whatever your current Solo session watches. This includes skipping tracks, restarting, etc. You can even change your filters and hit <code>Watch</code> again and their mirror will autoupdate! As long as you're both using the same <code>Solo ID</code>, this will all work. They can also give their opinion and control next/previous/restart.</p>
 
 </div>
 
