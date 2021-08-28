@@ -299,6 +299,8 @@ This is an advanced action! The `edit` action allows you to directly poke at the
 
 The [Solo page](/solo) offers a way to watch MTV without being social in Discord, and have full control over what videos show up. This can be leveraged to find new/recent videos, videos you haven't yet voted on, or simply make a playlist for yourself (or to share)! When you first visit the page, it will generate you a `Solo ID` which you can see as your own private MTV channel. You can simply hit `Watch` or `Cast`, and MTV will shuffle all of its videos just for you and play them privately. The Solo webpage will then turn into a remote control, where you can skip videos, restart, go back to a previous video, or (if logged in) even give your opinion!
 
+**Note:** Solo mode looks like the "remote control" version of itself when you first visit the page. If you want to actually edit filters or load/save playlists, press `Settings`.
+
 **Note:** To see the full set of solo controls, make sure you're logged in on the [main dashboard](/). Simply choose `Login` in the top right and let MTV know who you are in Discord. If you do this correctly, you should see your Discord name and nickname in the top left of the Dashboard. If this doesn't work, ask in the MTV Discord channel. The most common error is that you haven't yet set your nickname in Discord. Once you're logged in, refresh the [Solo page](/solo).
 
 ### Filters {#filters}
