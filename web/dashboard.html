@@ -197,10 +197,10 @@ window.CLIENT_ID = "!CLIENT_ID!";
 <br>
 <br>
 <form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()">
-    <input size="20" placeholder="Anonymous" id="userinput" type="text" name="user" value=""><br>
+    <div style="margin-bottom: 10px">
+    <input size="20" placeholder="Anonymous" id="userinput" type="text" name="user" value="">
     <input type="checkbox" name="sfw"> SFW Only<br>
-    <input type="checkbox" name="controls"> Show Controls<br>
-    <input type="checkbox" name="hidetitles"> Hide Titles<br>
+    </div>
     <input type="submit" value="Watch"> <input id="castbutton" type="submit" onclick="startCast(); return false;" value="Cast"> <input type="submit" onclick="showWatchLink(); return false;" value="Cancel">
 </form>
 
