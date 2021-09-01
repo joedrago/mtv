@@ -348,7 +348,7 @@ input[type=submit] {
         height: 100%;
     }
 
-    .fadey {
+    .corner {
         background-color: #000022;
         position: absolute;
         top: 5px;
@@ -357,6 +357,11 @@ input[type=submit] {
         width: 400px;
         border: 1px solid white;
 
+        transform-origin: top left;
+
+    }
+
+    .fadey {
         opacity: 0;
         transition: opacity .5s ease-out;
         -moz-transition: opacity .5s ease-out;
@@ -403,6 +408,32 @@ input[type=submit] {
     margin-bottom: 5px;
 }
 
+.tesla {
+    transform: scale(1.4);
+    transform-origin: top;
+    left: 100px;
+}
+
+#tapshow {
+    z-index: 5;
+    color: #fff;
+    font-size: 2em;
+
+    display: none;
+
+    position: absolute;
+    top: 25px;
+    left: 35px;
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+
 </style>
 <body>
 
@@ -414,6 +445,8 @@ window.CLIENT_ID = "!CLIENT_ID!";
 <div id="mtv-player"></div>
 <div id="over"></div>
 </div>
+
+<div id="tapshow" onclick="onTapShow()">&#9776;</div>
 
 <div id="outer">
 
