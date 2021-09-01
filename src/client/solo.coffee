@@ -38,6 +38,9 @@ console.log "launchOpen: #{launchOpen}"
 addEnabled = true
 exportEnabled = false
 
+isTesla = false
+tapTimeout = null
+
 currentPlaylistName = null
 
 opinionOrder = []
@@ -61,6 +64,23 @@ qs = (name) ->
   if not results or not results[2]
     return null
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
+
+onTapShow = ->
+  console.log "onTapShow"
+
+  outer = document.getElementById('outer')
+  if tapTimeout?
+    clearTimeout(tapTimeout)
+    tapTimeout = null
+    outer.style.opacity = 0
+  else
+    outer.style.opacity = 1
+    tapTimeout = setTimeout ->
+      console.log "tapTimeout!"
+      outer.style.opacity = 0
+      tapTimeout = null
+    , 10000
+
 
 fadeIn = (elem, ms) ->
   if not elem?
@@ -391,7 +411,11 @@ startHere = ->
 
   if not player?
     document.getElementById('solovideocontainer').style.display = 'block'
-    document.getElementById('outer').classList.add('fadey')
+    document.getElementById('outer').classList.add('corner')
+    if isTesla
+      onTapShow()
+    else
+      document.getElementById('outer').classList.add('fadey')
     player = new YT.Player 'mtv-player', {
       width: '100%'
       height: '100%'
@@ -425,6 +449,9 @@ startHere = ->
 
   document.getElementById("quickmenu").style.display = "none"
   listenForMediaButtons()
+
+  if isTesla
+    document.getElementById('tapshow').style.display = "block"
 
 calcPermalink = ->
   form = document.getElementById('asform')
@@ -854,6 +881,7 @@ finishInit = ->
   window.logout = logout
   window.newSoloID = newSoloID
   window.onAdd = onAdd
+  window.onTapShow = onTapShow
   window.savePlaylist = savePlaylist
   window.setOpinion = setOpinion
   window.shareClipboard = shareClipboard
@@ -871,6 +899,13 @@ finishInit = ->
 
   # addEnabled = qs('add')?
   # console.log "Add Enabled: #{addEnabled}"
+
+  userAgent = navigator.userAgent
+  if userAgent? and String(userAgent).match(/Tesla\/20/)
+    isTesla = true
+
+  if isTesla
+    document.getElementById('outer').classList.add('tesla')
 
   currentPlaylistName = qs('name')
   if currentPlaylistName?
