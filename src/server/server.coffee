@@ -207,6 +207,7 @@ calcOther = ->
   other =
     playing: count
     names: names
+    solo: Object.keys(soloSessions).length
     current:
       id: lastPlayed.id
       artist: lastPlayed.artist
@@ -999,7 +1000,7 @@ run = (args, user) ->
       other = calcOther()
       nameString = ""
       if other.playing == 0
-        return "MTV: [Here] Nobody is watching."
+        return "MTV: [Here] Nobody is watching live. _(#{other.solo} solo session#{if other.solo == 1 then "" else "s"})_"
       anonCount = other.playing - other.names.length
       if other.names.length > 0
         nameString = ""
@@ -1011,7 +1012,7 @@ run = (args, user) ->
         if nameString.length > 0
           nameString += " + "
         nameString += "**#{anonCount}** anonymous"
-      return "MTV: [Here] Watching: #{nameString}"
+      return "MTV: [Here] Watching: #{nameString} _(#{other.solo} solo session#{if other.solo == 1 then "" else "s"})_"
 
     when 'what', 'whatisthis', 'who', 'whodis', 'why'
       if lastPlayed == null
@@ -1796,7 +1797,7 @@ main = (argv) ->
               requestDashboardRefresh()
               checkAutoskip()
               name = getNickname(tag)
-              logOutput("MTV: _(Dashboard)_ #{name} `#{msg.set}`: #{strs.description}") # only if echoEnabled?
+              # logOutput("MTV: _(Dashboard)_ #{name} `#{msg.set}`: #{strs.description}") # only if echoEnabled?
 
         feeling = opinions[msg.id]?[tag]
         if not feeling?

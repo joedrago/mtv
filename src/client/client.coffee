@@ -349,9 +349,9 @@ window.onYouTubePlayerAPIReady = ->
 
   console.log "onYouTubePlayerAPIReady"
 
-  showControls = 0
-  if qs('controls')
-    showControls = 1
+  showControls = 1
+  #if qs('controls')
+  #  showControls = 1
 
   player = new YT.Player 'mtv-player', {
     width: '100%'
