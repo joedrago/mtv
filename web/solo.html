@@ -3,6 +3,7 @@
     <title>MTV Solo</title>
     <meta name="viewport" id="metaViewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 </head>
+<link rel="stylesheet" href="plyr.css" />
 <style>
 body, html {
     background-color: #000022;
@@ -273,14 +274,15 @@ input[type=submit] {
 #solovideocontainer object,
 #solovideocontainer embed,
 #solovideocontainer iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
 }
 
 #solovideocontainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
     display: none;
     z-index: 1;
 }
@@ -433,6 +435,13 @@ input[type=submit] {
     user-select: none;
 }
 
+.plyr {
+    height: 100%;
+}
+
+:root {
+  --plyr-color-main: #aaffaa;
+}
 
 </style>
 <body>
@@ -442,7 +451,7 @@ window.CLIENT_ID = "!CLIENT_ID!";
 </script>
 
 <div id="solovideocontainer">
-<div id="mtv-player"></div>
+<video id="mtv-player"></video>
 <div id="over"></div>
 </div>
 
@@ -523,7 +532,7 @@ window.CLIENT_ID = "!CLIENT_ID!";
 
 <script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
 <script src="/socket.io/socket.io.js"></script>
+<script src="plyr.js"></script>
 <script src="solo.js"></script>
-<script src="//www.youtube.com/player_api"></script>
 </body>
 </html>
