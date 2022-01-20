@@ -1,4 +1,5 @@
 <html>
+<link rel="stylesheet" href="plyr.css" />
 <style>
 body, html {
     margin: 0px;
@@ -31,14 +32,22 @@ body, html {
     pointer-events: none;
 }
 
+.plyr {
+    height: 100%;
+}
+
+:root {
+  --plyr-color-main: #aaffaa;
+}
+
 </style>
 <body>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="plyr.js"></script>
 <script src="client.js"></script>
-<script src="//www.youtube.com/player_api"></script>
 
-<div id="mtv-player"></div>
+<video id="mtv-player"></video>
 <div id="over"></div>
 </body>
 </html>

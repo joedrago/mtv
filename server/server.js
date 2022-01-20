@@ -316,6 +316,7 @@
     other = {
       playing: count,
       names: names,
+      solo: Object.keys(soloSessions).length,
       current: {
         id: lastPlayed.id,
         artist: lastPlayed.artist,
@@ -1353,7 +1354,7 @@
         other = calcOther();
         nameString = "";
         if (other.playing === 0) {
-          return "MTV: [Here] Nobody is watching.";
+          return `MTV: [Here] Nobody is watching live. _(${other.solo} solo session${other.solo === 1 ? "" : "s"})_`;
         }
         anonCount = other.playing - other.names.length;
         if (other.names.length > 0) {
@@ -1373,7 +1374,7 @@
           }
           nameString += `**${anonCount}** anonymous`;
         }
-        return `MTV: [Here] Watching: ${nameString}`;
+        return `MTV: [Here] Watching: ${nameString} _(${other.solo} solo session${other.solo === 1 ? "" : "s"})_`;
       case 'what':
       case 'whatisthis':
       case 'who':
@@ -2347,10 +2348,10 @@
                 requestDashboardRefresh();
                 checkAutoskip();
                 name = getNickname(tag);
-                logOutput(`MTV: _(Dashboard)_ ${name} \`${msg.set}\`: ${strs.description}`);
               }
             }
           }
+          // logOutput("MTV: _(Dashboard)_ #{name} `#{msg.set}`: #{strs.description}") # only if echoEnabled?
           feeling = (ref = opinions[msg.id]) != null ? ref[tag] : void 0;
           if (feeling == null) {
             feeling = "none";

@@ -1,6 +1,7 @@
 constants = require '../constants'
 Clipboard = require 'clipboard'
 filters = require '../filters'
+Player = require './Player'
 
 socket = null
 
@@ -213,23 +214,6 @@ startCast = ->
     castSession.sendMessage(DASHCAST_NAMESPACE, { url: mtvURL, force: true })
   , onError
 
-# autoplay video
-onPlayerReady = (event) ->
-  event.target.playVideo()
-  startHere()
-
-# when video ends
-onPlayerStateChange = (event) ->
-  if endedTimer?
-    clearTimeout(endedTimer)
-    endedTimer = null
-
-  if event.data == 0
-    console.log "ENDED"
-    endedTimer = setTimeout( ->
-      playing = false
-    , 2000)
-
 calcLabel = (pkt) ->
   console.log "soloLabels(1): ", soloLabels
   if not soloLabels?
@@ -289,14 +273,8 @@ play = (pkt, id, startSeconds = null, endSeconds = null) ->
   if not player?
     return
   console.log "Playing: #{id}"
-  opts = {
-    videoId: id
-  }
-  if startSeconds? and (startSeconds >= 0)
-    opts.startSeconds = startSeconds
-  if endSeconds? and (endSeconds >= 1)
-    opts.endSeconds = endSeconds
-  player.loadVideoById(opts)
+
+  player.play(id, startSeconds, endSeconds)
   playing = true
 
   showInfo(pkt)
@@ -416,17 +394,11 @@ startHere = ->
       onTapShow()
     else
       document.getElementById('outer').classList.add('fadey')
-    player = new YT.Player 'mtv-player', {
-      width: '100%'
-      height: '100%'
-      videoId: 'AB7ykOfAgIA' # MTV loading screen, this will be replaced almost immediately
-      playerVars: { 'autoplay': 1, 'enablejsapi': 1, 'controls': 1 }
-      events: {
-        onReady: onPlayerReady
-        onStateChange: onPlayerStateChange
-      }
-    }
-    return
+
+    player = new Player('#mtv-player')
+    player.ended = (event) ->
+      playing = false
+    player.play('AB7ykOfAgIA') # MTV Loading...
 
   filterString = qs('filters')
   soloUnshuffled = await filters.generateList(filterString)
@@ -677,10 +649,7 @@ setOpinion = (opinion) ->
 
 pauseInternal = ->
   if player?
-    if player.getPlayerState() == 2
-      player.playVideo()
-    else
-      player.pauseVideo()
+    player.togglePause()
 
 soloCommand = (pkt) ->
   if pkt.id != soloID
@@ -861,18 +830,7 @@ receiveIdentity = (pkt) ->
   if lastClicked?
     lastClicked()
 
-youtubeReady = false
-window.onYouTubePlayerAPIReady = ->
-  if youtubeReady
-    return
-  youtubeReady = true
-
-  console.log "onYouTubePlayerAPIReady"
-  setTimeout ->
-    finishInit()
-  , 0
-
-finishInit = ->
+window.onload = ->
   window.clipboardEdit = clipboardEdit
   window.clipboardMirror = clipboardMirror
   window.deletePlaylist = deletePlaylist
@@ -965,11 +923,3 @@ finishInit = ->
     showWatchForm()
   else
     showWatchLink()
-
-
-setTimeout ->
-  # somehow we missed this event, just kick it manually
-  if not youtubeReady
-    console.log "kicking Youtube..."
-    window.onYouTubePlayerAPIReady()
-, 3000

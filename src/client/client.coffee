@@ -1,3 +1,5 @@
+Player = require './Player'
+
 player = null
 socket = null
 playing = false
@@ -87,28 +89,6 @@ fadeOut = (elem, ms) ->
     elem.style.display = "none"
     elem.style.visibility = "hidden"
 
-# autoplay video
-onPlayerReady = (event) ->
-  event.target.playVideo()
-  finishInit()
-
-# when video ends
-onPlayerStateChange = (event) ->
-  if endedTimer?
-    clearTimeout(endedTimer)
-    endedTimer = null
-
-  videoData = player.getVideoData()
-  if videoData? and videoData.title?
-    console.log "Title: #{videoData.title}"
-    window.document.title = "#{videoData.title} - [[MTV]]"
-
-  if event.data == 0
-    console.log "ENDED"
-    endedTimer = setTimeout( ->
-      playing = false
-    , 2000)
-
 showInfo = (pkt) ->
   console.log pkt
 
@@ -163,11 +143,7 @@ play = (pkt, id, startSeconds = null, endSeconds = null) ->
   opts = {
     videoId: id
   }
-  if startSeconds? and (startSeconds >= 0)
-    opts.startSeconds = startSeconds
-  if endSeconds? and (endSeconds >= 1)
-    opts.endSeconds = endSeconds
-  player.loadVideoById(opts)
+  player.play(id, startSeconds, endSeconds)
   playing = true
 
   showInfo(pkt)
@@ -289,10 +265,7 @@ soloPlay = (restart = false) ->
 
 soloPause = ->
   if player?
-    if player.getPlayerState() == 2
-      player.playVideo()
-    else
-      player.pauseVideo()
+    player.togglePause()
 
 soloCommand = (pkt) ->
   if not pkt.cmd?
@@ -341,31 +314,16 @@ soloStartup = ->
 
 # ---------------------------------------------------------------------------------------
 
-youtubeReady = false
-window.onYouTubePlayerAPIReady = ->
-  if youtubeReady
-    return
-  youtubeReady = true
+window.onload = ->
+  showControls = 0
+  if qs('controls')
+    showControls = 1
 
-  console.log "onYouTubePlayerAPIReady"
+  player = new Player('#mtv-player')
+  player.ended = (event) ->
+    playing = false
+  player.play('AB7ykOfAgIA') # MTV Loading...
 
-  showControls = 1
-  #if qs('controls')
-  #  showControls = 1
-
-  player = new YT.Player 'mtv-player', {
-    width: '100%'
-    height: '100%'
-    videoId: 'AB7ykOfAgIA' # MTV loading screen, this will be replaced almost immediately
-    playerVars: { 'autoplay': 1, 'enablejsapi': 1, 'controls': showControls }
-    events: {
-      onReady: onPlayerReady
-      onStateChange: onPlayerStateChange
-    }
-  }
-
-# called by onPlayerReady
-finishInit = ->
   soloID = qs('solo')
 
   socket = io()
@@ -401,10 +359,3 @@ finishInit = ->
       serverEpoch = server.epoch
 
     setInterval(tick, 5000)
-
-setTimeout ->
-  # somehow we missed this event, just kick it manually
-  if not youtubeReady
-    console.log "kicking Youtube..."
-    window.onYouTubePlayerAPIReady()
-, 3000
