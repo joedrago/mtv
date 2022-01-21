@@ -1025,7 +1025,7 @@ window.onload = ->
 
   prepareCast()
 
-  if true # autostart
+  if autostart
     console.log "AUTO START"
     document.getElementById('info').innerHTML = "AUTO START"
     startHere()
