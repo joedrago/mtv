@@ -1,4 +1,5 @@
 constants = require '../constants'
+filters = require '../filters'
 
 socket = null
 
@@ -145,7 +146,11 @@ renderEntries = (firstTitle, restTitle, entries, isMap, sortMethod = SORT_NONE, 
     if e.end >= 0
       params += if params.length == 0 then "?" else "&"
       params += "end=#{e.end}"
-    url = "https://youtu.be/#{e.id}#{params}"
+
+    idInfo = filters.calcIdInfo(e.id)
+    if not idInfo?
+      continue
+    url = idInfo.url + params
 
     extraInfo = ""
     tags = []

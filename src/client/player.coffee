@@ -1,4 +1,4 @@
-# Plyr = require 'plyr'
+filters = require '../filters'
 
 class Player
   constructor: (domID) ->
@@ -11,6 +11,24 @@ class Player
         @ended()
 
   play: (id, startSeconds = undefined, endSeconds = undefined) ->
+    idInfo = filters.calcIdInfo(id)
+    if not idInfo?
+      return
+
+    switch idInfo.provider
+      when 'youtube'
+        source = {
+          src: idInfo.real
+          provider: 'youtube'
+        }
+      when 'mtv'
+        source = {
+          src: "/videos/#{idInfo.real}.mp4"
+          type: 'video/mp4'
+        }
+      else
+        return
+
     if(startSeconds? and (startSeconds > 0))
       @plyr.mtvStart = startSeconds
     else
@@ -22,16 +40,7 @@ class Player
     @plyr.source =
       type: 'video',
       title: 'MTV',
-      sources: [
-        # {
-        #   src: 'https://some.mp4',
-        #   type: 'video/mp4',
-        # }
-        {
-          src: id
-          provider: 'youtube'
-        }
-      ]
+      sources: [source]
 
   togglePause: ->
     if @plyr.paused

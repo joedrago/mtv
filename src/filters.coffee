@@ -190,6 +190,28 @@ generateList = (filterString, sortByArtist = false) ->
       return 0
   return soloUnshuffled
 
+calcIdInfo = (id) ->
+  if not matches = id.match(/^([a-z]+)_(\S+)/)
+    return null
+  provider = matches[1]
+  real = matches[2]
+
+  switch provider
+    when 'youtube'
+      url = "https://youtu.be/#{real}"
+    when 'mtv'
+      url = "/videos/#{real}.mp4"
+    else
+      return null
+
+  return {
+    id: id
+    provider: provider
+    real: real
+    url: url
+  }
+
 module.exports =
   setServerDatabases: setServerDatabases
   generateList: generateList
+  calcIdInfo: calcIdInfo
