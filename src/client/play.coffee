@@ -191,7 +191,7 @@ calcPerma = ->
   if not discordNickname? or (selectedName.length == 0)
     return ""
   baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
-  baseURL = baseURL.replace(/solo$/, "p")
+  baseURL = baseURL.replace(/play$/, "p")
   mtvURL = baseURL + "/#{encodeURIComponent(discordNickname)}/#{encodeURIComponent(selectedName)}"
   return mtvURL
 
@@ -223,7 +223,6 @@ startCast = ->
   params.set('start', 1)
   querystring = params.toString()
   baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
-  baseURL = baseURL.replace(/solo$/, "")
   mtvURL = baseURL + "?" + querystring
   console.log "We're going here: #{mtvURL}"
   chrome.cast.requestSession (e) ->
