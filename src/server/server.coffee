@@ -861,6 +861,7 @@ calcLicensingInfo = (e) ->
     title: strs.title
     opinions: strs.opinions
     company: company
+    thumb: e.thumb
   }
 
 updateNickname = (e) ->
@@ -1852,6 +1853,25 @@ main = (argv) ->
       res.redirect(url)
       return
     html = fs.readFileSync("#{__dirname}/../web/solo.html", "utf8")
+    discordClientID = secrets.discordClientID
+    if not discordClientID?
+      discordClientID = "0"
+    html = html.replace(/!CLIENT_ID!/, discordClientID)
+    res.send(html)
+
+  app.get '/play', (req, res) ->
+    soloID = req.query.solo
+    if soloID? and (soloID == 'new')
+      loop
+        soloID = randomString()
+        if not soloSessions[soloID]?
+          break
+      url = "/play?solo=#{soloID}"
+      for k,v of req.query
+        url += "&#{encodeURIComponent(k)}=#{encodeURIComponent(v)}"
+      res.redirect(url)
+      return
+    html = fs.readFileSync("#{__dirname}/../web/play.html", "utf8")
     discordClientID = secrets.discordClientID
     if not discordClientID?
       discordClientID = "0"
