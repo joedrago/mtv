@@ -1,7 +1,33 @@
 fs = require 'fs'
 path = require 'path'
-download = require 'download'
+URL = require 'url'
+http = require 'http'
+https = require 'https'
 {spawnSync} = require 'child_process'
+
+download = (url, outputFilename, callback) ->
+  return new Promise (resolve, reject) ->
+    if URL.parse(url).protocol == null
+      url = 'http://' + url
+      req = http
+    else if URL.parse(url).protocol == 'https:'
+      req = https
+    else
+      req = http
+
+    request = req.get url, (response) ->
+      if response.statusCode == 200
+        file = fs.createWriteStream(outputFilename)
+        response.pipe(file)
+      else
+        resolve()
+
+      response.on "end", ->
+        resolve()
+
+      request.setTimeout 30000, ->
+        request.abort()
+        resolve()
 
 downloadVideo = (real, url) ->
   dstDir = path.join(__dirname, '..', 'web', 'videos')
@@ -13,7 +39,7 @@ downloadVideo = (real, url) ->
     return { error: "Real ID `#{real}` already exists, bailing out." }
 
   try
-    await download(url, dstDir, { filename: videoFilename })
+    await download(url, fullVideoFilename)
   catch e
     return { error: "Download failed: #{e.toString()}" }
 
