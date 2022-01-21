@@ -948,6 +948,8 @@ window.onload = ->
   window.startCast = startCast
   window.startHere = startHere
 
+  autostart = qs('start')?
+
   # addEnabled = qs('add')?
   # console.log "Add Enabled: #{addEnabled}"
 
@@ -1033,13 +1035,7 @@ window.onload = ->
       return calcShareURL(mirror)
   }
 
-  if qs('start')?
+  if autostart
     console.log "AUTO START"
     document.getElementById('info').innerHTML = "AUTO START"
-    setTimeout ->
-      startHere()
-    , 0
-    setTimeout ->
-      if not player?
-        startHere()
-    , 3000
+    startHere()
