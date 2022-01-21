@@ -7,6 +7,7 @@ https = require 'https'
 ytdl = require 'ytdl-core'
 constants = require '../constants'
 filters = require '../filters'
+hosting = require './hosting'
 
 MAX_BLOCK_COUNT = 0
 YOUTUBE_USER = "YouTube"
@@ -578,13 +579,17 @@ getYoutubeData = (e) ->
     e.id = e.id.replace(/\?.+$/, "")
     console.log "Looking up: #{e.id}"
     return new Promise (resolve, reject) ->
-      url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&key=#{secrets.youtube}&id=#{encodeURIComponent(e.id)}"
+      idInfo = filters.calcIdInfo(e.id)
+      if not idInfo? or (idInfo.provider != 'youtube')
+        resolve(false)
+        return
+      url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&key=#{secrets.youtube}&id=#{encodeURIComponent(idInfo.real)}"
       req = https.request url, (res) ->
         rawJSON = ""
         res.on 'data', (chunk) ->
           rawJSON += chunk
         res.on 'error', ->
-          console.log "Error [#{e.id}]"
+          console.log "Error [#{idInfo.real}]"
           resolve(false)
         res.on 'end', ->
           data = null
@@ -593,7 +598,7 @@ getYoutubeData = (e) ->
           catch
             console.log "ERROR: Failed to talk to parse JSON: #{rawJSON}"
             return
-          console.log "looking up #{e.id}"
+          console.log "looking up #{idInfo.real}"
           saved = false
           if data.items? and (data.items.length > 0)
             # console.log JSON.stringify(data, null, 2)
@@ -618,11 +623,11 @@ getYoutubeData = (e) ->
               e.thumb = thumbUrl
               e.duration = parseDuration(data.items[0].contentDetails.duration)
               splitArtist(e)
-              console.log "Found title [#{e.id}]: '#{e.artist}' - '#{e.title}'"
+              console.log "Found title [#{idInfo.real}]: '#{e.artist}' - '#{e.title}'"
               savePlaylist()
               saved = true
           if not saved
-            console.log "Nope [#{e.id}]"
+            console.log "Nope [#{idInfo.real}]"
             if playlist[e.id]?
               delete playlist[e.id]
             queue = queue.filter (a) -> a.id != e.id
@@ -714,11 +719,18 @@ entryFromArg = (arg) ->
 
   if not id? and (url.hostname == 'youtu.be')
     id = url.pathname.replace(/^\//, "")
+    id = "youtube_#{id}"
 
   if not id? and url.hostname.match(/youtube.com$/)
     v = url.searchParams.get('v')
     if v?
-      id = v
+      id = "youtube_#{v}"
+
+  idInfo = filters.calcIdInfo(id)
+  if not idInfo?
+    # backwards compatibility
+    id = "youtube_#{id}"
+    idInfo = filters.calcIdInfo(id)
 
   if url?
     t = url.searchParams.get('t')
@@ -792,14 +804,18 @@ prettyDuration = (duration) ->
   return str
 
 calcEntryStrings = (e) ->
-  url = "https://youtu.be/#{e.id}"
-  params = ""
-  if e.start >= 0
-    params += if params.length == 0 then "?" else "&"
-    params += "start=#{e.start}"
-  if e.end >= 0
-    params += if params.length == 0 then "?" else "&"
-    params += "end=#{e.end}"
+  idInfo = filters.calcIdInfo(e.id)
+  url = idInfo.url
+  if idInfo.provider == 'youtube'
+    params = ""
+    if e.start >= 0
+      params += if params.length == 0 then "?" else "&"
+      params += "start=#{e.start}"
+    if e.end >= 0
+      params += if params.length == 0 then "?" else "&"
+      params += "end=#{e.end}"
+    url = "#{url}#{params}"
+
   if e.title?
     title = "#{e.title} "
   else
@@ -808,7 +824,6 @@ calcEntryStrings = (e) ->
     artist = e.artist
   else
     artist = "Unknown"
-  url = "#{url}#{params}"
 
   startTime = e.start
   if startTime < 0
@@ -1047,6 +1062,32 @@ run = (args, user) ->
       requestDashboardRefresh()
       checkAutoskip()
       return "MTV: (N)SFW Adjustment: #{strs.description}"
+
+    when 'host'
+      if args.length < 3
+        return "MTV: Syntax: host [real] [url.mp4]"
+      real = args[1].replace(/[^a-zA-Z0-9_]/g, "")
+      id = "mtv_#{real}"
+      e = entryFromArg(id)
+      if playlist[e.id]?
+        strs = calcEntryStrings(playlist[e.id])
+        return "MTV: Already in pool: #{strs.description}"
+      if not e?
+        return "MTV: host: invalid real: #{args[1]}"
+      idInfo = filters.calcIdInfo(e.id)
+      if not idInfo? or (idInfo.provider != 'mtv')
+        return "MTV: host: invalid real: #{args[1]}"
+      result = await hosting.downloadVideo(real, args[2])
+      if result.error
+        return "MTV: host error: #{result.error}"
+      e.user = user
+      e.artist = "Unset Artist #{real}"
+      e.title = "Unset Title #{real}"
+      e.thumb = result.thumb
+      e.duration = result.duration
+      playlist[e.id] = e
+      savePlaylist()
+      return "MTV: Host[`#{e.id}`] Successful (#{e.duration}s duration). Please edit `artist` and `title` using `#mtv edit #{e.id}`"
 
     when 'add'
       e = entryFromArg(args[1])
@@ -1512,6 +1553,10 @@ findMissingYoutubeInfo = ->
   missingTitleCount = 0
   needsSave = false
   for k,v of playlist
+    idInfo = filters.calcIdInfo(k)
+    if not idInfo? or (idInfo.provider != 'youtube')
+      continue
+
     if playlist[k].countPlay?
       delete playlist[k]["countPlay"]
       needsSave = true
