@@ -1149,7 +1149,8 @@
       artist: strs.artist,
       title: strs.title,
       opinions: strs.opinions,
-      company: company
+      company: company,
+      thumb: e.thumb
     };
   };
 
@@ -2423,6 +2424,33 @@
         return;
       }
       html = fs.readFileSync(`${__dirname}/../web/solo.html`, "utf8");
+      discordClientID = secrets.discordClientID;
+      if (discordClientID == null) {
+        discordClientID = "0";
+      }
+      html = html.replace(/!CLIENT_ID!/, discordClientID);
+      return res.send(html);
+    });
+    app.get('/play', function(req, res) {
+      var discordClientID, html, k, ref, soloID, url, v;
+      soloID = req.query.solo;
+      if ((soloID != null) && (soloID === 'new')) {
+        while (true) {
+          soloID = randomString();
+          if (soloSessions[soloID] == null) {
+            break;
+          }
+        }
+        url = `/play?solo=${soloID}`;
+        ref = req.query;
+        for (k in ref) {
+          v = ref[k];
+          url += `&${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
+        }
+        res.redirect(url);
+        return;
+      }
+      html = fs.readFileSync(`${__dirname}/../web/play.html`, "utf8");
       discordClientID = secrets.discordClientID;
       if (discordClientID == null) {
         discordClientID = "0";

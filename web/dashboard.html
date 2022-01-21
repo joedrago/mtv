@@ -190,16 +190,17 @@ window.CLIENT_ID = "!CLIENT_ID!";
 [<a href="#stats">Stats</a>]
 [<a href="#lists">Lists</a>]
 [<a href="/help/" class="helplink" target="_blank">Help</a>]
-[<a href="/solo" class="sololink">Solo</a>]
+[<a href="/play?solo=new" class="sololink">Solo</a>]
 [<a id="aslink" class="watchlink" onclick="showWatchForm()">Watch</a>]
 <span id="playing"></span>
 <div id="identity"></div>
 <br>
 <br>
-<form id="asform" target="_blank" action="/watch" onsubmit="showWatchLink()">
+<form id="asform" target="_blank" action="/play" onsubmit="showWatchLink()">
     <div style="margin-bottom: 10px">
     <input size="20" placeholder="Anonymous" id="userinput" type="text" name="user" value="">
     <input type="checkbox" name="sfw"> SFW Only<br>
+    <input type="hidden" name="start" value="1">
     </div>
     <input type="submit" value="Watch"> <input id="castbutton" type="submit" onclick="startCast(); return false;" value="Cast"> <input type="submit" onclick="showWatchLink(); return false;" value="Cancel">
 </form>

@@ -38,9 +38,8 @@ buildBundle = (uiSrc, uiDst, callback) ->
       util.log "#{uiDst} compilation failed: " + err
 
 buildClient = (callback) ->
-  buildBundle './src/client/client.coffee', "web/client.js", ->
-    buildBundle './src/client/dashboard.coffee', "web/dashboard.js", ->
-      buildBundle('./src/client/solo.coffee', "web/solo.js", callback)
+  buildBundle './src/client/dashboard.coffee', "web/dashboard.js", ->
+    buildBundle('./src/client/play.coffee', "web/play.js", callback)
 
 buildServer = (callback) ->
   coffee = spawn coffeeName, ['-c', '-o', 'server', 'src/server']

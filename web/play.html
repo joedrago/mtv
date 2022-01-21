@@ -1,0 +1,564 @@
+<html>
+<head>
+    <title>MTV Play</title>
+    <meta name="viewport" id="metaViewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+</head>
+<link rel="stylesheet" href="plyr.css" />
+<style>
+body, html {
+    background-color: #000022;
+    color: white;
+
+    font-family: monospace;
+    font-size: 1.2em;
+    margin: 0px;
+    padding: 0px;
+}
+
+a {
+    text-decoration: none;
+    cursor: pointer;
+
+    color: #aaffaa;
+}
+
+.maintitle {
+    font-size: 1.4em;
+    font-weight: 900;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+#aslive {
+    display: none;
+}
+
+#asform {
+    display: none;
+}
+
+#aslink {
+    display: none;
+    width: 100%;
+}
+
+#soloid {
+    font-size: 1.0em;
+    color: #fff;
+    background-color: #333;
+    margin-bottom: 10px;
+}
+
+.filters {
+    color: #fff;
+    background-color: #333;
+}
+
+#info {
+    margin-top: 10px;
+    margin-bottom: 10px;
+
+    padding: 5px;
+
+    text-align: center;
+}
+
+.infocounts {
+    color: #fff;
+    font-style: italic;
+}
+
+.infoheading {
+    color: #faa;
+    font-style: italic;
+    margin-top: 10px;
+}
+
+.infocurrent {
+    margin-top: 20px;
+}
+
+.infoartist {
+    color: #ffa;
+}
+
+.infotitle {
+    color: #aff;
+}
+
+.infolabel {
+    color: #777;
+    font-style: italic;
+    font-size: 0.8em;
+}
+
+.infotags {
+    color: #aaa;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    font-size: 0.6em;
+    font-style: italic;
+}
+
+.loginhint {
+    color: #aaa;
+    font-style: italic;
+}
+
+.inforeshuffle {
+    color: #aaa;
+    font-style: italic;
+}
+
+.infothumb {
+    width: 100%;
+    margin: auto;
+    margin-top: 20px;
+}
+
+.butto {
+    background-color:#444;
+    border-radius:5px;
+    border:1px solid #333333;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:Arial;
+    font-size:12px;
+    font-weight:bold;
+    padding:10px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #528ecc;
+}
+.butto:active {
+    position:relative;
+    top:1px;
+}
+
+.obutto {
+    width: 30px;
+    background-color:#444444;
+    border-radius:5px;
+    border:1px solid #333333;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:Arial;
+    font-size:10px;
+    font-weight:bold;
+    padding:10px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #528ecc;
+}
+.obutto:active {
+    position:relative;
+    top:1px;
+}
+
+.cbutto {
+    width: 50px;
+    background-color:#444444;
+    border-radius:5px;
+    border:1px solid #333333;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:Arial;
+    font-size:10px;
+    font-weight:bold;
+    padding:8px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #528ecc;
+}
+.cbutto:active {
+    position:relative;
+    top:1px;
+}
+
+.mbutto {
+    width: 50px;
+    background-color:#444444;
+    border-radius:5px;
+    border:1px solid #333333;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:Arial;
+    font-size:10px;
+    font-weight:bold;
+    padding:8px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #528ecc;
+}
+.mbutto:active {
+    position:relative;
+    top:1px;
+}
+
+.copied {
+    background-color:#77aa77;
+}
+
+.bprev {
+}
+.bpause {
+}
+.brestart {
+}
+.bskip {
+}
+
+
+.chosen {
+    background-color:#77aa77;
+}
+
+#outer {
+    z-index: 3;
+    max-width: 800px;
+    margin:auto;
+}
+
+#opinions {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#clipboard {
+    margin-bottom: 20px;
+}
+
+.youtubeid {
+    color: #777;
+}
+
+.nextvideo {
+    font-size: 0.6em;
+    font-style: italic;
+}
+
+input[type=submit] {
+    padding:5px 15px;
+    background:#ccc;
+    border:0 none;
+    cursor:pointer;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    font-family: monospace;
+    font-weight: 900;
+}
+
+.listcontainer {
+    margin-top: 20px;
+}
+
+.fsub {
+    font-size: 0.6em;
+    width: 80px;
+    margin-top: 10px;
+}
+
+.slsub {
+    font-size: 0.6em;
+    width: 80px;
+}
+
+.sharecopied {
+    color: #aaa;
+    margin-top: 20px;
+    font-style: italic;
+}
+
+.shareurl {
+    color: #afa;
+    font-family: monospace;
+    font-size: 0.6em;
+}
+
+
+#solovideocontainer object,
+#solovideocontainer embed,
+#solovideocontainer iframe {
+}
+
+#solovideocontainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    display: none;
+    z-index: 1;
+}
+
+@font-face {
+    font-family: Kabel Black;
+    src: url("Kabel-Black.otf") format("opentype");
+}
+
+#over {
+    float: left;
+    position: fixed;
+    margin-left: 3%;
+    margin-bottom: 3%;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+
+    display: none;
+
+    color: #ffffff;
+
+    font-size: 5vh;
+    font-family: Kabel Black;
+    text-shadow: 0.1em 0.1em #000000;
+    white-space: pre;
+
+    pointer-events: none;
+}
+
+#mirror {
+    display: none;
+}
+
+#mirrornote {
+    display: none;
+}
+
+.mirrorhint {
+    margin-top: 10px;
+    font-style: italic;
+    font-size: 0.6em;
+}
+
+@media (max-aspect-ratio: 1/1) {
+    #over {
+        font-size: 5vw;
+    }
+
+    #solovideocontainer {
+        width: 100vw;
+        height: 56.25vw; /* height:width ratio = 9/16 = .5625  */
+        max-height: 100vh;
+        max-width: 177.78vh; /* 16/9 = 1.778 */
+        margin: auto;
+        position: absolute;
+        bottom: 0;
+        left:0;right:0;
+    }
+}
+
+@media (min-aspect-ratio: 1/1) {
+    #solovideocontainer {
+        width: 100%;
+        height: 100%;
+    }
+
+    .corner {
+        background-color: #000022;
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        padding: 10px;
+        width: 400px;
+        border: 1px solid white;
+
+        transform-origin: top left;
+
+    }
+
+    .fadey {
+        opacity: 0;
+        transition: opacity .5s ease-out;
+        -moz-transition: opacity .5s ease-out;
+        -webkit-transition: opacity .5s ease-out;
+        -o-transition: opacity .5s ease-out;
+    }
+
+    .fadey:hover {
+        opacity: 1;
+    }
+}
+
+#loadarea {
+    margin: 5px;
+}
+
+#savearea {
+    margin: 5px;
+}
+
+#loadname {
+    width: 180px;
+    color: #fff;
+    font-family: monospace;
+    background-color: #333;
+    margin-top: 10px;
+    border: 1px solid #777;
+    font-size: 0.8em;
+}
+
+#savename {
+    width: 180px;
+    color: #fff;
+    font-family: monospace;
+    background-color: #333;
+    border: 1px solid #777;
+    font-size: 0.8em;
+}
+
+#playlistname {
+    font-size: 1.2em;
+    font-style: italic;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.tesla {
+    transform: scale(1.4);
+    transform-origin: top;
+    left: 100px;
+}
+
+#tapshow {
+    z-index: 5;
+    color: #fff;
+    font-size: 2em;
+
+    display: none;
+
+    position: absolute;
+    top: 25px;
+    left: 35px;
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.plyr {
+    height: 100%;
+}
+
+:root {
+  --plyr-color-main: #aaffaa;
+}
+
+.playcontrols {
+    display: none;
+}
+
+</style>
+<body>
+
+<script>
+window.CLIENT_ID = "!CLIENT_ID!";
+</script>
+
+<div id="solovideocontainer">
+<video id="mtv-player"></video>
+<div id="over"></div>
+</div>
+
+<div id="tapshow" onclick="onTapShow()"><img src="menu.png"></div>
+
+<div id="outer">
+
+<br>
+<div id="aslive">
+    <center>
+    <div class="modetitle">Live Mode</div>
+    <div>
+       [<a onclick="goSolo(); event.preventDefault();">Go Solo</a>]
+    </div>
+    <div id="quickmenu">
+    <input class="fsub" type="submit" value="Watch" onclick="event.preventDefault(); startHere();" title="Watch MTV">
+    <input id="quickcastbutton" class="fsub" type="submit" onclick="event.preventDefault(); startCast();" value="Cast" title="Begin casting MTV live">
+    </div>
+    </center>
+</div>
+
+<div id="aslink">
+    <center>
+    <div class="modetitle">Solo Mode</div>
+    <div id="playlistname"></div>
+    <div>
+       [<a onclick="goLive(); event.preventDefault();">Go Live</a>]<br><br>
+       [<a onclick="showWatchForm(); event.preventDefault();">Solo Settings</a>]
+    </div>
+    <div id="quickmenu">
+    <input class="fsub" type="submit" value="Watch" onclick="event.preventDefault(); startHere();" title="Watch MTV">
+    <input id="quickcastbutton" class="fsub" type="submit" onclick="event.preventDefault(); startCast();" value="Cast" title="Begin casting MTV with these settings">
+    </div>
+    </center>
+</div>
+
+<form id="asform" target="_blank" action="/watch" onchange="formChanged()" onsubmit="showWatchLink()">
+    <div class="modetitle">Solo Mode</div>
+    [<a onclick="goLive(); event.preventDefault();">Go Live</a>]<br><br>
+    <div id="identity"></div>
+    Solo ID: [<a onclick="goSolo(); event.preventDefault();">New</a>]<br>
+    <input type="text" id="soloid" name="solo" readonly value=""><br>
+    <div id="mirrornote">Mirror Mode.<br><div class="mirrorhint">(Generate a new ID to disable.)</div></div>
+    <div id="filtersection">
+    Filters (leave blank for all songs):<br>
+    <textarea form="asform" id="filters" name="filters" class="filters" oninput="formChanged()" style="width: 100%; max-width: 100%;" rows="5"></textarea><br>
+    </div>
+
+    <div id="loadarea">
+    <select id="loadname" name="loadname">
+        <option value="">None</option>
+    </select>
+    <input class="slsub" type="submit" value="Load" onclick="event.preventDefault(); loadPlaylist();" title="Load selected playlist">
+    <input class="slsub" type="submit" value="Delete" onclick="event.preventDefault(); deletePlaylist();" title="Delete selected playlist">
+    </div>
+
+    <div id="savearea">
+    <input type="text" id="savename" name="savename" placeholder="New Playlist Name" value="">
+    <input class="slsub" type="submit" value="Save" onclick="event.preventDefault(); savePlaylist();" title="Save selected playlist">
+    <input class="fsub share" type="submit" onclick="event.preventDefault(); sharePerma();" value="Perma" title="Share a Permalink of this shared playlist">
+    </div>
+
+    <input type="checkbox" id="mirror" name="mirror">
+    <br>
+    <input class="fsub" type="submit" value="Watch" onclick="event.preventDefault(); startHere();" title="Watch MTV">
+    <input id="castbutton" class="fsub" type="submit" onclick="event.preventDefault(); startCast();" value="Cast" title="Begin casting MTV with these settings">
+    <input class="fsub" type="submit" value="Tab" title="Watch MTV with these settings in a new tab">
+    <span id="export"></span>
+    <br>
+    <input class="fsub" type="submit" onclick="event.preventDefault(); showList();" value="List" title="Show the list of videos matching the current filter">
+    <input class="fsub share" type="submit" onclick="event.preventDefault(); shareClipboard(false);" value="Share" title="Share current settings by copying them to the clipboard without the Solo ID">
+    <input class="fsub share" type="submit" onclick="event.preventDefault(); shareClipboard(true);" value="Mirror" title="Share a mirror link of this Solo session.">
+    <input class="fsub" type="submit" onclick="event.preventDefault(); showWatchLink();" value="Close" title="Close all settings">
+    <div id="list"></div>
+</form>
+
+<div id="info"></div>
+
+<center>
+<div id="playcontrols">
+<a class="butto bprev" onclick="soloPrev(); event.preventDefault();"><img src="prev.png"></a>
+<a class="butto brestart" onclick="soloRestart(); event.preventDefault();"><img src="restart.png"></a>
+<a class="butto bpause" onclick="soloPause(); event.preventDefault();"><img src="resume.png"></a>
+<a class="butto bskip" onclick="soloSkip(); event.preventDefault();"><img src="next.png"></a>
+</div>
+<div id="opinions"></div>
+<div>
+<span id="add"></span>
+<span id="clipboard"></span>
+<span id="cbmirror"></span>
+</div>
+</center>
+
+</div>
+
+<script type="text/javascript" src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="plyr.js"></script>
+<script src="play.js"></script>
+</body>
+</html>
