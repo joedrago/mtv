@@ -2445,41 +2445,9 @@
       html = fs.readFileSync(`${__dirname}/../web/help.html`, "utf8");
       return res.send(html);
     });
-    app.get('/stream', function(req, res) {
+    app.get('/cast', function(req, res) {
       var html;
-      html = fs.readFileSync(`${__dirname}/../web/client.html`, "utf8");
-      return res.send(html);
-    });
-    app.get('/watch', function(req, res) {
-      var html;
-      html = fs.readFileSync(`${__dirname}/../web/client.html`, "utf8");
-      return res.send(html);
-    });
-    app.get('/solo', function(req, res) {
-      var discordClientID, html, k, ref, soloID, url, v;
-      soloID = req.query.solo;
-      if (soloID == null) {
-        while (true) {
-          soloID = randomString();
-          if (soloSessions[soloID] == null) {
-            break;
-          }
-        }
-        url = `/solo?solo=${soloID}`;
-        ref = req.query;
-        for (k in ref) {
-          v = ref[k];
-          url += `&${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
-        }
-        res.redirect(url);
-        return;
-      }
-      html = fs.readFileSync(`${__dirname}/../web/solo.html`, "utf8");
-      discordClientID = secrets.discordClientID;
-      if (discordClientID == null) {
-        discordClientID = "0";
-      }
-      html = html.replace(/!CLIENT_ID!/, discordClientID);
+      html = fs.readFileSync(`${__dirname}/../web/cast.html`, "utf8");
       return res.send(html);
     });
     app.get('/play', function(req, res) {

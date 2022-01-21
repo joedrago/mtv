@@ -220,10 +220,9 @@ startCast = ->
   params = new URLSearchParams(formData)
   if params.get("mirror")?
     params.delete("filters")
-  params.set('start', 1)
   querystring = params.toString()
   baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
-  baseURL = baseURL.replace(/play$/, "watch")
+  baseURL = baseURL.replace(/play$/, "cast")
   mtvURL = baseURL + "?" + querystring
   console.log "We're going here: #{mtvURL}"
   chrome.cast.requestSession (e) ->
