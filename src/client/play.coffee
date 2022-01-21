@@ -1034,6 +1034,8 @@ window.onload = ->
   }
 
   if qs('start')?
+    console.log "AUTO START"
+    document.getElementById('info').innerHTML = "AUTO START"
     setTimeout ->
       startHere()
     , 0
