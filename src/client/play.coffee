@@ -698,9 +698,6 @@ clearOpinion = ->
   document.getElementById('opinions').innerHTML = ""
 
 updateOpinion = (pkt) ->
-  if lastPlayedID != pkt.id
-    return
-
   html = ""
   for o in opinionOrder by -1
     capo = o.charAt(0).toUpperCase() + o.slice(1)
