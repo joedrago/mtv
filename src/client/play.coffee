@@ -1037,3 +1037,7 @@ window.onload = ->
     setTimeout ->
       startHere()
     , 0
+    setTimeout ->
+      if not player?
+        startHere()
+    , 3000
