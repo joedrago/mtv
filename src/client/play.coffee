@@ -1033,7 +1033,7 @@ window.onload = ->
       return calcShareURL(mirror)
   }
 
-  if qs('start') == "1"
+  if qs('start')?
     setTimeout ->
       startHere()
     , 0
