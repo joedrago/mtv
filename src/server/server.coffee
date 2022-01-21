@@ -1877,31 +1877,8 @@ main = (argv) ->
     html = fs.readFileSync("#{__dirname}/../web/help.html", "utf8")
     res.send(html)
 
-  app.get '/stream', (req, res) ->
-    html = fs.readFileSync("#{__dirname}/../web/client.html", "utf8")
-    res.send(html)
-
-  app.get '/watch', (req, res) ->
-    html = fs.readFileSync("#{__dirname}/../web/client.html", "utf8")
-    res.send(html)
-
-  app.get '/solo', (req, res) ->
-    soloID = req.query.solo
-    if not soloID?
-      loop
-        soloID = randomString()
-        if not soloSessions[soloID]?
-          break
-      url = "/solo?solo=#{soloID}"
-      for k,v of req.query
-        url += "&#{encodeURIComponent(k)}=#{encodeURIComponent(v)}"
-      res.redirect(url)
-      return
-    html = fs.readFileSync("#{__dirname}/../web/solo.html", "utf8")
-    discordClientID = secrets.discordClientID
-    if not discordClientID?
-      discordClientID = "0"
-    html = html.replace(/!CLIENT_ID!/, discordClientID)
+  app.get '/cast', (req, res) ->
+    html = fs.readFileSync("#{__dirname}/../web/cast.html", "utf8")
     res.send(html)
 
   app.get '/play', (req, res) ->

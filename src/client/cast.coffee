@@ -315,11 +315,7 @@ soloStartup = ->
 # ---------------------------------------------------------------------------------------
 
 window.onload = ->
-  showControls = 0
-  if qs('controls')
-    showControls = 1
-
-  player = new Player('#mtv-player')
+  player = new Player('#mtv-player', false)
   player.ended = (event) ->
     playing = false
   player.play('AB7ykOfAgIA') # MTV Loading...

@@ -1,9 +1,12 @@
 filters = require '../filters'
 
 class Player
-  constructor: (domID) ->
+  constructor: (domID, showControls = true) ->
     @ended = null
-    @plyr = new Plyr(domID)
+    options = undefined
+    if not showControls
+      options = { controls: [] }
+    @plyr = new Plyr(domID, options)
     @plyr.on 'ready', (event) =>
       @plyr.play()
     @plyr.on 'ended', (event) =>

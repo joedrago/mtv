@@ -719,7 +719,7 @@ startCast = ->
   params = new URLSearchParams(formData)
   querystring = params.toString()
   baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
-  mtvURL = baseURL + "watch?" + querystring
+  mtvURL = baseURL + "cast?" + querystring
   console.log "We're going here: #{mtvURL}"
   chrome.cast.requestSession (e) ->
     castSession = e
