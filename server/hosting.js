@@ -85,7 +85,7 @@
 
     }
     // who cares
-    cmdArgs = ['-y', '-i', fullVideoFilename, '-ss', '10', '-vframes', '1', '-vf', 'scale=320:180', fullThumbFilename];
+    cmdArgs = ['-y', '-ss', '10', '-i', fullVideoFilename, '-vframes', '1', '-vf', 'scale=320:180', fullThumbFilename];
     result = spawnSync("ffmpeg", cmdArgs);
     if (!fs.existsSync(fullThumbFilename)) {
       fs.unlinkSync(fullVideoFilename);
