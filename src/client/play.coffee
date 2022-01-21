@@ -1025,6 +1025,11 @@ window.onload = ->
 
   prepareCast()
 
+  if autostart
+    console.log "AUTO START"
+    document.getElementById('info').innerHTML = "AUTO START"
+    startHere()
+
   new Clipboard '.share', {
     text: (trigger) ->
       if trigger.value.match(/Perma/i)
@@ -1034,8 +1039,3 @@ window.onload = ->
         mirror = true
       return calcShareURL(mirror)
   }
-
-  if autostart
-    console.log "AUTO START"
-    document.getElementById('info').innerHTML = "AUTO START"
-    startHere()
