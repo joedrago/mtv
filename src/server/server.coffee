@@ -1882,9 +1882,9 @@ main = (argv) ->
     user = getUserFromNickname(req.params.nickname)
     p = userPlaylists[user]?[req.params.playlist]
     if p?
-      res.redirect("/solo?name=#{encodeURIComponent(req.params.playlist)}&filters=#{encodeURIComponent(p.filters)}")
+      res.redirect("/play?solo=new&name=#{encodeURIComponent(req.params.playlist)}&filters=#{encodeURIComponent(p.filters)}")
     else
-      res.redirect('/solo')
+      res.redirect('/play?solo=new')
 
   app.get '/info/playlist', (req, res) ->
     updateOpinions(playlist, true)
