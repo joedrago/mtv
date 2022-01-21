@@ -203,7 +203,7 @@ calcShareURL = (mirror) ->
     params.set("mirror", 1)
     params.delete("filters")
   else
-    params.delete("solo")
+    params.set("solo", "new")
     params.set("filters", params.get("filters").trim())
   params.delete("savename")
   params.delete("loadname")
