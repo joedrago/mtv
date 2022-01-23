@@ -1,7 +1,7 @@
 constants = require '../constants'
 Clipboard = require 'clipboard'
 filters = require '../filters'
-Player = require './Player'
+Player = require './player'
 
 socket = null
 

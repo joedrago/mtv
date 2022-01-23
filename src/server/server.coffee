@@ -1914,6 +1914,9 @@ main = (argv) ->
   app.get '/m(irror)?/:soloid', (req, res) ->
     res.redirect("/play?solo=#{encodeURIComponent(req.params.soloid)}&mirror=1")
 
+  app.get '/p', (req, res) ->
+    res.redirect('/#lists')
+
   app.get '/info/playlist', (req, res) ->
     updateOpinions(playlist, true)
     updateNicknames(playlist, true)

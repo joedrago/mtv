@@ -1,4 +1,4 @@
-Player = require './Player'
+Player = require './player'
 
 player = null
 socket = null

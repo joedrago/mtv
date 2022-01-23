@@ -2494,6 +2494,9 @@
     app.get('/m(irror)?/:soloid', function(req, res) {
       return res.redirect(`/play?solo=${encodeURIComponent(req.params.soloid)}&mirror=1`);
     });
+    app.get('/p', function(req, res) {
+      return res.redirect('/#lists');
+    });
     app.get('/info/playlist', function(req, res) {
       updateOpinions(playlist, true);
       updateNicknames(playlist, true);
