@@ -26,6 +26,9 @@ pad = (s, count) ->
 randomString = ->
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 
+randomShortString = ->
+  return Math.random().toString(36).substring(2, 6).toLowerCase()
+
 # TODO: Switch this sloppy pile of flat maps to a map of objects?
 serverEpoch = now()
 secrets = null
@@ -1885,7 +1888,7 @@ main = (argv) ->
     soloID = req.query.solo
     if soloID? and (soloID == 'new')
       loop
-        soloID = randomString()
+        soloID = randomShortString()
         if not soloSessions[soloID]?
           break
       url = "/play?solo=#{soloID}"
@@ -1907,6 +1910,9 @@ main = (argv) ->
       res.redirect("/play?solo=new&name=#{encodeURIComponent(req.params.playlist)}&filters=#{encodeURIComponent(p.filters)}")
     else
       res.redirect('/play?solo=new')
+
+  app.get '/m(irror)?/:soloid', (req, res) ->
+    res.redirect("/play?solo=#{encodeURIComponent(req.params.soloid)}&mirror=1")
 
   app.get '/info/playlist', (req, res) ->
     updateOpinions(playlist, true)

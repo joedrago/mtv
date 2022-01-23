@@ -196,19 +196,19 @@ calcPerma = ->
   return mtvURL
 
 calcShareURL = (mirror) ->
+  baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
+  if mirror
+    baseURL = baseURL.replace(/play$/, "m")
+    return baseURL + "/" + encodeURIComponent(soloID)
+
   form = document.getElementById('asform')
   formData = new FormData(form)
   params = new URLSearchParams(formData)
-  if mirror
-    params.set("mirror", 1)
-    params.delete("filters")
-  else
-    params.set("solo", "new")
-    params.set("filters", params.get("filters").trim())
+  params.set("solo", "new")
+  params.set("filters", params.get("filters").trim())
   params.delete("savename")
   params.delete("loadname")
   querystring = params.toString()
-  baseURL = window.location.href.split('#')[0].split('?')[0] # oof hacky
   mtvURL = baseURL + "?" + querystring
   return mtvURL
 
