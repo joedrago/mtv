@@ -18,6 +18,29 @@ soloCount = 0
 soloLabels = null
 soloMirror = false
 
+TIME_BUCKETS = [
+  { since: 1200, description: "20 min" }
+  { since: 3600, description: "1 hour" }
+  { since: 10800, description: "3 hours" }
+  { since: 28800, description: "8 hours" }
+  { since: 86400, description: "1 day" }
+  { since: 259200, description: "3 days" }
+  { since: 0, description: "More than 3 days" }
+]
+
+lastShowListTime = null
+soloLastWatched = {}
+try
+  rawJSON = localStorage.getItem('lastwatched')
+  soloLastWatched = JSON.parse(rawJSON)
+  if not soloLastWatched? or (typeof(soloLastWatched) != 'object')
+    console.log "soloLastWatched is not an object, starting fresh."
+    soloLastWatched = {}
+  console.log "Parsed localStorage's lastwatched: ", soloLastWatched
+catch
+  console.log "Failed to parse localStorage's lastwatched, starting fresh."
+  soloLastWatched = {}
+
 lastPlayedID = null
 
 endedTimer = null
@@ -36,7 +59,7 @@ castAvailable = false
 castSession = null
 
 launchOpen = false # (localStorage.getItem('launch') == "true")
-console.log "launchOpen: #{launchOpen}"
+# console.log "launchOpen: #{launchOpen}"
 
 addEnabled = true
 exportEnabled = false
@@ -316,6 +339,54 @@ soloInfoBroadcast = ->
     socket.emit 'solo', pkt
     soloCommand(pkt)
 
+soloSaveLastWatched = ->
+  localStorage.setItem('lastwatched', JSON.stringify(soloLastWatched))
+
+soloCalcBuckets = (list) ->
+  buckets = []
+  for tb in TIME_BUCKETS
+    buckets.push {
+      since: tb.since
+      description: tb.description
+      list: []
+    }
+
+  t = now()
+  for e in list
+    since = soloLastWatched[e.id]
+    if since?
+      since = t - since
+    else
+      since = 2592000 # two weeks
+    # console.log "id #{e.id} since #{since}"
+    for bucket in buckets
+      if bucket.since == 0
+        # the catchall
+        bucket.list.push e
+        continue
+      if since < bucket.since
+        bucket.list.push e
+        break
+  return buckets.reverse() # oldest to newest
+
+shuffleArray = (array) ->
+  for i in [array.length - 1 ... 0] by -1
+    j = Math.floor(Math.random() * (i + 1))
+    temp = array[i]
+    array[i] = array[j]
+    array[j] = temp
+
+soloShuffle = ->
+  console.log "Shuffling..."
+
+  soloQueue = []
+  buckets = soloCalcBuckets(soloUnshuffled)
+  for bucket in buckets
+    shuffleArray(bucket.list)
+    for e in bucket.list
+      soloQueue.push e
+  soloIndex = 0
+
 soloPlay = (delta = 1) ->
   if not player?
     return
@@ -323,14 +394,7 @@ soloPlay = (delta = 1) ->
     return
 
   if not soloVideo? or (soloQueue.length == 0) or ((soloIndex + delta) > (soloQueue.length - 1))
-    console.log "Reshuffling..."
-    soloQueue = [ soloUnshuffled[0] ]
-    for i, index in soloUnshuffled
-      continue if index == 0
-      j = Math.floor(Math.random() * (index + 1))
-      soloQueue.push(soloQueue[j])
-      soloQueue[j] = i
-    soloIndex = 0
+    soloShuffle()
   else
     soloIndex += delta
 
@@ -346,8 +410,11 @@ soloPlay = (delta = 1) ->
   # soloVideo.duration = 40
 
   play(soloVideo, soloVideo.id, soloVideo.start, soloVideo.end)
-
   soloInfoBroadcast()
+
+  soloLastWatched[soloVideo.id] = now()
+  soloSaveLastWatched()
+
 
 soloTick = ->
   if not player?
@@ -642,6 +709,11 @@ sharePerma = (mirror) ->
   """
 
 showList = ->
+  t = now()
+  showBuckets = false
+  if lastShowListTime? and ((t - lastShowListTime) < 3)
+    showBuckets = true
+
   document.getElementById('list').innerHTML = "Please wait..."
 
   filterString = document.getElementById('filters').value
@@ -652,15 +724,30 @@ showList = ->
 
   html = "<div class=\"listcontainer\">"
   html += "<div class=\"infocounts\">#{list.length} videos:</div>"
-  for e in list
-    html += "<div>"
-    html += "<span class=\"infoartist nextvideo\">#{e.artist}</span>"
-    html += "<span class=\"nextvideo\"> - </span>"
-    html += "<span class=\"infotitle nextvideo\">\"#{e.title}\"</span>"
-    html += "</div>\n"
+
+  if showBuckets && (list.length > 1)
+    buckets = soloCalcBuckets(list)
+    for bucket in buckets
+      if bucket.list.length < 1
+        continue
+      html += "<div class=\"infobucket\">Bucket [#{bucket.description}] (#{bucket.list.length} videos):</div>"
+      for e in bucket.list
+        html += "<div>"
+        html += "<span class=\"infoartist nextvideo\">#{e.artist}</span>"
+        html += "<span class=\"nextvideo\"> - </span>"
+        html += "<span class=\"infotitle nextvideo\">\"#{e.title}\"</span>"
+        html += "</div>\n"
+  else
+    for e in list
+      html += "<div>"
+      html += "<span class=\"infoartist nextvideo\">#{e.artist}</span>"
+      html += "<span class=\"nextvideo\"> - </span>"
+      html += "<span class=\"infotitle nextvideo\">\"#{e.title}\"</span>"
+      html += "</div>\n"
 
   html += "</div>"
 
+  lastShowListTime = t
   document.getElementById('list').innerHTML = html
 
 showExport = ->
