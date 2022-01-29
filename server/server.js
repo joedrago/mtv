@@ -538,6 +538,7 @@
       history.pop();
     }
     if (!shouldSkip(lastPlayed)) {
+      console.log(e);
       pkt = calcLicensingInfo(e);
       pkt.id = e.id;
       pkt.start = e.start;
@@ -1085,6 +1086,10 @@
   calcEntryStrings = function(e) {
     var actualDuration, artist, count, endTime, feeling, idInfo, nick, opinionString, opinionTable, ownerNick, params, ref, ref1, startTime, tagsString, title, url, user, userFeeling, whoList;
     idInfo = filters.calcIdInfo(e.id);
+    if (idInfo == null) {
+      console.log("calcEntryStrings: bad idInfo: ", e);
+      return {};
+    }
     url = idInfo.url;
     if (idInfo.provider === 'youtube') {
       params = "";

@@ -296,6 +296,7 @@
   calcIdInfo = function(id) {
     var matches, provider, real, url;
     if (!(matches = id.match(/^([a-z]+)_(\S+)/))) {
+      console.log(`calcIdInfo: Bad ID: ${id}`);
       return null;
     }
     provider = matches[1];
@@ -308,6 +309,7 @@
         url = `/videos/${real}.mp4`;
         break;
       default:
+        console.log(`calcIdInfo: Bad Provider: ${provider}`);
         return null;
     }
     return {

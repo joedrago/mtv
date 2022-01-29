@@ -192,6 +192,7 @@ generateList = (filterString, sortByArtist = false) ->
 
 calcIdInfo = (id) ->
   if not matches = id.match(/^([a-z]+)_(\S+)/)
+    console.log "calcIdInfo: Bad ID: #{id}"
     return null
   provider = matches[1]
   real = matches[2]
@@ -202,6 +203,7 @@ calcIdInfo = (id) ->
     when 'mtv'
       url = "/videos/#{real}.mp4"
     else
+      console.log "calcIdInfo: Bad Provider: #{provider}"
       return null
 
   return {
