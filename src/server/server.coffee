@@ -378,6 +378,7 @@ play = (e) ->
     history.pop()
 
   if not shouldSkip(lastPlayed)
+    console.log e
     pkt = calcLicensingInfo(e)
     pkt.id = e.id
     pkt.start = e.start
@@ -808,6 +809,9 @@ prettyDuration = (duration) ->
 
 calcEntryStrings = (e) ->
   idInfo = filters.calcIdInfo(e.id)
+  if not idInfo?
+    console.log "calcEntryStrings: bad idInfo: ", e
+    return {}
   url = idInfo.url
   if idInfo.provider == 'youtube'
     params = ""
