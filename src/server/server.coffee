@@ -1677,10 +1677,12 @@ main = (argv) ->
           soloBroadcast(socket.id, msg)
           if (msg.cmd == 'info') and msg.info?
             soloInfo[msg.id] = msg.info
+            soloInfo[msg.id].tu = now() # time updated
             # console.log "Solo Info Update [#{msg.id}]: ", soloInfo[msg.id]
         else
           # new connection or re-connection, update their info
           if soloInfo[msg.id]?
+            soloInfo[msg.id].tb = now() # time broadcasted
             socket.emit 'solo', { id: msg.id, cmd: 'info', info: soloInfo[msg.id] }
 
     socket.on 'playing', (msg) ->
