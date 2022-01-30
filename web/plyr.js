@@ -3397,7 +3397,7 @@ typeof navigator === "object" && (function (global, factory) {
     },
     // Keyboard shortcut settings
     keyboard: {
-      focused: true,
+      focused: false,
       global: true
     },
     // Display tooltips
