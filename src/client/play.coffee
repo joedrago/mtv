@@ -522,8 +522,8 @@ startHere = ->
 
     soloQueue = []
     soloPlay()
-    if soloMirror and soloVideo
-      play(soloVideo, soloVideo.id, soloVideo.start, soloVideo.end)
+    if soloMirror and soloID
+      socket.emit 'solo', { id: soloID }
   else
     # Live Mode!
     showWatchLive()
@@ -832,7 +832,11 @@ soloCommand = (pkt) ->
           if soloVideo?
             if not player?
               console.log "no player yet"
-            play(soloVideo, soloVideo.id, soloVideo.start, soloVideo.end)
+            extraOffset = 0
+            if pkt.info.tu? and pkt.info.tb?
+              extraOffset = 1 + pkt.info.tb - pkt.info.tu
+              console.log "Extra offset: #{extraOffset}"
+            play(soloVideo, soloVideo.id, soloVideo.start + extraOffset, soloVideo.end)
         clearOpinion()
         if discordToken? and soloInfo.current? and soloInfo.current.id?
           socket.emit 'opinion', { token: discordToken, id: soloInfo.current.id }

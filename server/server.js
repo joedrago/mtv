@@ -2181,12 +2181,14 @@
           if (msg.cmd != null) {
             soloBroadcast(socket.id, msg);
             if ((msg.cmd === 'info') && (msg.info != null)) {
-              return soloInfo[msg.id] = msg.info;
+              soloInfo[msg.id] = msg.info;
+              return soloInfo[msg.id].tu = now(); // time updated
             }
           } else {
             // new connection or re-connection, update their info
             // console.log "Solo Info Update [#{msg.id}]: ", soloInfo[msg.id]
             if (soloInfo[msg.id] != null) {
+              soloInfo[msg.id].tb = now(); // time broadcasted
               return socket.emit('solo', {
                 id: msg.id,
                 cmd: 'info',
