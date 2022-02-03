@@ -25,8 +25,14 @@ TIME_BUCKETS = [
   { since: 28800, description: "8 hours" }
   { since: 86400, description: "1 day" }
   { since: 259200, description: "3 days" }
-  { since: 0, description: "More than 3 days" }
+  { since: 604800, description: "1 week" }
+  { since: 2419200, description: "4 weeks" }
+  { since: 31536000, description: "1 year" }
+  { since: 315360000, description: "10 years" }
+  { since: 3153600000, description: "100 years" }
+  { since: 0, description: "Never watched" }
 ]
+NEVER_WATCHED_TIME = TIME_BUCKETS[TIME_BUCKETS.length - 2].since + 1
 
 lastShowListTime = null
 soloLastWatched = {}
@@ -357,7 +363,7 @@ soloCalcBuckets = (list) ->
     if since?
       since = t - since
     else
-      since = 2592000 # two weeks
+      since = NEVER_WATCHED_TIME
     # console.log "id #{e.id} since #{since}"
     for bucket in buckets
       if bucket.since == 0
