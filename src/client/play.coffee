@@ -348,6 +348,15 @@ soloInfoBroadcast = ->
 soloSaveLastWatched = ->
   localStorage.setItem('lastwatched', JSON.stringify(soloLastWatched))
 
+soloResetLastWatched = ->
+  soloLastWatched = {}
+  soloSaveLastWatched()
+
+askForget = ->
+  if confirm("Are you sure you want to forget your watch history?")
+    soloResetLastWatched()
+    showList(true)
+
 soloCalcBuckets = (list) ->
   buckets = []
   for tb in TIME_BUCKETS
@@ -714,9 +723,8 @@ sharePerma = (mirror) ->
     <div class=\"shareurl\">#{calcPerma()}</div>
   """
 
-showList = ->
+showList = (showBuckets = false) ->
   t = now()
-  showBuckets = false
   if lastShowListTime? and ((t - lastShowListTime) < 3)
     showBuckets = true
 
@@ -729,9 +737,9 @@ showList = ->
     return
 
   html = "<div class=\"listcontainer\">"
-  html += "<div class=\"infocounts\">#{list.length} videos:</div>"
 
   if showBuckets && (list.length > 1)
+    html += "<div class=\"infocounts\">#{list.length} videos: <a class=\"forgetlink\" onclick=\"askForget(); return false;\">[Forget]</a></div>"
     buckets = soloCalcBuckets(list)
     for bucket in buckets
       if bucket.list.length < 1
@@ -744,6 +752,7 @@ showList = ->
         html += "<span class=\"infotitle nextvideo\">\"#{e.title}\"</span>"
         html += "</div>\n"
   else
+    html += "<div class=\"infocounts\">#{list.length} videos:</div>"
     for e in list
       html += "<div>"
       html += "<span class=\"infoartist nextvideo\">#{e.artist}</span>"
@@ -1016,6 +1025,7 @@ goSolo = ->
   window.location = mtvURL
 
 window.onload = ->
+  window.askForget = askForget
   window.clipboardEdit = clipboardEdit
   window.clipboardMirror = clipboardMirror
   window.deletePlaylist = deletePlaylist
