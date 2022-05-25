@@ -1923,6 +1923,9 @@ main = (argv) ->
   app.get '/p', (req, res) ->
     res.redirect('/#lists')
 
+  app.get '/s(olo)?', (req, res) ->
+    res.redirect('/play?solo=new')
+
   app.get '/info/playlist', (req, res) ->
     updateOpinions(playlist, true)
     updateNicknames(playlist, true)
@@ -1958,6 +1961,14 @@ main = (argv) ->
     updateNicknames(history)
     res.type('application/json')
     res.send(JSON.stringify(history, privacyReplacer, 2))
+
+  app.get '/info/solo/:id', (req, res) ->
+    res.type('application/json')
+    if soloInfo[req.params.id]?
+      jsonText = JSON.stringify(soloInfo[req.params.id], null, 2)
+    else
+      jsonText = "false"
+    res.send(jsonText)
 
   app.get '/info/user', (req, res) ->
     if req.query? and req.query.user?
