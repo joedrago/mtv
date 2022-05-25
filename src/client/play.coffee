@@ -632,14 +632,20 @@ renderInfo = (info, isLive = false) ->
     tagsString = Object.keys(info.current.tags).sort().join(', ')
     company = await calcLabel(info.current)
 
+  idInfo = filters.calcIdInfo(info.current.id)
+  if not idInfo?
+    idInfo =
+      provider: 'youtube'
+      url: 'https://example.com'
+
   html = ""
   if not isLive
     html += "<div class=\"infocounts\">Track #{info.index} / #{info.count}</div>"
 
   if not player?
-    html += "<div class=\"infothumb\"><a href=\"https://youtu.be/#{encodeURIComponent(info.current.id)}\"><img width=320 height=180 src=\"#{info.current.thumb}\"></a></div>"
+    html += "<div class=\"infothumb\"><a target=\"_blank\" href=\"#{idInfo.url}\"><img width=320 height=180 src=\"#{info.current.thumb}\"></a></div>"
   html += "<div class=\"infocurrent infoartist\">#{info.current.artist}</div>"
-  html += "<div class=\"infotitle\">\"#{info.current.title}\"</div>"
+  html += "<div class=\"infotitle\">\"<a target=\"_blank\" class=\"infotitle\" href=\"#{idInfo.url}\">#{info.current.title}</a>\"</div>"
   html += "<div class=\"infolabel\">#{company}</div>"
   if not isLive
     html += "<div class=\"infotags\">&nbsp;#{tagsString}&nbsp;</div>"

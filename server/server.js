@@ -2504,6 +2504,9 @@
     app.get('/p', function(req, res) {
       return res.redirect('/#lists');
     });
+    app.get('/s(olo)?', function(req, res) {
+      return res.redirect('/play?solo=new');
+    });
     app.get('/info/playlist', function(req, res) {
       updateOpinions(playlist, true);
       updateNicknames(playlist, true);
@@ -2546,6 +2549,16 @@
       updateNicknames(history);
       res.type('application/json');
       return res.send(JSON.stringify(history, privacyReplacer, 2));
+    });
+    app.get('/info/solo/:id', function(req, res) {
+      var jsonText;
+      res.type('application/json');
+      if (soloInfo[req.params.id] != null) {
+        jsonText = JSON.stringify(soloInfo[req.params.id], null, 2);
+      } else {
+        jsonText = "false";
+      }
+      return res.send(jsonText);
     });
     app.get('/info/user', function(req, res) {
       var userInfo;
