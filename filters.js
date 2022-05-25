@@ -240,7 +240,7 @@
               if (id.match(/^#/)) {
                 break;
               }
-              if (!id.match(/^youtube_/)) {
+              if (!id.match(/^youtube_/) && !id.match(/^mtv_/)) {
                 id = `youtube_${id}`;
               }
               pipeSplit = id.split(/\|/);
@@ -255,6 +255,8 @@
               }
               title = id;
               if (matches = title.match(/^youtube_(.+)/)) {
+                title = matches[1];
+              } else if (matches = title.match(/^mtv_(.+)/)) {
                 title = matches[1];
               }
               soloUnlisted[id] = {

@@ -153,7 +153,7 @@ generateList = (filterString, sortByArtist = false) ->
           for id in pieces.slice(1)
             if id.match(/^#/)
               break
-            if not id.match(/^youtube_/)
+            if not id.match(/^youtube_/) and not id.match(/^mtv_/)
               id = "youtube_#{id}"
             pipeSplit = id.split(/\|/)
             id = pipeSplit.shift()
@@ -165,6 +165,8 @@ generateList = (filterString, sortByArtist = false) ->
               end = parseInt(pipeSplit.shift())
             title = id
             if matches = title.match(/^youtube_(.+)/)
+              title = matches[1]
+            else if matches = title.match(/^mtv_(.+)/)
               title = matches[1]
             soloUnlisted[id] =
               id: id
