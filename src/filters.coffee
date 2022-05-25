@@ -179,6 +179,10 @@ generateList = (filterString, sortByArtist = false) ->
               start: start
               end: end
               unlisted: true
+
+            # force-skip any pre-existing DB versions of this ID
+            if filterDatabase[id]?
+              filterDatabase[id].skipped = true
             continue
         else
           # skip this filter

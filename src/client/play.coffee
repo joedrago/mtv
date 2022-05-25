@@ -505,6 +505,54 @@ sendReady = ->
     sfw = true
   socket.emit 'ready', { user: user, sfw: sfw }
 
+trimAllWhitespace = (e) ->
+  ret = false
+  if e.artist?
+    newArtist = e.artist.replace(/^\s*/, "")
+    newArtist = e.artist.replace(/\s*$/, "")
+    if e.artist != newArtist
+      e.artist = newArtist
+      ret = true
+  if e.title?
+    newTitle = e.title.replace(/^\s*/, "")
+    newTitle = e.title.replace(/\s*$/, "")
+    if e.title != newTitle
+      e.title = newTitle
+      ret = true
+  return ret
+
+splitArtist = (e) ->
+  artist = "Unlisted Videos"
+  title = e.title
+  if matches = e.title.match(/^(.+)\s[–-]\s(.+)$/)
+    artist = matches[1]
+    title = matches[2]
+  else if matches = e.title.match(/^([^"]+)\s"([^"]+)"/)
+    artist = matches[1]
+    title = matches[2]
+
+  title = title.replace(/[\(\[](Official)?\s?(HD)?\s?(Music)?\s(Audio|Video)[\)\]]/i, "")
+  title = title.replace(/^\s+/, "")
+  title = title.replace(/\s+$/, "")
+  if title.match(/^".+"$/)
+    title = title.replace(/^"/, "")
+    title = title.replace(/"$/, "")
+
+  if matches = title.match(/^(.+)\s+\(f(ea)?t. (.+)\)$/i)
+    title = matches[1]
+    artist += " ft. #{matches[3]}"
+  else if matches = title.match(/^(.+)\s+f(ea)?t. (.+)$/i)
+    title = matches[1]
+    artist += " ft. #{matches[3]}"
+
+  if matches = artist.match(/^(.+)\s+\(with ([^)]+)\)$/)
+    artist = "#{matches[1]} ft. #{matches[2]}"
+
+  e.artist = artist
+  e.title = title
+  trimAllWhitespace(e)
+  return
+
 startHere = ->
   if not player?
     document.getElementById('solovideocontainer').style.display = 'block'
@@ -521,6 +569,8 @@ startHere = ->
       if soloVideo? and soloVideo.unlisted
         console.log "Updating Title: #{title}"
         soloVideo.title = title
+        splitArtist(soloVideo)
+        renderInfo(soloInfo)
         showInfo(soloVideo)
 
     player.play('AB7ykOfAgIA') # MTV Loading...
