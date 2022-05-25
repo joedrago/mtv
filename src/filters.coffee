@@ -57,6 +57,7 @@ generateList = (filterString, sortByArtist = false) ->
     if not filterDatabase?
       return null
 
+  soloUnlisted = {}
   soloUnshuffled = []
   if soloFilters?
     for id, e of filterDatabase
@@ -147,6 +148,36 @@ generateList = (filterString, sortByArtist = false) ->
               break
             idLookup[id] = true
           filterFunc = (e, s) -> idLookup[e.id]
+        when 'un', 'ul', 'unlisted'
+          idLookup = {}
+          for id in pieces.slice(1)
+            if id.match(/^#/)
+              break
+            if not id.match(/^youtube_/)
+              id = "youtube_#{id}"
+            pipeSplit = id.split(/\|/)
+            id = pipeSplit.shift()
+            start = -1
+            end = -1
+            if pipeSplit.length > 0
+              start = parseInt(pipeSplit.shift())
+            if pipeSplit.length > 0
+              end = parseInt(pipeSplit.shift())
+            title = id
+            if matches = title.match(/^youtube_(.+)/)
+              title = matches[1]
+            soloUnlisted[id] =
+              id: id
+              artist: 'Unlisted Videos'
+              title: title
+              tags: {}
+              nickname: 'Unlisted'
+              company: 'Unlisted'
+              thumb: 'unlisted.png'
+              start: start
+              end: end
+              unlisted: true
+            continue
         else
           # skip this filter
           continue
@@ -176,6 +207,9 @@ generateList = (filterString, sortByArtist = false) ->
     # Queue it all up
     for id, e of filterDatabase
       soloUnshuffled.push e
+
+  for k, unlisted of soloUnlisted
+    soloUnshuffled.push unlisted
 
   if sortByArtist
     soloUnshuffled.sort (a, b) ->

@@ -5813,6 +5813,7 @@ typeof navigator === "object" && (function (global, factory) {
           } = data; // Set title
 
           this.config.title = title;
+          this.mtvTitle = title;
           ui.setTitle.call(this); // Set aspect ratio
 
           this.embed.ratio = roundAspectRatio(width, height);

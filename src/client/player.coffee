@@ -13,6 +13,10 @@ class Player
       if @ended?
         @ended()
 
+    @plyr.on 'playing', (event) =>
+      if @onTitle?
+        @onTitle(@plyr.mtvTitle)
+
   play: (id, startSeconds = undefined, endSeconds = undefined) ->
     idInfo = filters.calcIdInfo(id)
     if not idInfo?
