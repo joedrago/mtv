@@ -57,7 +57,7 @@
   };
 
   generateList = async function(filterString, sortByArtist = false) {
-    var allAllowed, command, durationInSeconds, e, filter, filterFunc, filterOpinion, filterUser, i, id, idLookup, isMatch, j, k, len, len1, len2, matches, negated, pieces, property, rawFilters, ref, since, soloFilters, soloUnshuffled, someException, substring;
+    var allAllowed, command, durationInSeconds, e, end, filter, filterFunc, filterOpinion, filterUser, i, id, idLookup, isMatch, j, k, l, len, len1, len2, len3, m, matches, negated, pieces, pipeSplit, property, rawFilters, ref, ref1, since, soloFilters, soloUnlisted, soloUnshuffled, someException, start, substring, title, unlisted;
     soloFilters = null;
     if ((filterString != null) && (filterString.length > 0)) {
       soloFilters = [];
@@ -84,6 +84,7 @@
         return null;
       }
     }
+    soloUnlisted = {};
     soloUnshuffled = [];
     if (soloFilters != null) {
       for (id in filterDatabase) {
@@ -218,8 +219,8 @@
           case 'ids':
             idLookup = {};
             ref = pieces.slice(1);
-            for (k = 0, len2 = ref.length; k < len2; k++) {
-              id = ref[k];
+            for (l = 0, len2 = ref.length; l < len2; l++) {
+              id = ref[l];
               if (id.match(/^#/)) {
                 break;
               }
@@ -228,6 +229,48 @@
             filterFunc = function(e, s) {
               return idLookup[e.id];
             };
+            break;
+          case 'un':
+          case 'ul':
+          case 'unlisted':
+            idLookup = {};
+            ref1 = pieces.slice(1);
+            for (m = 0, len3 = ref1.length; m < len3; m++) {
+              id = ref1[m];
+              if (id.match(/^#/)) {
+                break;
+              }
+              if (!id.match(/^youtube_/)) {
+                id = `youtube_${id}`;
+              }
+              pipeSplit = id.split(/\|/);
+              id = pipeSplit.shift();
+              start = -1;
+              end = -1;
+              if (pipeSplit.length > 0) {
+                start = parseInt(pipeSplit.shift());
+              }
+              if (pipeSplit.length > 0) {
+                end = parseInt(pipeSplit.shift());
+              }
+              title = id;
+              if (matches = title.match(/^youtube_(.+)/)) {
+                title = matches[1];
+              }
+              soloUnlisted[id] = {
+                id: id,
+                artist: 'Unlisted Videos',
+                title: title,
+                tags: {},
+                nickname: 'Unlisted',
+                company: 'Unlisted',
+                thumb: 'unlisted.png',
+                start: start,
+                end: end,
+                unlisted: true
+              };
+              continue;
+            }
             break;
           default:
             // skip this filter
@@ -272,6 +315,10 @@
         e = filterDatabase[id];
         soloUnshuffled.push(e);
       }
+    }
+    for (k in soloUnlisted) {
+      unlisted = soloUnlisted[k];
+      soloUnshuffled.push(unlisted);
     }
     if (sortByArtist) {
       soloUnshuffled.sort(function(a, b) {

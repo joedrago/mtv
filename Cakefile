@@ -103,7 +103,7 @@ task 'build', 'build JS bundle', (options) ->
 
 watchEverything = ->
   util.log "Watching for changes in src"
-  watch ['src/client','src/server','package.json','web'], (evt, filename) ->
+  watch ['src/client','src/server', 'src/filters.coffee','package.json','web'], (evt, filename) ->
     parsed = path.parse(filename)
     # console.log parsed
     if (parsed.ext == '.coffee') or (parsed.ext == '.md') or (filename == 'package.json') or (parsed.base == 'help.template.html')

@@ -317,7 +317,7 @@ showInfo = (pkt) ->
 play = (pkt, id, startSeconds = null, endSeconds = null) ->
   if not player?
     return
-  console.log "Playing: #{id}"
+  console.log "Playing: #{id} (#{startSeconds}, #{endSeconds})"
 
   lastPlayedID = id
   player.play(id, startSeconds, endSeconds)
@@ -517,6 +517,12 @@ startHere = ->
     player = new Player('#mtv-player')
     player.ended = (event) ->
       playing = false
+    player.onTitle = (title) ->
+      if soloVideo? and soloVideo.unlisted
+        console.log "Updating Title: #{title}"
+        soloVideo.title = title
+        showInfo(soloVideo)
+
     player.play('AB7ykOfAgIA') # MTV Loading...
 
   if soloID?

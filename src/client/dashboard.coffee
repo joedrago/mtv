@@ -27,6 +27,9 @@ castSession = null
 rawMode = false
 rawModeTag = ""
 
+convertPlaylistMode = null
+convertPlaylistData = null
+
 opinionOrder = constants.opinionOrder
 opinionButtonOrder = []
 for o in constants.opinionOrder
@@ -358,6 +361,31 @@ showLists = ->
   updateOther()
   lastClicked = showLists
 
+showConvertedPlaylist = ->
+  if not discordToken?
+    document.getElementById("main").innerHTML = """
+      Not authorized.
+    """
+    return
+
+  if convertPlaylistData?
+    if not Array.isArray(convertPlaylistData)
+      convertPlaylistData = []
+
+    playlistOutput = "un"
+    for id in convertPlaylistData
+      playlistOutput += " #{id}"
+    document.getElementById("main").innerHTML = """
+      Converted Youtube Playlist: #{convertPlaylistMode}<br>
+      <br>
+      <span class="convertoutput">#{playlistOutput}</span>
+    """
+    return
+
+  document.getElementById("main").innerHTML = """
+    Converting Youtube Playlist: #{convertPlaylistMode}
+  """
+
 showStats = ->
   html = ""
   xhttp = new XMLHttpRequest()
@@ -620,6 +648,10 @@ showWatchLink = ->
   document.getElementById('asform').style.display = 'none'
 
 processHash = ->
+  if convertPlaylistMode?
+    showConvertedPlaylist()
+    return
+
   currentHash = window.location.hash
   if matches = currentHash.match(/^#user\/(.+)/)
     lastUser = decodeURIComponent(matches[1])
@@ -748,12 +780,15 @@ init = ->
       rawMode = "tag"
       rawModeTag = matches[1]
 
+  convertPlaylistMode = qs('list')
+
   token = qs('token')
   if token?
     localStorage.setItem('token', token)
     window.location = '/'
     return
 
+  discordToken = localStorage.getItem('token')
   processHash()
 
   socket = io()
@@ -762,6 +797,10 @@ init = ->
     # switch which line is commented here to allow identity on the dash
     sendIdentity()
     # document.getElementById("identity").innerHTML = ""
+
+    if convertPlaylistMode?
+      console.log "emitting convertplaylist"
+      socket.emit 'convertplaylist', { token: discordToken, list: convertPlaylistMode }
 
   socket.on 'play', (pkt) ->
     if lastClicked?
@@ -776,6 +815,10 @@ init = ->
 
   socket.on 'opinion', (pkt) ->
     updateOpinion(pkt)
+
+  socket.on 'convertplaylist', (pkt) ->
+    convertPlaylistData = pkt
+    showConvertedPlaylist()
 
   prepareCast()
 
