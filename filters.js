@@ -271,6 +271,10 @@
                 end: end,
                 unlisted: true
               };
+              // force-skip any pre-existing DB versions of this ID
+              if (filterDatabase[id] != null) {
+                filterDatabase[id].skipped = true;
+              }
               continue;
             }
             break;
