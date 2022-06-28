@@ -86,6 +86,11 @@ randomString = ->
 now = ->
   return Math.floor(Date.now() / 1000)
 
+soloFatalError = (reason) ->
+  console.log "soloFatalError: #{reason}"
+  document.body.innerHTML = "ERROR: #{reason}"
+  soloError = true
+
 pageEpoch = now()
 
 qs = (name) ->
@@ -395,11 +400,15 @@ soloShuffle = ->
   console.log "Shuffling..."
 
   soloQueue = []
-  buckets = soloCalcBuckets(soloUnshuffled)
-  for bucket in buckets
-    shuffleArray(bucket.list)
-    for e in bucket.list
-      soloQueue.push e
+  if filters.isOrdered()
+    for s in soloUnshuffled
+      soloQueue.push s
+  else
+    buckets = soloCalcBuckets(soloUnshuffled)
+    for bucket in buckets
+      shuffleArray(bucket.list)
+      for e in bucket.list
+        soloQueue.push e
   soloIndex = 0
 
 soloPlay = (delta = 1) ->

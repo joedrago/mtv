@@ -5,6 +5,8 @@ filterServerOpinions = null
 filterGetUserFromNickname = null
 iso8601 = require 'iso8601-duration'
 
+lastOrdered = false
+
 now = ->
   return Math.floor(Date.now() / 1000)
 
@@ -36,7 +38,11 @@ cacheOpinions = (filterUser) ->
     if not filterOpinions[filterUser]?
       soloFatalError("Cannot get user opinions for #{filterUser}")
 
+isOrdered = ->
+  return lastOrdered
+
 generateList = (filterString, sortByArtist = false) ->
+  lastOrdered = false
   soloFilters = null
   if filterString? and (filterString.length > 0)
     soloFilters = []
@@ -68,6 +74,9 @@ generateList = (filterString, sortByArtist = false) ->
     for filter in soloFilters
       pieces = filter.split(/ +/)
       if pieces[0] == "private"
+        continue
+      if pieces[0] == "ordered"
+        lastOrdered = true
         continue
 
       negated = false
@@ -217,7 +226,7 @@ generateList = (filterString, sortByArtist = false) ->
   for k, unlisted of soloUnlisted
     soloUnshuffled.push unlisted
 
-  if sortByArtist
+  if sortByArtist and not lastOrdered
     soloUnshuffled.sort (a, b) ->
       if a.artist.toLowerCase() < b.artist.toLowerCase()
         return -1
@@ -255,5 +264,6 @@ calcIdInfo = (id) ->
 
 module.exports =
   setServerDatabases: setServerDatabases
+  isOrdered: isOrdered
   generateList: generateList
   calcIdInfo: calcIdInfo
