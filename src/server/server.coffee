@@ -1657,6 +1657,10 @@ sanitizeUsername = (name) ->
     name = name.substring(0, 16)
   return name
 
+youtubeSoloRedirect = (req, res) ->
+  html = fs.readFileSync("#{__dirname}/../web/redirect.html", "utf8")
+  res.send(html)
+
 main = (argv) ->
   secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'))
   if not secrets.youtube? or not secrets.cmd?
@@ -1952,6 +1956,9 @@ main = (argv) ->
       res.redirect("/play?solo=new&name=#{encodeURIComponent(req.params.playlist)}&filters=#{encodeURIComponent(p.filters)}")
     else
       res.redirect('/play?solo=new')
+
+  app.get '/playlist', youtubeSoloRedirect
+  app.get '/watch', youtubeSoloRedirect
 
   app.get '/m(irror)?/:soloid', (req, res) ->
     res.redirect("/play?solo=#{encodeURIComponent(req.params.soloid)}&mirror=1")

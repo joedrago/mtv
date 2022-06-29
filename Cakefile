@@ -39,8 +39,9 @@ buildBundle = (uiSrc, uiDst, callback) ->
 
 buildClient = (callback) ->
   buildBundle './src/client/dashboard.coffee', "web/dashboard.js", ->
-    buildBundle './src/client/play.coffee', "web/play.js", ->
-      buildBundle './src/client/cast.coffee', "web/cast.js", callback
+    buildBundle './src/client/redirect.coffee', "web/redirect.js", ->
+      buildBundle './src/client/play.coffee', "web/play.js", ->
+        buildBundle './src/client/cast.coffee', "web/cast.js", callback
 
 buildServer = (callback) ->
   coffee = spawn coffeeName, ['-c', '-o', 'server', 'src/server']
