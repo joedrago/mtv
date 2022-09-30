@@ -1955,11 +1955,14 @@ main = (argv) ->
 
   app.get '/p(laylist)?/:nickname/:playlist', (req, res) ->
     user = getUserFromNickname(req.params.nickname)
+    soloId = "new"
+    if req.query? and req.query.solo?
+      soloId = req.query.solo
     p = userPlaylists[user]?[req.params.playlist]
     if p?
-      res.redirect("/play?solo=new&name=#{encodeURIComponent(req.params.playlist)}&filters=#{encodeURIComponent(p.filters)}")
+      res.redirect("/play?solo=#{encodeURIComponent(soloId)}&name=#{encodeURIComponent(req.params.playlist)}&filters=#{encodeURIComponent(p.filters)}")
     else
-      res.redirect('/play?solo=new')
+      res.redirect("/play?solo=#{encodeURIComponent(soloId)}")
 
   app.get '/playlist', youtubeSoloRedirect
   app.get '/watch', youtubeSoloRedirect

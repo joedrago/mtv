@@ -2551,13 +2551,17 @@
       return res.send(html);
     });
     app.get('/p(laylist)?/:nickname/:playlist', function(req, res) {
-      var p, ref, user;
+      var p, ref, soloId, user;
       user = getUserFromNickname(req.params.nickname);
+      soloId = "new";
+      if ((req.query != null) && (req.query.solo != null)) {
+        soloId = req.query.solo;
+      }
       p = (ref = userPlaylists[user]) != null ? ref[req.params.playlist] : void 0;
       if (p != null) {
-        return res.redirect(`/play?solo=new&name=${encodeURIComponent(req.params.playlist)}&filters=${encodeURIComponent(p.filters)}`);
+        return res.redirect(`/play?solo=${encodeURIComponent(soloId)}&name=${encodeURIComponent(req.params.playlist)}&filters=${encodeURIComponent(p.filters)}`);
       } else {
-        return res.redirect('/play?solo=new');
+        return res.redirect(`/play?solo=${encodeURIComponent(soloId)}`);
       }
     });
     app.get('/playlist', youtubeSoloRedirect);
