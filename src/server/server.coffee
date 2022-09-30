@@ -578,33 +578,37 @@ queueYoutubePlaylist = (playlistId) ->
         req.end()
     outerReq.end()
 
-convertYoutubePlaylist = (playlistId) ->
+convertYoutubePlaylist = (output, playlistId, pageToken = null) ->
   return new Promise (resolve, reject) ->
     url = "https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=#{encodeURIComponent(playlistId)}&key=#{secrets.youtube}"
+    if pageToken?
+      url += "&pageToken=#{pageToken}"
     outerReq = https.request url, (outerRes) ->
       rawJSON = ""
       outerRes.on 'data', (chunk) ->
         rawJSON += chunk
       outerRes.on 'error', ->
         console.log "Error getting playlist music"
-        resolve([])
+        resolve(output)
       outerRes.on 'end', ->
         outerData = null
         try
           outerData = JSON.parse(rawJSON)
         catch
           console.log "ERROR: Failed to talk to parse JSON: #{rawJSON}"
-          resolve([])
+          resolve(output)
           return
 
-        idList = []
         if outerData.items? and (outerData.items.length > 0)
           unshuffledPlaylistQueue = []
           for item in outerData.items
             if item.snippet.resourceId.kind == 'youtube#video'
-              idList.push item.snippet.resourceId.videoId
+              output.push item.snippet.resourceId.videoId
 
-        resolve(idList)
+        if outerData.nextPageToken?
+          resolve(await convertYoutubePlaylist(output, playlistId, outerData.nextPageToken))
+        else
+          resolve(output)
     outerReq.end()
 
 getYoutubeData = (e) ->
@@ -1900,7 +1904,7 @@ main = (argv) ->
     socket.on 'convertplaylist', (msg) ->
       console.log "convertplaylist: ", msg
       if msg.token? and discordAuth[msg.token]? and msg.list?
-        reply = await convertYoutubePlaylist(msg.list)
+        reply = await convertYoutubePlaylist([], msg.list)
         socket.emit 'convertplaylist', reply
         return
 

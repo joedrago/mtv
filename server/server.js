@@ -806,10 +806,13 @@
     });
   };
 
-  convertYoutubePlaylist = function(playlistId) {
+  convertYoutubePlaylist = function(output, playlistId, pageToken = null) {
     return new Promise(function(resolve, reject) {
       var outerReq, url;
       url = `https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${encodeURIComponent(playlistId)}&key=${secrets.youtube}`;
+      if (pageToken != null) {
+        url += `&pageToken=${pageToken}`;
+      }
       outerReq = https.request(url, function(outerRes) {
         var rawJSON;
         rawJSON = "";
@@ -818,30 +821,33 @@
         });
         outerRes.on('error', function() {
           console.log("Error getting playlist music");
-          return resolve([]);
+          return resolve(output);
         });
-        return outerRes.on('end', function() {
-          var idList, item, len, m, outerData, ref, unshuffledPlaylistQueue;
+        return outerRes.on('end', async function() {
+          var item, len, m, outerData, ref, unshuffledPlaylistQueue;
           outerData = null;
           try {
             outerData = JSON.parse(rawJSON);
           } catch (error) {
             console.log(`ERROR: Failed to talk to parse JSON: ${rawJSON}`);
-            resolve([]);
+            resolve(output);
             return;
           }
-          idList = [];
           if ((outerData.items != null) && (outerData.items.length > 0)) {
             unshuffledPlaylistQueue = [];
             ref = outerData.items;
             for (m = 0, len = ref.length; m < len; m++) {
               item = ref[m];
               if (item.snippet.resourceId.kind === 'youtube#video') {
-                idList.push(item.snippet.resourceId.videoId);
+                output.push(item.snippet.resourceId.videoId);
               }
             }
           }
-          return resolve(idList);
+          if (outerData.nextPageToken != null) {
+            return resolve((await convertYoutubePlaylist(output, playlistId, outerData.nextPageToken)));
+          } else {
+            return resolve(output);
+          }
         });
       });
       return outerReq.end();
@@ -2479,7 +2485,7 @@
         var reply;
         console.log("convertplaylist: ", msg);
         if ((msg.token != null) && (discordAuth[msg.token] != null) && (msg.list != null)) {
-          reply = (await convertYoutubePlaylist(msg.list));
+          reply = (await convertYoutubePlaylist([], msg.list));
           socket.emit('convertplaylist', reply);
         }
       });
