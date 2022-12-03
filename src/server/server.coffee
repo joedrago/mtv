@@ -22,17 +22,17 @@ AUTOSKIPLIST_COUNT = 3
 
 LOG_LEVELS =
   levels:
-    all: 0
-    play: 1
-    error: 2
-    auth: 3
-    info: 4
+    play: 0
+    error: 1
+    auth: 2
+    info: 3
+    all: 4
   colors:
-    all: 'white'
     play: 'blue'
     error: 'red'
     auth: 'green'
     info: 'white'
+    all: 'white'
 
 logger = winston.createLogger {
   levels: LOG_LEVELS.levels
