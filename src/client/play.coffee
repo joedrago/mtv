@@ -331,24 +331,40 @@ play = (pkt, id, startSeconds = null, endSeconds = null) ->
   showInfo(pkt)
 
 soloInfoBroadcast = ->
-  if socket? and soloID? and soloVideo? and not soloMirror
-    nextVideo = null
-    if soloIndex < soloQueue.length - 1
-      nextVideo = soloQueue[soloIndex+1]
-    info =
-      current: soloVideo
-      next: nextVideo
-      index: soloIndex + 1
-      count: soloCount
+  console.log "soloInfoBroadcast #{soloID} #{soloVideo} #{soloMirror}"
+  if socket? and soloID? and soloVideo?
+    if soloMirror
+      info =
+        current: soloVideo
 
-    console.log "Broadcast: ", info
-    pkt = {
-      id: soloID
-      cmd: 'info'
-      info: info
-    }
-    socket.emit 'solo', pkt
-    soloCommand(pkt)
+      console.log "Mirror: ", info
+      pkt = {
+        token: discordToken
+        id: soloID
+        cmd: 'mirror'
+        info: info
+      }
+      socket.emit 'solo', pkt
+      soloCommand(pkt)
+    else
+      nextVideo = null
+      if soloIndex < soloQueue.length - 1
+        nextVideo = soloQueue[soloIndex+1]
+      info =
+        current: soloVideo
+        next: nextVideo
+        index: soloIndex + 1
+        count: soloCount
+
+      console.log "Broadcast: ", info
+      pkt = {
+        token: discordToken
+        id: soloID
+        cmd: 'info'
+        info: info
+      }
+      socket.emit 'solo', pkt
+      soloCommand(pkt)
 
 soloSaveLastWatched = ->
   localStorage.setItem('lastwatched', JSON.stringify(soloLastWatched))
@@ -923,6 +939,7 @@ soloCommand = (pkt) ->
               extraOffset = 1 + pkt.info.tb - pkt.info.tu
               console.log "Extra offset: #{extraOffset}"
             play(soloVideo, soloVideo.id, soloVideo.start + extraOffset, soloVideo.end)
+            soloInfoBroadcast()
         clearOpinion()
         if discordToken? and soloInfo.current? and soloInfo.current.id?
           socket.emit 'opinion', { token: discordToken, id: soloInfo.current.id }

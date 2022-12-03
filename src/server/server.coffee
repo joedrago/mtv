@@ -5,6 +5,10 @@ iso8601 = require 'iso8601-duration'
 fs = require 'fs'
 https = require 'https'
 ytdl = require 'ytdl-core'
+
+winston = require 'winston'
+require 'winston-daily-rotate-file'
+
 constants = require '../constants'
 filters = require '../filters'
 hosting = require './hosting'
@@ -12,6 +16,43 @@ hosting = require './hosting'
 MAX_BLOCK_COUNT = 0
 YOUTUBE_USER = "YouTube"
 AUTOSKIPLIST_COUNT = 3
+
+# ------------------------------------------------------------------------------------------------
+# Logging
+
+LOG_LEVELS =
+  levels:
+    all: 0
+    play: 1
+    error: 2
+    auth: 3
+    info: 4
+  colors:
+    all: 'white'
+    play: 'blue'
+    error: 'red'
+    auth: 'green'
+    info: 'white'
+
+logger = winston.createLogger {
+  levels: LOG_LEVELS.levels
+  transports: [
+    new winston.transports.Console {
+      level: 'all'
+      format: winston.format.json()
+    }
+    new winston.transports.DailyRotateFile {
+      level: 'play',
+      format: winston.format.json()
+      filename: 'play-%DATE%.log'
+      datePattern: 'YYYY-MM'
+      zippedArchive: true
+    }
+  ]
+}
+winston.addColors(LOG_LEVELS.colors)
+
+# ------------------------------------------------------------------------------------------------
 
 limiter = new Bottleneck {
   maxConcurrent: 5
@@ -150,6 +191,30 @@ logOutput = (msg) ->
   while output.length > 10
     output.shift()
   return
+
+filterObject = (inputObject, propList) ->
+  outputObject = {}
+  for prop in propList
+    outputObject[prop] = inputObject[prop]
+  return outputObject
+
+logPlay = (msg) ->
+  logUserTag = "Anonymous"
+  if msg.token? and discordAuth[msg.token]?
+    logUserTag = discordAuth[msg.token].tag
+  logger.play 'play', {
+    src: msg.cmd
+    sid: msg.id
+    tag: logUserTag
+    video: filterObject(msg.info.current, [
+      'added'
+      'artist'
+      'duration'
+      'id'
+      'nickname'
+      'title'
+    ])
+  }
 
 refreshDashboards = ->
   for sid, soc of sockets
@@ -1713,9 +1778,14 @@ main = (argv) ->
         if msg.cmd?
           soloBroadcast(socket.id, msg)
           if (msg.cmd == 'info') and msg.info?
+            if not soloInfo[msg.id]?
+              logger.play 'sessionadd', { sid: msg.id }
             soloInfo[msg.id] = msg.info
             soloInfo[msg.id].tu = now() # time updated
             # console.log "Solo Info Update [#{msg.id}]: ", soloInfo[msg.id]
+            logPlay(msg)
+          else if (msg.cmd == 'mirror') and msg.info?
+            logPlay(msg)
         else
           # new connection or re-connection, update their info
           if soloInfo[msg.id]?
@@ -1812,6 +1882,8 @@ main = (argv) ->
           console.log "Forgetting solo session: #{soloID}"
           if soloInfo[soloID]?
             delete soloInfo[soloID]
+            logger.play 'sessiondel', { sid: soloID }
+
       checkAutoskip()
       checkIfEveryoneLeft()
 
