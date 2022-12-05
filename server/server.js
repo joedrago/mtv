@@ -297,6 +297,7 @@
       src: msg.cmd,
       sid: msg.id,
       tag: logUserTag,
+      t: now(),
       video: filterObject(msg.info.current, ['added', 'artist', 'duration', 'id', 'nickname', 'title'])
     });
   };
@@ -2304,6 +2305,7 @@
             if ((msg.cmd === 'info') && (msg.info != null)) {
               if (soloInfo[msg.id] == null) {
                 logger.play('sessionadd', {
+                  t: now(),
                   sid: msg.id
                 });
               }
@@ -2435,6 +2437,7 @@
             if (soloInfo[soloID] != null) {
               delete soloInfo[soloID];
               logger.play('sessiondel', {
+                t: now(),
                 sid: soloID
               });
             }

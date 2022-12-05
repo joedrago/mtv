@@ -206,6 +206,7 @@ logPlay = (msg) ->
     src: msg.cmd
     sid: msg.id
     tag: logUserTag
+    t: now()
     video: filterObject(msg.info.current, [
       'added'
       'artist'
@@ -1779,7 +1780,7 @@ main = (argv) ->
           soloBroadcast(socket.id, msg)
           if (msg.cmd == 'info') and msg.info?
             if not soloInfo[msg.id]?
-              logger.play 'sessionadd', { sid: msg.id }
+              logger.play 'sessionadd', { t: now(), sid: msg.id }
             soloInfo[msg.id] = msg.info
             soloInfo[msg.id].tu = now() # time updated
             # console.log "Solo Info Update [#{msg.id}]: ", soloInfo[msg.id]
@@ -1882,7 +1883,7 @@ main = (argv) ->
           console.log "Forgetting solo session: #{soloID}"
           if soloInfo[soloID]?
             delete soloInfo[soloID]
-            logger.play 'sessiondel', { sid: soloID }
+            logger.play 'sessiondel', { t: now(), sid: soloID }
 
       checkAutoskip()
       checkIfEveryoneLeft()
