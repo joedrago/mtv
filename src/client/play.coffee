@@ -611,6 +611,10 @@ startHere = ->
       soloFatalError("Cannot get solo database!")
       return
 
+    # If "yo" querystring is present, filter to YouTube entries only
+    if qs('yo')?
+      soloUnshuffled = soloUnshuffled.filter (e) -> e.id.match(/^youtube_/)
+
     if soloUnshuffled.length == 0
       soloFatalError("No matching songs in the filter!")
       return
