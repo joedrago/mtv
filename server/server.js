@@ -2780,6 +2780,65 @@
       }
       return res.send("MTV: wat");
     });
+    app.post('/api/solo', function(req, res) {
+      var action, cmd, cmdMap, missing, ref, ref1, sessionExists, sessionID, sid, soloName;
+      // Validate payload
+      missing = [];
+      if (((ref = req.body) != null ? ref.solo : void 0) == null) {
+        missing.push('solo');
+      }
+      if (((ref1 = req.body) != null ? ref1.action : void 0) == null) {
+        missing.push('action');
+      }
+      if (missing.length > 0) {
+        res.status(400).json({
+          error: `Missing required properties: ${missing.join(', ')}`
+        });
+        return;
+      }
+      soloName = req.body.solo;
+      action = req.body.action;
+      // Check if solo session exists
+      sessionExists = false;
+      for (sid in soloSessions) {
+        sessionID = soloSessions[sid];
+        if (sessionID === soloName) {
+          sessionExists = true;
+          break;
+        }
+      }
+      if (!sessionExists && (soloInfo[soloName] != null)) {
+        sessionExists = true;
+      }
+      if (!sessionExists) {
+        res.status(400).json({
+          error: `No such solo session: ${soloName}`
+        });
+        return;
+      }
+      // Map action to command
+      cmdMap = {
+        'next': 'skip',
+        'prev': 'prev',
+        'restart': 'restart',
+        'pause': 'pause'
+      };
+      cmd = cmdMap[action];
+      if (cmd == null) {
+        res.status(400).json({
+          error: `Unknown action: ${action}`
+        });
+        return;
+      }
+      // Broadcast the command
+      soloBroadcast("SERVER", {
+        id: soloName,
+        cmd: cmd
+      });
+      return res.json({
+        success: true
+      });
+    });
     app.use(express.static('web'));
     host = '127.0.0.1';
     if (argv.length > 0) {

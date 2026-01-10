@@ -2150,6 +2150,51 @@ main = (argv) ->
       return
     res.send("MTV: wat")
 
+  app.post '/api/solo', (req, res) ->
+    # Validate payload
+    missing = []
+    if not req.body?.solo?
+      missing.push 'solo'
+    if not req.body?.action?
+      missing.push 'action'
+
+    if missing.length > 0
+      res.status(400).json({ error: "Missing required properties: #{missing.join(', ')}" })
+      return
+
+    soloName = req.body.solo
+    action = req.body.action
+
+    # Check if solo session exists
+    sessionExists = false
+    for sid, sessionID of soloSessions
+      if sessionID == soloName
+        sessionExists = true
+        break
+    if not sessionExists and soloInfo[soloName]?
+      sessionExists = true
+
+    if not sessionExists
+      res.status(400).json({ error: "No such solo session: #{soloName}" })
+      return
+
+    # Map action to command
+    cmdMap =
+      'next': 'skip'
+      'prev': 'prev'
+      'restart': 'restart'
+      'pause': 'pause'
+
+    cmd = cmdMap[action]
+    if not cmd?
+      res.status(400).json({ error: "Unknown action: #{action}" })
+      return
+
+    # Broadcast the command
+    soloBroadcast("SERVER", { id: soloName, cmd: cmd })
+
+    res.json({ success: true })
+
   app.use(express.static('web'))
 
   host = '127.0.0.1'
