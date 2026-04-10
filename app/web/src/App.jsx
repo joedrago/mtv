@@ -4,6 +4,7 @@ import Container from "@mui/material/Container"
 import { HomePage } from "./pages/HomePage.jsx"
 import { PlaylistPage } from "./pages/PlaylistPage.jsx"
 import { BrowsePage } from "./pages/BrowsePage.jsx"
+import { MirrorPage } from "./pages/MirrorPage.jsx"
 import { PlayerOverlay } from "./components/Player.jsx"
 import { NavBar } from "./components/NavBar.jsx"
 import { useUserStore } from "./store/user.js"
@@ -22,6 +23,7 @@ export const App = () => {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/browse" element={<BrowsePage />} />
                     <Route path="/p/:owner/:slug" element={<PlaylistPage />} />
+                    <Route path="/m/:code" element={<MirrorPage />} />
                 </Routes>
             </Container>
             <PlayerOverlay />

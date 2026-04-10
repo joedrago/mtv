@@ -6,6 +6,7 @@ import { Server as IOServer } from "socket.io"
 import { config, secrets, mediaDir, webDistDir } from "./config.js"
 import { authRouter } from "./auth.js"
 import { apiRouter } from "./routes.js"
+import { attachMirror } from "./mirror.js"
 
 const app = express()
 app.use(express.json())
@@ -30,9 +31,7 @@ if (fs.existsSync(webDistDir)) {
 const server = http.createServer(app)
 const io = new IOServer(server, { cors: { origin: true, credentials: true } })
 
-io.on("connection", (socket) => {
-    socket.emit("hello", { ts: Date.now() })
-})
+attachMirror(io)
 
 const port = config.port ?? 3000
 server.listen(port, () => {
