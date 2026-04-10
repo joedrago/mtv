@@ -20,6 +20,27 @@ const slugify = (s) =>
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "") || "list"
 
+// Clamp a freeform user-provided string. Strips control characters, collapses
+// whitespace, and enforces a max length. Returns "" if input is null/blank.
+const sanitizeFreeform = (input, max) => {
+    if (input == null) return ""
+    return (
+        String(input)
+            // eslint-disable-next-line no-control-regex
+            .replace(/[\u0000-\u001f\u007f-\u009f]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, max)
+    )
+}
+
+const LIMITS = {
+    playlistName: 80,
+    videoTitle: 200,
+    videoArtist: 120,
+    userLabel: 128
+}
+
 const nowEpoch = () => Math.floor(Date.now() / 1000)
 
 const requireUser = (req, res) => {
@@ -84,12 +105,8 @@ router.patch("/me", (req, res) => {
     }
 
     if (req.body?.label !== undefined) {
-        const raw = req.body.label
-        if (raw == null || String(raw).trim() === "") {
-            label = null
-        } else {
-            label = String(raw).trim().slice(0, 128)
-        }
+        const clean = sanitizeFreeform(req.body.label, LIMITS.userLabel)
+        label = clean || null
     }
 
     updateUser.run(displayName, label, me.id)
@@ -230,7 +247,7 @@ const deletePlaylistItemsByVideo = db.prepare(`DELETE FROM playlist_items WHERE 
 router.post("/playlists", (req, res) => {
     const me = requireUser(req, res)
     if (!me) return
-    const name = String(req.body?.name ?? "").trim()
+    const name = sanitizeFreeform(req.body?.name, LIMITS.playlistName)
     const isPublic = req.body?.is_public !== false
     if (!name) {
         res.status(400).json({ error: "name required" })
@@ -263,7 +280,7 @@ router.patch("/playlists/:id", (req, res) => {
     const sets = []
     const values = []
     if (req.body?.name != null) {
-        const name = String(req.body.name).trim()
+        const name = sanitizeFreeform(req.body.name, LIMITS.playlistName)
         if (!name) {
             res.status(400).json({ error: "name cannot be empty" })
             return
@@ -463,8 +480,8 @@ router.post("/videos", async (req, res) => {
     const me = requireContributor(req, res)
     if (!me) return
     const { source, source_ref: rawRef, url, duration_s } = req.body || {}
-    const title = String(req.body?.title ?? "").trim()
-    const artist = String(req.body?.artist ?? "").trim()
+    const title = sanitizeFreeform(req.body?.title, LIMITS.videoTitle)
+    const artist = sanitizeFreeform(req.body?.artist, LIMITS.videoArtist)
     if (!title || !artist) {
         res.status(400).json({ error: "title and artist required" })
         return
@@ -524,9 +541,10 @@ router.patch("/videos/:id", (req, res) => {
     }
     const sets = []
     const values = []
+    const fieldLimits = { title: LIMITS.videoTitle, artist: LIMITS.videoArtist }
     for (const field of ["title", "artist"]) {
         if (req.body?.[field] != null) {
-            const v = String(req.body[field]).trim()
+            const v = sanitizeFreeform(req.body[field], fieldLimits[field])
             if (v) {
                 sets.push(`${field} = ?`)
                 values.push(v)

@@ -9,6 +9,7 @@ import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
 import { updateVideo } from "../api.js"
 import { fmtDuration } from "./videoColumns.jsx"
+import { LIMITS } from "../limits.js"
 
 // Clamp a form value the way the server does: non-numeric or <=0 becomes -1.
 const normalizeSeconds = (s) => {
@@ -86,14 +87,16 @@ export const EditVideoDialog = ({ video, open, onClose, onSaved }) => {
                             size="small"
                             label="artist"
                             value={artist}
-                            onChange={(e) => setArtist(e.target.value)}
+                            onChange={(e) => setArtist(e.target.value.slice(0, LIMITS.videoArtist))}
+                            slotProps={{ htmlInput: { maxLength: LIMITS.videoArtist } }}
                             fullWidth
                         />
                         <TextField
                             size="small"
                             label="title"
                             value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            onChange={(e) => setTitle(e.target.value.slice(0, LIMITS.videoTitle))}
+                            slotProps={{ htmlInput: { maxLength: LIMITS.videoTitle } }}
                             fullWidth
                         />
                     </Stack>

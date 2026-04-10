@@ -9,6 +9,7 @@ import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
 import { fetchMyStats, updateMe } from "../api.js"
 import { useUserStore } from "../store/user.js"
+import { LIMITS } from "../limits.js"
 
 const StatLine = ({ label, value }) => (
     <Stack direction="row" sx={{ py: 0.5 }}>
@@ -107,7 +108,8 @@ export const AccountPage = () => {
                         size="small"
                         label="display name"
                         value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
+                        onChange={(e) => setDisplayName(e.target.value.slice(0, LIMITS.userDisplayName))}
+                        slotProps={{ htmlInput: { maxLength: LIMITS.userDisplayName } }}
                         helperText="2–32 characters: letters, digits, underscores"
                         fullWidth
                     />
@@ -115,8 +117,9 @@ export const AccountPage = () => {
                         size="small"
                         label="record label (shown in the chyron)"
                         value={label}
-                        onChange={(e) => setLabel(e.target.value)}
-                        placeholder="e.g. Joey User User Jecords"
+                        onChange={(e) => setLabel(e.target.value.slice(0, LIMITS.userLabel))}
+                        slotProps={{ htmlInput: { maxLength: LIMITS.userLabel } }}
+                        placeholder="Cool Guy Records"
                         fullWidth
                     />
                     <Stack direction="row" spacing={2} alignItems="center">

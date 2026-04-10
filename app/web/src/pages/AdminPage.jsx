@@ -136,7 +136,7 @@ export const AdminPage = () => {
                 </Typography>
             </Box>
 
-            <Paper variant="outlined">
+            <Paper variant="outlined" sx={{ overflow: "hidden" }}>
                 {loading ? (
                     <Box sx={{ p: 2 }}>
                         <Typography color="text.secondary" variant="body2">

@@ -6,6 +6,7 @@ import Slider from "@mui/material/Slider"
 import Stack from "@mui/material/Stack"
 import Tooltip from "@mui/material/Tooltip"
 import Typography from "@mui/material/Typography"
+import useMediaQuery from "@mui/material/useMediaQuery"
 import CloseIcon from "@mui/icons-material/Close"
 import FullscreenIcon from "@mui/icons-material/Fullscreen"
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit"
@@ -260,6 +261,33 @@ export const PlayerOverlay = () => {
     const [isFullscreen, setIsFullscreen] = useState(false)
     const [copied, setCopied] = useState(false)
 
+    // Mobile layout: video pinned top (16:9), info + always-visible controls below
+    const isPortraitMobile = useMediaQuery("(orientation: portrait) and (max-width: 900px)")
+
+    // Tap-to-toggle controls for touch devices (desktop still uses hover).
+    const [controlsVisible, setControlsVisible] = useState(false)
+    const hideTimerRef = useRef(null)
+    const scheduleHide = useCallback(() => {
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+        hideTimerRef.current = setTimeout(() => setControlsVisible(false), 3500)
+    }, [])
+    const toggleControlsTap = useCallback(() => {
+        setControlsVisible((v) => {
+            if (v) {
+                if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+                return false
+            }
+            scheduleHide()
+            return true
+        })
+    }, [scheduleHide])
+    useEffect(
+        () => () => {
+            if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+        },
+        []
+    )
+
     useEffect(() => {
         const sync = () => setIsFullscreen(!!document.fullscreenElement)
         document.addEventListener("fullscreenchange", sync)
@@ -419,73 +447,128 @@ export const PlayerOverlay = () => {
     const owner = { display_name: video.owner_display_name, label: video.owner_label }
     const chyronMode = isMirror || hostCode ? "mirror" : "solo"
 
+    const iconBtnSx = { color: "#fff", p: { xs: "12px", md: "8px" } }
+    const showControlBar = isPortraitMobile || controlsVisible
+
+    const surface =
+        video.source === "youtube" ? (
+            <YoutubeSurface
+                key={video.id}
+                video={video}
+                paused={paused}
+                volume={volume}
+                initialPosition={initialPosition}
+                surfaceRef={surfaceRef}
+                onEnded={next}
+            />
+        ) : (
+            <SelfHostedSurface
+                key={video.id}
+                video={video}
+                paused={paused}
+                volume={volume}
+                initialPosition={initialPosition}
+                surfaceRef={surfaceRef}
+                onEnded={next}
+            />
+        )
+
     return (
-        <Box sx={{ position: "fixed", inset: 0, zIndex: 1300, background: "#000", display: "flex", flexDirection: "column" }}>
-            <Box sx={{ position: "absolute", inset: 0 }}>
-                {video.source === "youtube" ? (
-                    <YoutubeSurface
-                        key={video.id}
-                        video={video}
-                        paused={paused}
-                        volume={volume}
-                        initialPosition={initialPosition}
-                        surfaceRef={surfaceRef}
-                        onEnded={next}
-                    />
-                ) : (
-                    <SelfHostedSurface
-                        key={video.id}
-                        video={video}
-                        paused={paused}
-                        volume={volume}
-                        initialPosition={initialPosition}
-                        surfaceRef={surfaceRef}
-                        onEnded={next}
-                    />
-                )}
+        <Box
+            sx={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 1300,
+                background: "#000",
+                display: "flex",
+                flexDirection: "column"
+            }}
+        >
+            <Box
+                onClick={isPortraitMobile ? undefined : toggleControlsTap}
+                sx={
+                    isPortraitMobile
+                        ? {
+                              position: "relative",
+                              width: "100%",
+                              aspectRatio: "16 / 9",
+                              background: "#000",
+                              flexShrink: 0
+                          }
+                        : { position: "absolute", inset: 0, cursor: "pointer" }
+                }
+            >
+                {surface}
                 <Chyron video={video} owner={owner} mode={chyronMode} />
             </Box>
 
-            <Box
-                sx={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    pt: 6,
-                    px: 2,
-                    pb: 2,
-                    background: "linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0) 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    opacity: 0,
-                    transition: "opacity 200ms",
-                    "&:hover": { opacity: 1 }
-                }}
-            >
-                <IconButton onClick={handlePrev} sx={{ color: "#fff" }} disabled={!isMirror && index === 0}>
-                    <SkipPreviousIcon />
-                </IconButton>
-                <IconButton onClick={handleTogglePause} sx={{ color: "#fff" }}>
-                    {paused ? <PlayArrowIcon /> : <PauseIcon />}
-                </IconButton>
-                <IconButton onClick={handleNext} sx={{ color: "#fff" }}>
-                    <SkipNextIcon />
-                </IconButton>
-                <VolumeControl />
-                <Stack sx={{ flexGrow: 1, color: "#fff", minWidth: 0 }}>
-                    <Typography
-                        variant="body2"
-                        sx={{ opacity: 0.9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
-                    >
-                        {video.artist} — {video.title}
+            {isPortraitMobile && (
+                <Stack spacing={0.5} sx={{ p: 2, color: "#fff", flexGrow: 1, minHeight: 0, overflow: "hidden" }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                        {video.artist}
                     </Typography>
-                    <Typography variant="caption" sx={{ opacity: 0.6 }}>
-                        {isMirror ? `mirroring` : `${index + 1} / ${queue.length}`}
+                    <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.2 }}>
+                        {video.title}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.5)", mt: 0.5 }}>
+                        {isMirror ? "mirroring" : `${index + 1} / ${queue.length}`}
+                        {hostCode && ` · mirror ${hostCode}${copied ? " (copied)" : ""}`}
                     </Typography>
                 </Stack>
-                {hostCode && (
+            )}
+
+            <Box
+                onClick={(e) => e.stopPropagation()}
+                sx={{
+                    position: isPortraitMobile ? "relative" : "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: isPortraitMobile ? undefined : 0,
+                    pt: isPortraitMobile ? 1.5 : 6,
+                    px: { xs: 1, md: 2 },
+                    pb: isPortraitMobile ? 2 : 2,
+                    background: isPortraitMobile
+                        ? "rgba(0,0,0,0.92)"
+                        : "linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0) 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: { xs: 0.5, md: 2 },
+                    flexWrap: isPortraitMobile ? "wrap" : "nowrap",
+                    rowGap: 1,
+                    opacity: showControlBar ? 1 : 0,
+                    pointerEvents: showControlBar ? "auto" : "none",
+                    transition: "opacity 200ms",
+                    flexShrink: 0,
+                    "@media (hover: hover)": {
+                        "&:hover": { opacity: 1, pointerEvents: "auto" }
+                    }
+                }}
+            >
+                <IconButton onClick={handlePrev} sx={iconBtnSx} disabled={!isMirror && index === 0}>
+                    <SkipPreviousIcon />
+                </IconButton>
+                <IconButton onClick={handleTogglePause} sx={iconBtnSx}>
+                    {paused ? <PlayArrowIcon /> : <PauseIcon />}
+                </IconButton>
+                <IconButton onClick={handleNext} sx={iconBtnSx}>
+                    <SkipNextIcon />
+                </IconButton>
+                {!isPortraitMobile && <VolumeControl />}
+                {!isPortraitMobile && (
+                    <Stack sx={{ flexGrow: 1, color: "#fff", minWidth: 0 }}>
+                        <Typography
+                            variant="body2"
+                            sx={{ opacity: 0.9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+                        >
+                            {video.artist} — {video.title}
+                        </Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.6 }}>
+                            {isMirror ? `mirroring` : `${index + 1} / ${queue.length}`}
+                        </Typography>
+                    </Stack>
+                )}
+                {isPortraitMobile && <Box sx={{ flexGrow: 1 }} />}
+                {!isPortraitMobile && hostCode && (
                     <Chip
                         size="small"
                         label={copied ? `copied ${hostCode}` : `mirror ${hostCode}`}
@@ -499,15 +582,17 @@ export const PlayerOverlay = () => {
                 {signedIn && <OpinionButtons current={video.my_opinion ?? null} onSet={applyOpinion} />}
                 {!isMirror && (
                     <Tooltip title={hostCode ? "stop mirroring" : "start mirroring"}>
-                        <IconButton onClick={toggleMirror} sx={{ color: hostCode ? "primary.main" : "#fff" }}>
+                        <IconButton onClick={toggleMirror} sx={{ ...iconBtnSx, color: hostCode ? "primary.main" : "#fff" }}>
                             {hostCode ? <StopScreenShareIcon /> : <ScreenShareIcon />}
                         </IconButton>
                     </Tooltip>
                 )}
-                <IconButton onClick={toggleFullscreen} sx={{ color: "#fff" }}>
-                    {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-                </IconButton>
-                <IconButton onClick={closeOverlay} sx={{ color: "#fff" }}>
+                {!isPortraitMobile && (
+                    <IconButton onClick={toggleFullscreen} sx={iconBtnSx}>
+                        {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+                    </IconButton>
+                )}
+                <IconButton onClick={closeOverlay} sx={iconBtnSx}>
                     <CloseIcon />
                 </IconButton>
             </Box>

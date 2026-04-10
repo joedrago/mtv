@@ -12,6 +12,7 @@ import { createVideo, queryYoutube } from "../api.js"
 import { useToastStore } from "../store/toast.js"
 import { useUserStore } from "../store/user.js"
 import { fmtDuration } from "../components/videoColumns.jsx"
+import { LIMITS } from "../limits.js"
 
 const parseOptionalSeconds = (s) => {
     if (s == null || String(s).trim() === "" || String(s).trim() === "-1") return -1
@@ -145,7 +146,8 @@ const YoutubeTab = () => {
                     size="small"
                     label="artist"
                     value={artist}
-                    onChange={(e) => setArtist(e.target.value)}
+                    onChange={(e) => setArtist(e.target.value.slice(0, LIMITS.videoArtist))}
+                    slotProps={{ htmlInput: { maxLength: LIMITS.videoArtist } }}
                     fullWidth
                     disabled={!queried}
                 />
@@ -153,7 +155,8 @@ const YoutubeTab = () => {
                     size="small"
                     label="title"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => setTitle(e.target.value.slice(0, LIMITS.videoTitle))}
+                    slotProps={{ htmlInput: { maxLength: LIMITS.videoTitle } }}
                     fullWidth
                     disabled={!queried}
                 />
@@ -256,8 +259,22 @@ const SelfHostedTab = () => {
     return (
         <Stack spacing={2} sx={{ p: 3 }}>
             <Stack direction="row" spacing={2}>
-                <TextField size="small" label="artist" value={artist} onChange={(e) => setArtist(e.target.value)} fullWidth />
-                <TextField size="small" label="title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
+                <TextField
+                    size="small"
+                    label="artist"
+                    value={artist}
+                    onChange={(e) => setArtist(e.target.value.slice(0, LIMITS.videoArtist))}
+                    slotProps={{ htmlInput: { maxLength: LIMITS.videoArtist } }}
+                    fullWidth
+                />
+                <TextField
+                    size="small"
+                    label="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value.slice(0, LIMITS.videoTitle))}
+                    slotProps={{ htmlInput: { maxLength: LIMITS.videoTitle } }}
+                    fullWidth
+                />
             </Stack>
             <TextField
                 size="small"

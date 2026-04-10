@@ -9,6 +9,7 @@ import Stack from "@mui/material/Stack"
 import Switch from "@mui/material/Switch"
 import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
+import { LIMITS } from "../limits.js"
 
 export const CreatePlaylistDialog = ({ open, onCancel, onSubmit }) => {
     const [name, setName] = useState("")
@@ -52,7 +53,8 @@ export const CreatePlaylistDialog = ({ open, onCancel, onSubmit }) => {
                         autoFocus
                         label="name"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => setName(e.target.value.slice(0, LIMITS.playlistName))}
+                        slotProps={{ htmlInput: { maxLength: LIMITS.playlistName } }}
                         fullWidth
                         onKeyDown={(e) => {
                             if (e.key === "Enter") submit()

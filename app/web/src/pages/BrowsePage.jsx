@@ -140,7 +140,7 @@ export const BrowsePage = () => {
 
             <EditVideoDialog video={editVideo} open={!!editVideo} onClose={() => setEditVideo(null)} onSaved={handleSaved} />
 
-            <Paper variant="outlined">
+            <Paper variant="outlined" sx={{ overflow: "hidden" }}>
                 {loading ? (
                     <Box sx={{ px: 2, py: 2 }}>
                         <Typography color="text.secondary" variant="body2">

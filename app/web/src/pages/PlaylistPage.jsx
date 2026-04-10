@@ -29,6 +29,7 @@ import { SortableTable } from "../components/SortableTable.jsx"
 import { buildVideoColumns } from "../components/videoColumns.jsx"
 import { DestinationPicker } from "../components/DestinationPicker.jsx"
 import { EditVideoDialog } from "../components/EditVideoDialog.jsx"
+import { LIMITS } from "../limits.js"
 
 const shuffled = (arr) => {
     const out = arr.slice()
@@ -210,7 +211,7 @@ export const PlaylistPage = () => {
 
             <EditVideoDialog video={editVideo} open={!!editVideo} onClose={() => setEditVideo(null)} onSaved={handleSaved} />
 
-            <Paper variant="outlined">
+            <Paper variant="outlined" sx={{ overflow: "hidden" }}>
                 <SortableTable
                     columns={columns}
                     rows={items}
@@ -252,7 +253,8 @@ export const PlaylistPage = () => {
                         autoFocus
                         fullWidth
                         value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
+                        onChange={(e) => setRenameValue(e.target.value.slice(0, LIMITS.playlistName))}
+                        slotProps={{ htmlInput: { maxLength: LIMITS.playlistName } }}
                         onKeyDown={(e) => {
                             if (e.key === "Enter") submitRename()
                         }}

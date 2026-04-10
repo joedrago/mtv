@@ -94,6 +94,7 @@ export const buildVideoColumns = ({ signedIn, onRate, canRemove = false, onRemov
             label: "added",
             sortWith: "artist",
             width: "120px",
+            hideOnMobile: true,
             render: (r) => (
                 <Typography variant="body2" color="text.secondary">
                     {r.owner_display_name ?? ""}
@@ -106,6 +107,7 @@ export const buildVideoColumns = ({ signedIn, onRate, canRemove = false, onRemov
             sortWith: "artist",
             align: "right",
             width: "80px",
+            hideOnMobile: true,
             render: (r) => fmtDuration(r.duration_s),
             cellSx: { fontVariantNumeric: "tabular-nums", color: "text.secondary" }
         }

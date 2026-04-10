@@ -42,6 +42,8 @@ const getSortValue = (col, row) => (col.sortValue ? col.sortValue(row) : row[col
 // active on those cells. Otherwise the whole row is clickable. Keeps mixed
 // tables (where some cells have their own interactive content) from
 // accidentally triggering row navigation.
+const HIDDEN_ON_MOBILE = { display: { xs: "none", md: "table-cell" } }
+
 const MemoRow = memo(function MemoRow({ row, columns, onRowClick, rowSx, rowFullyClickable }) {
     return (
         <TableRow hover={!!onRowClick} onClick={rowFullyClickable && onRowClick ? () => onRowClick(row) : undefined} sx={rowSx}>
@@ -54,7 +56,8 @@ const MemoRow = memo(function MemoRow({ row, columns, onRowClick, rowSx, rowFull
                         onClick={cellClickable ? () => onRowClick(row) : undefined}
                         sx={{
                             ...col.cellSx,
-                            ...(cellClickable ? { cursor: "pointer" } : null)
+                            ...(cellClickable ? { cursor: "pointer" } : null),
+                            ...(col.hideOnMobile ? HIDDEN_ON_MOBILE : null)
                         }}
                     >
                         {col.render ? col.render(row) : row[col.key]}
@@ -140,7 +143,8 @@ export const SortableTable = ({ columns, rows, rowKey, onRowClick, onSortedRowsC
                                     letterSpacing: "0.08em",
                                     borderBottom: 1,
                                     borderColor: "divider",
-                                    userSelect: "none"
+                                    userSelect: "none",
+                                    ...(col.hideOnMobile ? HIDDEN_ON_MOBILE : null)
                                 }}
                             >
                                 <TableSortLabel

@@ -83,7 +83,7 @@ export const HomePage = () => {
                     </Button>
                 </Stack>
             )}
-            <Paper variant="outlined">
+            <Paper variant="outlined" sx={{ overflow: "hidden" }}>
                 {playlists.length === 0 ? (
                     <Box sx={{ px: 2, py: 2 }}>
                         <Typography color="text.secondary" variant="body2">
