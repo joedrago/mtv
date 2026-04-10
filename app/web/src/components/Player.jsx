@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Box from "@mui/material/Box"
 import Chip from "@mui/material/Chip"
 import IconButton from "@mui/material/IconButton"
+import Menu from "@mui/material/Menu"
+import MenuItem from "@mui/material/MenuItem"
 import Slider from "@mui/material/Slider"
 import Stack from "@mui/material/Stack"
 import Tooltip from "@mui/material/Tooltip"
@@ -12,6 +14,7 @@ import FullscreenIcon from "@mui/icons-material/Fullscreen"
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit"
 import PauseIcon from "@mui/icons-material/Pause"
 import PlayArrowIcon from "@mui/icons-material/PlayArrow"
+import ContentCopyIcon from "@mui/icons-material/ContentCopy"
 import ScreenShareIcon from "@mui/icons-material/ScreenShare"
 import StopScreenShareIcon from "@mui/icons-material/StopScreenShare"
 import SkipNextIcon from "@mui/icons-material/SkipNext"
@@ -287,6 +290,7 @@ export const PlayerOverlay = () => {
     sessionStateRef.current = sessionState
     const [isFullscreen, setIsFullscreen] = useState(false)
     const [copied, setCopied] = useState(false)
+    const [mirrorMenuAnchor, setMirrorMenuAnchor] = useState(null)
 
     // Mobile layout: video pinned top (16:9), info + always-visible controls below
     const isPortraitMobile = useMediaQuery("(orientation: portrait) and (max-width: 900px)")
@@ -413,22 +417,54 @@ export const PlayerOverlay = () => {
         if (hostCode || isMirror) sendPlaying(!newPaused, snapPos)
     }, [paused, hostCode, isMirror, sendPlaying, setPaused])
 
-    const toggleMirror = async () => {
-        if (hostCode) {
-            stopHost()
-            return
-        }
-        const code = await startHost()
-        if (!code) return
-        const url = `${window.location.origin}/m/${code}`
+    const mirrorViewerUrl = (code) => `${window.location.origin}/m/${code}`
+    const setHostParam = (code) => {
+        const p = new URLSearchParams(window.location.search)
+        p.set("h", code)
+        history.replaceState(null, "", `?${p}`)
+    }
+    const clearHostParam = () => {
+        const p = new URLSearchParams(window.location.search)
+        p.delete("h")
+        const s = p.toString()
+        history.replaceState(null, "", s ? `?${s}` : window.location.pathname)
+    }
+
+    const copyMirrorUrl = async (code) => {
         try {
-            await navigator.clipboard?.writeText(url)
+            await navigator.clipboard?.writeText(mirrorViewerUrl(code))
             setCopied(true)
             setTimeout(() => setCopied(false), 1500)
         } catch (_e) {
             /* no clipboard perms */
         }
     }
+
+    const handleStartMirror = async () => {
+        const requestedCode = new URLSearchParams(window.location.search).get("h") ?? undefined
+        const code = await startHost(requestedCode)
+        if (!code) return
+        setHostParam(code)
+        copyMirrorUrl(code)
+    }
+
+    const handleStopMirror = () => {
+        stopHost()
+        clearHostParam()
+        setMirrorMenuAnchor(null)
+    }
+
+    const handleMirrorButton = (e) => {
+        if (hostCode) setMirrorMenuAnchor(e.currentTarget)
+        else handleStartMirror()
+    }
+
+    // Auto-start hosting if ?h= is in the URL when the player opens
+    useEffect(() => {
+        if (!isOpen || hostCode) return
+        const requested = new URLSearchParams(window.location.search).get("h")
+        if (requested) startHost(requested)
+    }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const closeOverlay = () => {
         if (hostCode) stopHost()
@@ -630,12 +666,26 @@ export const PlayerOverlay = () => {
                 )}
                 {signedIn && <OpinionButtons current={video.my_opinion ?? null} onSet={applyOpinion} />}
                 {!isMirror && (
-                    <Tooltip title={hostCode ? "stop mirroring" : "start mirroring"}>
-                        <IconButton onClick={toggleMirror} sx={{ ...iconBtnSx, color: hostCode ? "primary.main" : "#fff" }}>
-                            {hostCode ? <StopScreenShareIcon /> : <ScreenShareIcon />}
+                    <Tooltip title={hostCode ? "mirroring" : "start mirroring"}>
+                        <IconButton onClick={handleMirrorButton} sx={{ ...iconBtnSx, color: hostCode ? "primary.main" : "#fff" }}>
+                            {hostCode ? <ScreenShareIcon /> : <ScreenShareIcon />}
                         </IconButton>
                     </Tooltip>
                 )}
+                <Menu
+                    anchorEl={mirrorMenuAnchor}
+                    open={Boolean(mirrorMenuAnchor)}
+                    onClose={() => setMirrorMenuAnchor(null)}
+                >
+                    <MenuItem onClick={() => { copyMirrorUrl(hostCode); setMirrorMenuAnchor(null) }}>
+                        <ContentCopyIcon sx={{ mr: 1, fontSize: 18 }} />
+                        {copied ? "copied!" : "copy mirror URL"}
+                    </MenuItem>
+                    <MenuItem onClick={handleStopMirror}>
+                        <StopScreenShareIcon sx={{ mr: 1, fontSize: 18 }} />
+                        stop mirroring
+                    </MenuItem>
+                </Menu>
                 {!isPortraitMobile && (
                     <IconButton onClick={toggleFullscreen} sx={iconBtnSx}>
                         {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}

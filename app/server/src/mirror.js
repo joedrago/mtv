@@ -32,20 +32,29 @@ export const attachMirror = (io) => {
         let hostingCode = null
         const watching = new Set()
 
-        socket.on("mirror:start", (_payload, cb) => {
+        socket.on("mirror:start", ({ requestedCode } = {}, cb) => {
             if (hostingCode) {
                 cb?.({ ok: true, code: hostingCode })
                 return
             }
-            const code = generateCode()
-            mirrors.set(code, {
-                hostSocketId: socket.id,
-                video: null,
-                pos: 0,
-                updated: Date.now(),
-                playing: false,
-                createdAt: Date.now()
-            })
+            const isValid =
+                requestedCode &&
+                typeof requestedCode === "string" &&
+                /^[A-Za-z0-9_-]{1,32}$/.test(requestedCode)
+            const code = isValid ? requestedCode : generateCode()
+            if (mirrors.has(code)) {
+                // Take over an existing session (e.g. host reconnecting after crash)
+                mirrors.get(code).hostSocketId = socket.id
+            } else {
+                mirrors.set(code, {
+                    hostSocketId: socket.id,
+                    video: null,
+                    pos: 0,
+                    updated: Date.now(),
+                    playing: false,
+                    createdAt: Date.now()
+                })
+            }
             socket.join(roomFor(code))
             hostingCode = code
             cb?.({ ok: true, code })

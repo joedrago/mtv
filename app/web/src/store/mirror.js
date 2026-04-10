@@ -7,13 +7,13 @@ export const useMirrorStore = create((set, get) => ({
     viewerCode: null,
     sessionState: null, // { video, pos, playing, receivedAt }
 
-    startHost: () =>
+    startHost: (requestedCode) =>
         new Promise((resolve) => {
             if (get().hostCode) {
                 resolve(get().hostCode)
                 return
             }
-            socket.emit("mirror:start", null, (reply) => {
+            socket.emit("mirror:start", requestedCode ? { requestedCode } : {}, (reply) => {
                 if (reply?.ok) {
                     set({ hostCode: reply.code })
                     resolve(reply.code)
