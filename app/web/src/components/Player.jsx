@@ -525,7 +525,33 @@ export const PlayerOverlay = () => {
                 }
             >
                 {surface}
-                <Chyron video={video} owner={owner} mode={chyronMode} />
+                {isPortraitMobile ? (
+                    <Chyron video={video} owner={owner} mode={chyronMode} />
+                ) : (
+                    // On desktop the video box fills the viewport but the actual 16:9
+                    // content is letterboxed inside it. Wrap the chyron in a centered
+                    // 16:9 box so it sits in the corner of the video, not the viewport.
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            inset: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            pointerEvents: "none",
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                position: "relative",
+                                width: "min(100%, calc(100vh * 16 / 9))",
+                                aspectRatio: "16 / 9",
+                            }}
+                        >
+                            <Chyron video={video} owner={owner} mode={chyronMode} />
+                        </Box>
+                    </Box>
+                )}
             </Box>
 
             {isPortraitMobile && (
