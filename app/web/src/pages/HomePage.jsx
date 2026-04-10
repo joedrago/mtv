@@ -5,7 +5,7 @@ import CircularProgress from "@mui/material/CircularProgress"
 import Paper from "@mui/material/Paper"
 import Typography from "@mui/material/Typography"
 import FavoriteIcon from "@mui/icons-material/Favorite"
-import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule"
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline"
 import PersonIcon from "@mui/icons-material/Person"
 import QueueMusicIcon from "@mui/icons-material/QueueMusic"
 import SearchIcon from "@mui/icons-material/Search"
@@ -118,12 +118,11 @@ export const HomePage = () => {
                         iconColor="#ff4f70"
                     />
                     <ActionCard
-                        Icon={HorizontalRuleIcon}
+                        Icon={HelpOutlineIcon}
                         label="shuffle unrated"
                         description="play videos you haven't rated yet"
                         onClick={() => watchVideos("unrated", (v) => !v.my_opinion)}
                         loading={loadingKey === "unrated"}
-                        iconColor="text.disabled"
                     />
                     <ActionCard
                         Icon={PersonIcon}
