@@ -7,6 +7,7 @@ import { BrowsePage } from "./pages/BrowsePage.jsx"
 import { MirrorPage } from "./pages/MirrorPage.jsx"
 import { PlayerOverlay } from "./components/Player.jsx"
 import { NavBar } from "./components/NavBar.jsx"
+import { Toaster } from "./components/Toaster.jsx"
 import { useUserStore } from "./store/user.js"
 
 export const App = () => {
@@ -27,6 +28,7 @@ export const App = () => {
                 </Routes>
             </Container>
             <PlayerOverlay />
+            <Toaster />
         </BrowserRouter>
     )
 }

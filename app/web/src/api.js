@@ -4,6 +4,28 @@ export const fetchJson = async (url, opts) => {
     return res.json()
 }
 
+const jsonOpts = (method, body) => ({
+    method,
+    credentials: "same-origin",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body)
+})
+
+export const createPlaylist = (name, is_public = true) => fetchJson("/api/playlists", jsonOpts("POST", { name, is_public }))
+
+export const updatePlaylist = (id, patch) => fetchJson(`/api/playlists/${id}`, jsonOpts("PATCH", patch))
+
+export const deletePlaylist = (id) => fetchJson(`/api/playlists/${id}`, { method: "DELETE", credentials: "same-origin" })
+
+export const addToPlaylist = (playlistId, videoId) =>
+    fetchJson(`/api/playlists/${playlistId}/items`, jsonOpts("POST", { video_id: videoId }))
+
+export const addToPlaylistBulk = (playlistId, videoIds) =>
+    fetchJson(`/api/playlists/${playlistId}/items/bulk`, jsonOpts("POST", { video_ids: videoIds }))
+
+export const removeFromPlaylist = (playlistId, videoId) =>
+    fetchJson(`/api/playlists/${playlistId}/items/${videoId}`, { method: "DELETE", credentials: "same-origin" })
+
 export const setOpinion = async (videoId, value) => {
     try {
         if (value == null) {

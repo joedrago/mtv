@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
 import InputAdornment from "@mui/material/InputAdornment"
@@ -14,6 +14,7 @@ import { usePlayerStore } from "../store/player.js"
 import { useUserStore } from "../store/user.js"
 import { SortableTable } from "../components/SortableTable.jsx"
 import { buildVideoColumns } from "../components/videoColumns.jsx"
+import { DestinationPicker } from "../components/DestinationPicker.jsx"
 
 const shuffled = (arr) => {
     const out = arr.slice()
@@ -27,8 +28,14 @@ const shuffled = (arr) => {
 export const BrowsePage = () => {
     const [videos, setVideos] = useState([])
     const [displayVideos, setDisplayVideos] = useState([])
+    const [queryInput, setQueryInput] = useState("")
     const [query, setQuery] = useState("")
     const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const t = setTimeout(() => setQuery(queryInput), 180)
+        return () => clearTimeout(t)
+    }, [queryInput])
     const user = useUserStore((s) => s.user)
     const openQueue = usePlayerStore((s) => s.openQueue)
 
@@ -41,12 +48,12 @@ export const BrowsePage = () => {
             .catch(() => setLoading(false))
     }, [])
 
-    const handleRate = (videoId, value) => {
+    const handleRate = useCallback((videoId, value) => {
         setVideos((prev) => prev.map((v) => (v.id === videoId ? { ...v, my_opinion: value } : v)))
         setOpinion(videoId, value)
-    }
+    }, [])
 
-    const columns = useMemo(() => buildVideoColumns({ signedIn: !!user, onRate: handleRate }), [user])
+    const columns = useMemo(() => buildVideoColumns({ signedIn: !!user, onRate: handleRate }), [user, handleRate])
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase()
@@ -60,9 +67,12 @@ export const BrowsePage = () => {
         openQueue(queue, { startAt: 0 })
     }
 
-    const handleRowClick = (_row, index, sortedRows) => {
-        openQueue(sortedRows, { startAt: index })
-    }
+    const handleRowClick = useCallback(
+        (_row, index, sortedRows) => {
+            openQueue(sortedRows, { startAt: index })
+        },
+        [openQueue]
+    )
 
     return (
         <Stack spacing={3}>
@@ -74,8 +84,8 @@ export const BrowsePage = () => {
                 <TextField
                     size="small"
                     placeholder="search artist or title…"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    value={queryInput}
+                    onChange={(e) => setQueryInput(e.target.value)}
                     sx={{ minWidth: 280 }}
                     InputProps={{
                         startAdornment: (
@@ -87,7 +97,7 @@ export const BrowsePage = () => {
                 />
             </Stack>
 
-            <Stack direction="row" spacing={2} alignItems="center">
+            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" rowGap={1.5}>
                 <Button variant="contained" startIcon={<PlayArrowIcon />} onClick={() => playAll(false)}>
                     play all
                 </Button>
@@ -97,6 +107,8 @@ export const BrowsePage = () => {
                 <Typography variant="body2" color="text.secondary">
                     {filtered.length} of {videos.length}
                 </Typography>
+                <Box sx={{ flexGrow: 1 }} />
+                <DestinationPicker visibleVideos={displayVideos} />
             </Stack>
 
             <Paper variant="outlined">

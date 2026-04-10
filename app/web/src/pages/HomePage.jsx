@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Box from "@mui/material/Box"
+import Button from "@mui/material/Button"
 import Paper from "@mui/material/Paper"
 import Stack from "@mui/material/Stack"
 import Typography from "@mui/material/Typography"
-import { fetchJson } from "../api.js"
+import AddIcon from "@mui/icons-material/Add"
+import { createPlaylist, fetchJson } from "../api.js"
 import { SortableTable } from "../components/SortableTable.jsx"
+import { CreatePlaylistDialog } from "../components/CreatePlaylistDialog.jsx"
+import { useUserStore } from "../store/user.js"
 
 const playlistColumns = [
     {
@@ -50,16 +54,35 @@ const playlistColumns = [
 
 export const HomePage = () => {
     const navigate = useNavigate()
+    const user = useUserStore((s) => s.user)
     const [playlists, setPlaylists] = useState([])
+    const [createOpen, setCreateOpen] = useState(false)
 
-    useEffect(() => {
+    const load = useCallback(() => {
         fetchJson("/api/playlists")
             .then((d) => setPlaylists(d.playlists))
             .catch(() => setPlaylists([]))
     }, [])
 
+    useEffect(() => {
+        load()
+    }, [load])
+
+    const handleCreate = async (name, isPublic) => {
+        const { playlist } = await createPlaylist(name, isPublic)
+        setCreateOpen(false)
+        navigate(`/p/${playlist.owner}/${playlist.slug}`)
+    }
+
     return (
         <Stack spacing={3}>
+            {user && (
+                <Stack direction="row" justifyContent="flex-end">
+                    <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+                        new playlist
+                    </Button>
+                </Stack>
+            )}
             <Paper variant="outlined">
                 {playlists.length === 0 ? (
                     <Box sx={{ px: 2, py: 2 }}>
@@ -76,6 +99,7 @@ export const HomePage = () => {
                     />
                 )}
             </Paper>
+            <CreatePlaylistDialog open={createOpen} onCancel={() => setCreateOpen(false)} onSubmit={handleCreate} />
         </Stack>
     )
 }

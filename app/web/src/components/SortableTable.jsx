@@ -37,14 +37,30 @@ const getSortValue = (col, row) => (col.sortValue ? col.sortValue(row) : row[col
 // parent's useMemo) and `onRowClick` (via useCallback below), this means that
 // sorting or filtering the list skips re-rendering every row — only the rows
 // whose membership changes touch the DOM.
-const MemoRow = memo(function MemoRow({ row, columns, onRowClick, rowSx }) {
+//
+// Click behavior: if any column is marked `clickable: true`, clicks are only
+// active on those cells. Otherwise the whole row is clickable. Keeps mixed
+// tables (where some cells have their own interactive content) from
+// accidentally triggering row navigation.
+const MemoRow = memo(function MemoRow({ row, columns, onRowClick, rowSx, rowFullyClickable }) {
     return (
-        <TableRow hover={!!onRowClick} onClick={onRowClick ? () => onRowClick(row) : undefined} sx={rowSx}>
-            {columns.map((col) => (
-                <TableCell key={col.key} align={col.align ?? "left"} sx={col.cellSx}>
-                    {col.render ? col.render(row) : row[col.key]}
-                </TableCell>
-            ))}
+        <TableRow hover={!!onRowClick} onClick={rowFullyClickable && onRowClick ? () => onRowClick(row) : undefined} sx={rowSx}>
+            {columns.map((col) => {
+                const cellClickable = !rowFullyClickable && col.clickable && !!onRowClick
+                return (
+                    <TableCell
+                        key={col.key}
+                        align={col.align ?? "left"}
+                        onClick={cellClickable ? () => onRowClick(row) : undefined}
+                        sx={{
+                            ...col.cellSx,
+                            ...(cellClickable ? { cursor: "pointer" } : null)
+                        }}
+                    >
+                        {col.render ? col.render(row) : row[col.key]}
+                    </TableCell>
+                )
+            })}
         </TableRow>
     )
 })
@@ -93,12 +109,14 @@ export const SortableTable = ({ columns, rows, rowKey, onRowClick, onSortedRowsC
     )
     const rowClickBinding = onRowClick ? handleRowClick : undefined
 
+    const rowFullyClickable = useMemo(() => !columns.some((c) => c.clickable), [columns])
+
     const rowSx = useMemo(
         () => ({
-            cursor: onRowClick ? "pointer" : "default",
+            cursor: rowFullyClickable && onRowClick ? "pointer" : "default",
             "& td": { borderBottom: 1, borderColor: "divider", py: 0.5 }
         }),
-        [onRowClick]
+        [onRowClick, rowFullyClickable]
     )
 
     return (
@@ -143,7 +161,14 @@ export const SortableTable = ({ columns, rows, rowKey, onRowClick, onSortedRowsC
             </TableHead>
             <TableBody>
                 {sortedRows.map((r, i) => (
-                    <MemoRow key={rowKey ? rowKey(r) : i} row={r} columns={columns} onRowClick={rowClickBinding} rowSx={rowSx} />
+                    <MemoRow
+                        key={rowKey ? rowKey(r) : i}
+                        row={r}
+                        columns={columns}
+                        onRowClick={rowClickBinding}
+                        rowSx={rowSx}
+                        rowFullyClickable={rowFullyClickable}
+                    />
                 ))}
             </TableBody>
         </Table>
