@@ -17,6 +17,7 @@ import { SortableTable } from "../components/SortableTable.jsx"
 import { buildVideoColumns } from "../components/videoColumns.jsx"
 import { DestinationPicker } from "../components/DestinationPicker.jsx"
 import { EditVideoDialog } from "../components/EditVideoDialog.jsx"
+import { FilterButton } from "../components/FilterButton.jsx"
 
 const shuffled = (arr) => {
     const out = arr.slice()
@@ -30,21 +31,46 @@ const shuffled = (arr) => {
 export const BrowsePage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const initialQ = searchParams.get("q") ?? ""
+    const initialR = useMemo(() => searchParams.get("r")?.split(",").filter(Boolean) ?? [], [])
     const [videos, setVideos] = useState([])
     const [displayVideos, setDisplayVideos] = useState([])
     const [queryInput, setQueryInput] = useState(initialQ)
     const [query, setQuery] = useState(initialQ)
+    const [opinions, setOpinions] = useState(initialR)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const t = setTimeout(() => {
             setQuery(queryInput)
             // mirror into the URL so refresh/back preserves the search
-            if (queryInput) setSearchParams({ q: queryInput }, { replace: true })
-            else setSearchParams({}, { replace: true })
+            setSearchParams(
+                (prev) => {
+                    const next = new URLSearchParams(prev)
+                    if (queryInput) next.set("q", queryInput)
+                    else next.delete("q")
+                    return next
+                },
+                { replace: true }
+            )
         }, 180)
         return () => clearTimeout(t)
     }, [queryInput, setSearchParams])
+
+    const handleOpinionFilterChange = useCallback(
+        (newOpinions) => {
+            setOpinions(newOpinions)
+            setSearchParams(
+                (prev) => {
+                    const next = new URLSearchParams(prev)
+                    if (newOpinions.length) next.set("r", newOpinions.join(","))
+                    else next.delete("r")
+                    return next
+                },
+                { replace: true }
+            )
+        },
+        [setSearchParams]
+    )
     const user = useUserStore((s) => s.user)
     const openQueue = usePlayerStore((s) => s.openQueue)
 
@@ -74,19 +100,26 @@ export const BrowsePage = () => {
     )
 
     const filtered = useMemo(() => {
+        let result = videos
         const q = query.trim().toLowerCase()
-        if (!q) return videos
-        const terms = q
-            .split("|")
-            .map((t) => t.trim())
-            .filter(Boolean)
-        if (!terms.length) return videos
-        return videos.filter((v) => {
-            const a = v.artist.toLowerCase()
-            const t = v.title.toLowerCase()
-            return terms.some((term) => a.includes(term) || t.includes(term))
-        })
-    }, [videos, query])
+        if (q) {
+            const terms = q
+                .split("|")
+                .map((t) => t.trim())
+                .filter(Boolean)
+            if (terms.length) {
+                result = result.filter((v) => {
+                    const a = v.artist.toLowerCase()
+                    const t = v.title.toLowerCase()
+                    return terms.some((term) => a.includes(term) || t.includes(term))
+                })
+            }
+        }
+        if (opinions.length) {
+            result = result.filter((v) => (v.my_opinion ? opinions.includes(v.my_opinion) : opinions.includes("none")))
+        }
+        return result
+    }, [videos, query, opinions])
 
     const playAll = (shuffle = false) => {
         if (!displayVideos.length) return
@@ -122,6 +155,7 @@ export const BrowsePage = () => {
                         )
                     }}
                 />
+                {user && <FilterButton activeOpinions={opinions} onChange={handleOpinionFilterChange} />}
             </Stack>
 
             <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" rowGap={1.5}>
