@@ -404,22 +404,26 @@ const tx = db.transaction(() => {
     )
     const insertPlaylistItem = db.prepare(`INSERT INTO playlist_items (playlist_id, position, video_id) VALUES (?, ?, ?)`)
     const skippedPlaylists = []
+    let skippedEmpty = 0
     for (const p of playlistRows) {
         const ownerId = canonicalTagToUserId.get(canonicalTagFor(p.owner_tag))
         if (!ownerId) {
             skippedPlaylists.push(`${p.owner_tag}/${p.name}`)
             continue
         }
+        const resolvedItems = p.items.map((legacyId) => legacyIdToVideoId.get(legacyId)).filter((v) => v != null)
+        if (resolvedItems.length === 0) {
+            skippedEmpty++
+            continue
+        }
         const info = insertPlaylist.run(ownerId, p.name, slugify(p.name), p.is_public, nowEpoch, nowEpoch)
         const playlistId = info.lastInsertRowid
-        let pos = 0
-        for (const legacyId of p.items) {
-            const vid = legacyIdToVideoId.get(legacyId)
-            if (!vid) continue
-            insertPlaylistItem.run(playlistId, pos++, vid)
+        for (let pos = 0; pos < resolvedItems.length; pos++) {
+            insertPlaylistItem.run(playlistId, pos, resolvedItems[pos])
         }
     }
     if (skippedPlaylists.length) warn(`skipped ${skippedPlaylists.length} playlists with unknown owner:`, skippedPlaylists)
+    if (skippedEmpty) log(`skipped ${skippedEmpty} empty playlists (no resolvable items)`)
 })
 tx()
 

@@ -1,14 +1,18 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import Box from "@mui/material/Box"
 import IconButton from "@mui/material/IconButton"
 import Stack from "@mui/material/Stack"
 import Typography from "@mui/material/Typography"
 import CloseIcon from "@mui/icons-material/Close"
+import FullscreenIcon from "@mui/icons-material/Fullscreen"
+import FullscreenExitIcon from "@mui/icons-material/FullscreenExit"
 import SkipNextIcon from "@mui/icons-material/SkipNext"
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious"
 import { usePlayerStore } from "../store/player.js"
+import { setOpinion } from "../api.js"
 import { loadYouTubeApi } from "./youtubeApi.js"
 import { Chyron } from "./Chyron.jsx"
+import { OpinionButtons, OPINIONS } from "./OpinionButtons.jsx"
 
 const YoutubeSurface = ({ video, onEnded }) => {
     const hostRef = useRef(null)
@@ -105,8 +109,32 @@ const SelfHostedSurface = ({ video, onEnded }) => {
 }
 
 export const PlayerOverlay = () => {
-    const { isOpen, queue, index, close, next, prev } = usePlayerStore()
+    const { isOpen, queue, index, close, next, prev, setOpinionForCurrent } = usePlayerStore()
     const video = queue[index] ?? null
+    const [isFullscreen, setIsFullscreen] = useState(false)
+
+    useEffect(() => {
+        const sync = () => setIsFullscreen(!!document.fullscreenElement)
+        document.addEventListener("fullscreenchange", sync)
+        sync()
+        return () => document.removeEventListener("fullscreenchange", sync)
+    }, [])
+
+    const toggleFullscreen = () => {
+        if (document.fullscreenElement) {
+            document.exitFullscreen?.()
+        } else {
+            document.documentElement.requestFullscreen?.().catch(() => {})
+        }
+    }
+
+    const applyOpinion = (value) => {
+        if (!video) return
+        const cur = video.my_opinion ?? null
+        const nextVal = value === cur ? null : value
+        setOpinionForCurrent(nextVal)
+        setOpinion(video.id, nextVal)
+    }
 
     useEffect(() => {
         if (!isOpen) return
@@ -114,6 +142,10 @@ export const PlayerOverlay = () => {
             if (e.key === "Escape") close()
             else if (e.key === "ArrowRight") next()
             else if (e.key === "ArrowLeft") prev()
+            else {
+                const opinion = OPINIONS.find((o) => o.key === e.key)
+                if (opinion) applyOpinion(opinion.value)
+            }
         }
         window.addEventListener("keydown", handler)
         const priorOverflow = document.body.style.overflow
@@ -122,7 +154,7 @@ export const PlayerOverlay = () => {
             window.removeEventListener("keydown", handler)
             document.body.style.overflow = priorOverflow
         }
-    }, [isOpen, close, next, prev])
+    }, [isOpen, video?.id, video?.my_opinion])
 
     if (!isOpen || !video) return null
 
@@ -175,14 +207,21 @@ export const PlayerOverlay = () => {
                 <IconButton onClick={next} sx={{ color: "#fff" }}>
                     <SkipNextIcon />
                 </IconButton>
-                <Stack sx={{ flexGrow: 1, color: "#fff" }}>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        {video.artist}
+                <Stack sx={{ flexGrow: 1, color: "#fff", minWidth: 0 }}>
+                    <Typography
+                        variant="body2"
+                        sx={{ opacity: 0.9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+                    >
+                        {video.artist} — {video.title}
                     </Typography>
                     <Typography variant="caption" sx={{ opacity: 0.6 }}>
                         {index + 1} / {queue.length}
                     </Typography>
                 </Stack>
+                <OpinionButtons current={video.my_opinion ?? null} onSet={applyOpinion} />
+                <IconButton onClick={toggleFullscreen} sx={{ color: "#fff" }}>
+                    {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+                </IconButton>
                 <IconButton onClick={close} sx={{ color: "#fff" }}>
                     <CloseIcon />
                 </IconButton>

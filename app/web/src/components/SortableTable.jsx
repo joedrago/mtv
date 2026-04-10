@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Table from "@mui/material/Table"
 import TableBody from "@mui/material/TableBody"
 import TableCell from "@mui/material/TableCell"
@@ -14,7 +14,11 @@ import TableSortLabel from "@mui/material/TableSortLabel"
 //   - render: (row) => ReactNode for the cell, defaults to row[key]
 // rows: array of row objects
 // rowKey: (row) => stable key
-// onRowClick: optional (row) => void
+// onRowClick: optional (row, index, sortedRows) => void — index is the
+//   position in the currently displayed (possibly sorted) order
+// onSortedRowsChange: optional (sortedRows) => void — fires whenever the
+//   sort changes, so the parent can expose the displayed order to other
+//   controls (e.g. "play all" buttons)
 //
 // Click a header to cycle: none → asc → desc → none.
 
@@ -28,7 +32,24 @@ const compareValues = (a, b) => {
 
 const getSortValue = (col, row) => (col.sortValue ? col.sortValue(row) : row[col.key])
 
-export const SortableTable = ({ columns, rows, rowKey, onRowClick, initialSort = null, size = "small" }) => {
+// Memoized row — re-renders only when its own row, the columns array, or the
+// onRowClick callback change. Combined with stable refs for `columns` (via the
+// parent's useMemo) and `onRowClick` (via useCallback below), this means that
+// sorting or filtering the list skips re-rendering every row — only the rows
+// whose membership changes touch the DOM.
+const MemoRow = memo(function MemoRow({ row, columns, onRowClick, rowSx }) {
+    return (
+        <TableRow hover={!!onRowClick} onClick={onRowClick ? () => onRowClick(row) : undefined} sx={rowSx}>
+            {columns.map((col) => (
+                <TableCell key={col.key} align={col.align ?? "left"} sx={col.cellSx}>
+                    {col.render ? col.render(row) : row[col.key]}
+                </TableCell>
+            ))}
+        </TableRow>
+    )
+})
+
+export const SortableTable = ({ columns, rows, rowKey, onRowClick, onSortedRowsChange, initialSort = null, size = "small" }) => {
     const [sort, setSort] = useState(initialSort) // null | { key, direction }
 
     const cycleSort = (key) => {
@@ -52,6 +73,33 @@ export const SortableTable = ({ columns, rows, rowKey, onRowClick, initialSort =
             return compareValues(getSortValue(secondary, a), getSortValue(secondary, b))
         })
     }, [rows, sort, columns])
+
+    useEffect(() => {
+        onSortedRowsChange?.(sortedRows)
+    }, [sortedRows, onSortedRowsChange])
+
+    // Stable row-click handler: resolves current index inside the latest
+    // sortedRows snapshot so memoized rows don't need to re-render on sort.
+    const sortedRowsRef = useRef(sortedRows)
+    sortedRowsRef.current = sortedRows
+    const handleRowClick = useCallback(
+        (row) => {
+            if (!onRowClick) return
+            const list = sortedRowsRef.current
+            const idx = list.indexOf(row)
+            onRowClick(row, idx, list)
+        },
+        [onRowClick]
+    )
+    const rowClickBinding = onRowClick ? handleRowClick : undefined
+
+    const rowSx = useMemo(
+        () => ({
+            cursor: onRowClick ? "pointer" : "default",
+            "& td": { borderBottom: 1, borderColor: "divider", py: 0.5 }
+        }),
+        [onRowClick]
+    )
 
     return (
         <Table size={size}>
@@ -95,21 +143,7 @@ export const SortableTable = ({ columns, rows, rowKey, onRowClick, initialSort =
             </TableHead>
             <TableBody>
                 {sortedRows.map((r, i) => (
-                    <TableRow
-                        key={rowKey ? rowKey(r) : i}
-                        hover={!!onRowClick}
-                        onClick={onRowClick ? () => onRowClick(r) : undefined}
-                        sx={{
-                            cursor: onRowClick ? "pointer" : "default",
-                            "& td": { borderBottom: 1, borderColor: "divider", py: 0.5 }
-                        }}
-                    >
-                        {columns.map((col) => (
-                            <TableCell key={col.key} align={col.align ?? "left"} sx={col.cellSx}>
-                                {col.render ? col.render(r) : r[col.key]}
-                            </TableCell>
-                        ))}
-                    </TableRow>
+                    <MemoRow key={rowKey ? rowKey(r) : i} row={r} columns={columns} onRowClick={rowClickBinding} rowSx={rowSx} />
                 ))}
             </TableBody>
         </Table>

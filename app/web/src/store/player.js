@@ -37,6 +37,15 @@ export const usePlayerStore = create((set, get) => ({
 
     togglePause: () => set((s) => ({ paused: !s.paused })),
 
+    setOpinionForCurrent: (value) => {
+        set((s) => {
+            const q = s.queue.slice()
+            if (!q[s.index]) return {}
+            q[s.index] = { ...q[s.index], my_opinion: value }
+            return { queue: q }
+        })
+    },
+
     current: () => {
         const { queue, index } = get()
         return queue[index] ?? null
