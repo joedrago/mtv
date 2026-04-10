@@ -7,6 +7,7 @@ import { BrowsePage } from "./pages/BrowsePage.jsx"
 import { MirrorPage } from "./pages/MirrorPage.jsx"
 import { AccountPage } from "./pages/AccountPage.jsx"
 import { AdminPage } from "./pages/AdminPage.jsx"
+import { ContributePage } from "./pages/ContributePage.jsx"
 import { PlayerOverlay } from "./components/Player.jsx"
 import { NavBar } from "./components/NavBar.jsx"
 import { Toaster } from "./components/Toaster.jsx"
@@ -29,6 +30,7 @@ export const App = () => {
                     <Route path="/m/:code" element={<MirrorPage />} />
                     <Route path="/me" element={<AccountPage />} />
                     <Route path="/admin" element={<AdminPage />} />
+                    <Route path="/contribute" element={<ContributePage />} />
                 </Routes>
             </Container>
             <PlayerOverlay />

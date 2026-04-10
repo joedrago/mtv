@@ -28,6 +28,7 @@ import { useUserStore } from "../store/user.js"
 import { SortableTable } from "../components/SortableTable.jsx"
 import { buildVideoColumns } from "../components/videoColumns.jsx"
 import { DestinationPicker } from "../components/DestinationPicker.jsx"
+import { EditVideoDialog } from "../components/EditVideoDialog.jsx"
 
 const shuffled = (arr) => {
     const out = arr.slice()
@@ -88,9 +89,23 @@ export const PlaylistPage = () => {
         [playlist, owner, slug]
     )
 
+    const [editVideo, setEditVideo] = useState(null)
+    const handleEdit = useCallback((video) => setEditVideo(video), [])
+    const handleSaved = useCallback((updated) => {
+        setItems((prev) => prev.map((i) => (i.id === updated.id ? { ...i, ...updated } : i)))
+    }, [])
+
     const columns = useMemo(
-        () => buildVideoColumns({ signedIn: !!user, onRate: handleRate, canRemove: !!isOwner, onRemove: handleRemoveItem }),
-        [user, isOwner, handleRate, handleRemoveItem]
+        () =>
+            buildVideoColumns({
+                signedIn: !!user,
+                onRate: handleRate,
+                canRemove: !!isOwner,
+                onRemove: handleRemoveItem,
+                canEdit: !!user?.is_contributor,
+                onEdit: handleEdit
+            }),
+        [user, isOwner, handleRate, handleRemoveItem, handleEdit]
     )
 
     const playAll = (shuffle = false) => {
@@ -192,6 +207,8 @@ export const PlaylistPage = () => {
                 <Box sx={{ flexGrow: 1 }} />
                 <DestinationPicker visibleVideos={displayItems} />
             </Stack>
+
+            <EditVideoDialog video={editVideo} open={!!editVideo} onClose={() => setEditVideo(null)} onSaved={handleSaved} />
 
             <Paper variant="outlined">
                 <SortableTable

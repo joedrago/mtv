@@ -48,6 +48,7 @@ export const NavBar = () => {
             <Stack direction="row" spacing={0.5} alignItems="center">
                 <NavLink to="/" label="home" />
                 <NavLink to="/browse" label="browse" />
+                {user?.is_contributor && <NavLink to="/contribute" label="contribute" />}
             </Stack>
             <Box sx={{ flexGrow: 1 }} />
             {user ? (

@@ -11,6 +11,12 @@ const jsonOpts = (method, body) => ({
     body: JSON.stringify(body)
 })
 
+export const createVideo = (video) => fetchJson("/api/videos", jsonOpts("POST", video))
+
+export const queryYoutube = (input) => fetchJson("/api/videos/query-youtube", jsonOpts("POST", { input }))
+
+export const updateVideo = (id, patch) => fetchJson(`/api/videos/${id}`, jsonOpts("PATCH", patch))
+
 export const updateMe = (patch) => fetchJson("/api/me", jsonOpts("PATCH", patch))
 
 export const fetchMyStats = () => fetchJson("/api/me/stats")

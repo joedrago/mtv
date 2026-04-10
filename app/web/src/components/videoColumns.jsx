@@ -2,6 +2,7 @@ import IconButton from "@mui/material/IconButton"
 import Tooltip from "@mui/material/Tooltip"
 import Typography from "@mui/material/Typography"
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
+import EditIcon from "@mui/icons-material/Edit"
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd"
 import { RatingCell, opinionSortValue } from "./OpinionButtons.jsx"
 import { addToPlaylist } from "../api.js"
@@ -65,8 +66,10 @@ export const fmtDuration = (s) => {
 // Columns for video tables (playlist items, library browse).
 // onRate     - called with (videoId, newValue|null)
 // canRemove  - true when the current user can remove items from this list
-// onRemove   - called with (videoId) when a remove button is clicked
-export const buildVideoColumns = ({ signedIn, onRate, canRemove = false, onRemove = null }) => {
+// onRemove   - called with (videoId)
+// canEdit    - true when the current user can edit video metadata (contributor)
+// onEdit     - called with (video) when the edit pencil is clicked
+export const buildVideoColumns = ({ signedIn, onRate, canRemove = false, onRemove = null, canEdit = false, onEdit = null }) => {
     const cols = [
         {
             key: "artist",
@@ -123,6 +126,29 @@ export const buildVideoColumns = ({ signedIn, onRate, canRemove = false, onRemov
             align: "center",
             width: "50px",
             render: (r) => <QuickAddButton video={r} />
+        })
+    }
+    if (canEdit) {
+        cols.push({
+            key: "edit",
+            label: "",
+            align: "center",
+            width: "50px",
+            render: (r) => (
+                <Tooltip title="edit metadata" placement="left" enterDelay={400} enterNextDelay={400}>
+                    <IconButton
+                        size="small"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onEdit?.(r)
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        sx={{ color: "text.disabled", "&:hover": { color: "primary.main" } }}
+                    >
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+            )
         })
     }
     if (canRemove) {

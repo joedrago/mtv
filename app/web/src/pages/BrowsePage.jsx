@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
 import InputAdornment from "@mui/material/InputAdornment"
@@ -15,6 +16,7 @@ import { useUserStore } from "../store/user.js"
 import { SortableTable } from "../components/SortableTable.jsx"
 import { buildVideoColumns } from "../components/videoColumns.jsx"
 import { DestinationPicker } from "../components/DestinationPicker.jsx"
+import { EditVideoDialog } from "../components/EditVideoDialog.jsx"
 
 const shuffled = (arr) => {
     const out = arr.slice()
@@ -26,16 +28,23 @@ const shuffled = (arr) => {
 }
 
 export const BrowsePage = () => {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const initialQ = searchParams.get("q") ?? ""
     const [videos, setVideos] = useState([])
     const [displayVideos, setDisplayVideos] = useState([])
-    const [queryInput, setQueryInput] = useState("")
-    const [query, setQuery] = useState("")
+    const [queryInput, setQueryInput] = useState(initialQ)
+    const [query, setQuery] = useState(initialQ)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        const t = setTimeout(() => setQuery(queryInput), 180)
+        const t = setTimeout(() => {
+            setQuery(queryInput)
+            // mirror into the URL so refresh/back preserves the search
+            if (queryInput) setSearchParams({ q: queryInput }, { replace: true })
+            else setSearchParams({}, { replace: true })
+        }, 180)
         return () => clearTimeout(t)
-    }, [queryInput])
+    }, [queryInput, setSearchParams])
     const user = useUserStore((s) => s.user)
     const openQueue = usePlayerStore((s) => s.openQueue)
 
@@ -53,12 +62,30 @@ export const BrowsePage = () => {
         setOpinion(videoId, value)
     }, [])
 
-    const columns = useMemo(() => buildVideoColumns({ signedIn: !!user, onRate: handleRate }), [user, handleRate])
+    const [editVideo, setEditVideo] = useState(null)
+    const handleEdit = useCallback((video) => setEditVideo(video), [])
+    const handleSaved = useCallback((updated) => {
+        setVideos((prev) => prev.map((v) => (v.id === updated.id ? { ...v, ...updated } : v)))
+    }, [])
+
+    const columns = useMemo(
+        () => buildVideoColumns({ signedIn: !!user, onRate: handleRate, canEdit: !!user?.is_contributor, onEdit: handleEdit }),
+        [user, handleRate, handleEdit]
+    )
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase()
         if (!q) return videos
-        return videos.filter((v) => v.artist.toLowerCase().includes(q) || v.title.toLowerCase().includes(q))
+        const terms = q
+            .split("|")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        if (!terms.length) return videos
+        return videos.filter((v) => {
+            const a = v.artist.toLowerCase()
+            const t = v.title.toLowerCase()
+            return terms.some((term) => a.includes(term) || t.includes(term))
+        })
     }, [videos, query])
 
     const playAll = (shuffle = false) => {
@@ -110,6 +137,8 @@ export const BrowsePage = () => {
                 <Box sx={{ flexGrow: 1 }} />
                 <DestinationPicker visibleVideos={displayVideos} />
             </Stack>
+
+            <EditVideoDialog video={editVideo} open={!!editVideo} onClose={() => setEditVideo(null)} onSaved={handleSaved} />
 
             <Paper variant="outlined">
                 {loading ? (

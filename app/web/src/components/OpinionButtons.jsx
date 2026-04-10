@@ -25,7 +25,7 @@ export const OPINIONS = [
         value: "meh",
         label: "meh (3)",
         key: "3",
-        color: "#9aa0a8",
+        color: "#7aa7c7",
         FilledIcon: SentimentNeutralIcon,
         OutlineIcon: SentimentNeutralIcon
     },

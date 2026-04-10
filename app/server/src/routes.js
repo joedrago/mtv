@@ -2,6 +2,9 @@ import express from "express"
 import { db } from "./db.js"
 import { AUTH_COOKIE } from "./auth.js"
 import { getUserById, isAdministrator, listAllUsers, setUserContributor, userPublicView } from "./users.js"
+import { downloadSelfHostedVideo } from "./hosting.js"
+import { fetchYoutubeMetadata, parseYoutubeInput, splitArtistTitle } from "./youtube.js"
+import { secrets } from "./config.js"
 
 const router = express.Router()
 
@@ -33,6 +36,16 @@ const requireAdmin = (req, res) => {
     if (!me) return null
     if (!isAdministrator(me)) {
         res.status(403).json({ error: "administrator only" })
+        return null
+    }
+    return me
+}
+
+const requireContributor = (req, res) => {
+    const me = requireUser(req, res)
+    if (!me) return null
+    if (!me.is_contributor) {
+        res.status(403).json({ error: "contributor only" })
         return null
     }
     return me
@@ -406,6 +419,142 @@ const listAllVideos = db.prepare(
 router.get("/videos", (req, res) => {
     const me = currentUser(req)
     res.json({ videos: listAllVideos.all(me?.id ?? -1) })
+})
+
+const existingVideoBySource = db.prepare(`SELECT id FROM videos WHERE source = ? AND source_ref = ?`)
+const insertVideo = db.prepare(
+    `INSERT INTO videos (source, source_ref, title, artist, duration_s, start_s, end_s, thumb, added_by, added_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+)
+
+// Parse a raw YouTube URL (or id), fetch metadata from the API, and return a
+// pre-filled form payload: id, guessed artist/title, duration, thumb, and any
+// t/start/end trim hints extracted from the URL. Used by the contribute page.
+router.post("/videos/query-youtube", async (req, res) => {
+    const me = requireContributor(req, res)
+    if (!me) return
+    const parsed = parseYoutubeInput(req.body?.input)
+    if (!parsed) {
+        res.status(400).json({ error: "couldn't parse a YouTube URL or id" })
+        return
+    }
+    if (existingVideoBySource.get("youtube", parsed.source_ref)) {
+        res.status(409).json({ error: "this video is already in the library" })
+        return
+    }
+    try {
+        const meta = await fetchYoutubeMetadata(parsed.source_ref, secrets?.youtube)
+        const { artist, title } = splitArtistTitle(meta.title ?? "")
+        res.json({
+            source_ref: parsed.source_ref,
+            start_s: parsed.start_s,
+            end_s: parsed.end_s,
+            duration_s: meta.duration_s,
+            thumb: meta.thumb,
+            artist,
+            title
+        })
+    } catch (e) {
+        res.status(502).json({ error: String(e?.message ?? e) })
+    }
+})
+
+router.post("/videos", async (req, res) => {
+    const me = requireContributor(req, res)
+    if (!me) return
+    const { source, source_ref: rawRef, url, duration_s } = req.body || {}
+    const title = String(req.body?.title ?? "").trim()
+    const artist = String(req.body?.artist ?? "").trim()
+    if (!title || !artist) {
+        res.status(400).json({ error: "title and artist required" })
+        return
+    }
+    if (source !== "youtube" && source !== "self") {
+        res.status(400).json({ error: "source must be 'youtube' or 'self'" })
+        return
+    }
+
+    let finalRef
+    let finalDuration = Number.isFinite(Number(duration_s)) ? Number(duration_s) : null
+    let finalThumb = null
+
+    if (source === "youtube") {
+        const ref = String(rawRef ?? "").trim()
+        if (!/^[A-Za-z0-9_-]{11}$/.test(ref)) {
+            res.status(400).json({ error: "invalid youtube video id (expected 11 chars)" })
+            return
+        }
+        finalRef = ref
+        finalThumb = `https://i.ytimg.com/vi/${ref}/mqdefault.jpg`
+    } else {
+        if (!url) {
+            res.status(400).json({ error: "url required for self-hosted videos" })
+            return
+        }
+        finalRef = `${slugify(`${artist}-${title}`)}-${Date.now().toString(36)}`
+        try {
+            const result = await downloadSelfHostedVideo(String(url), finalRef)
+            finalDuration = result.duration_s
+            finalThumb = result.thumb
+        } catch (e) {
+            res.status(500).json({ error: String(e?.message ?? e) })
+            return
+        }
+    }
+
+    if (existingVideoBySource.get(source, finalRef)) {
+        res.status(409).json({ error: "video already in the library" })
+        return
+    }
+
+    const startS = Number.isFinite(Number(req.body?.start_s)) ? Number(req.body.start_s) : -1
+    const endS = Number.isFinite(Number(req.body?.end_s)) ? Number(req.body.end_s) : -1
+    const info = insertVideo.run(source, finalRef, title, artist, finalDuration, startS, endS, finalThumb, me.id, nowEpoch())
+    res.json({ ok: true, id: info.lastInsertRowid })
+})
+
+router.patch("/videos/:id", (req, res) => {
+    const me = requireContributor(req, res)
+    if (!me) return
+    const id = Number(req.params.id)
+    const video = db.prepare(`SELECT * FROM videos WHERE id = ?`).get(id)
+    if (!video) {
+        res.status(404).json({ error: "not found" })
+        return
+    }
+    const sets = []
+    const values = []
+    for (const field of ["title", "artist"]) {
+        if (req.body?.[field] != null) {
+            const v = String(req.body[field]).trim()
+            if (v) {
+                sets.push(`${field} = ?`)
+                values.push(v)
+            }
+        }
+    }
+    // duration_s is immutable via the UI — it's the raw source length from
+    // YouTube or ffprobe, never user-edited. start/end are the trim points.
+    if (req.body?.start_s != null) {
+        let n = Number(req.body.start_s)
+        if (!Number.isFinite(n) || n <= 0) n = -1
+        sets.push("start_s = ?")
+        values.push(n)
+    }
+    if (req.body?.end_s != null) {
+        let n = Number(req.body.end_s)
+        if (!Number.isFinite(n) || n <= 0) n = -1
+        if (video.duration_s != null && n >= video.duration_s) n = -1
+        sets.push("end_s = ?")
+        values.push(n)
+    }
+    if (!sets.length) {
+        res.json({ ok: true })
+        return
+    }
+    values.push(id)
+    db.prepare(`UPDATE videos SET ${sets.join(", ")} WHERE id = ?`).run(...values)
+    res.json({ ok: true })
 })
 
 router.delete("/opinions/:videoId", (req, res) => {

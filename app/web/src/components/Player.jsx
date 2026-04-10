@@ -20,6 +20,7 @@ import VolumeOffIcon from "@mui/icons-material/VolumeOff"
 import VolumeUpIcon from "@mui/icons-material/VolumeUp"
 import { usePlayerStore } from "../store/player.js"
 import { useMirrorStore } from "../store/mirror.js"
+import { useUserStore } from "../store/user.js"
 import { setOpinion } from "../api.js"
 import { loadYouTubeApi } from "./youtubeApi.js"
 import { Chyron } from "./Chyron.jsx"
@@ -241,6 +242,7 @@ export const PlayerOverlay = () => {
         volume,
         initialPosition
     } = usePlayerStore()
+    const signedIn = useUserStore((s) => !!s.user)
     const hostCode = useMirrorStore((s) => s.hostCode)
     const sessionState = useMirrorStore((s) => s.sessionState)
     const startHost = useMirrorStore((s) => s.startHost)
@@ -266,7 +268,7 @@ export const PlayerOverlay = () => {
     }, [])
 
     const applyOpinion = (value) => {
-        if (!video) return
+        if (!video || !signedIn) return
         const cur = video.my_opinion ?? null
         const nextVal = value === cur ? null : value
         setOpinionForCurrent(nextVal)
@@ -494,7 +496,7 @@ export const PlayerOverlay = () => {
                         }}
                     />
                 )}
-                <OpinionButtons current={video.my_opinion ?? null} onSet={applyOpinion} />
+                {signedIn && <OpinionButtons current={video.my_opinion ?? null} onSet={applyOpinion} />}
                 {!isMirror && (
                     <Tooltip title={hostCode ? "stop mirroring" : "start mirroring"}>
                         <IconButton onClick={toggleMirror} sx={{ color: hostCode ? "primary.main" : "#fff" }}>
