@@ -1,8 +1,9 @@
 import { useEffect } from "react"
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "react-router-dom"
 import Container from "@mui/material/Container"
 import { useMirrorStore } from "./store/mirror.js"
 import { HomePage } from "./pages/HomePage.jsx"
+import { PlaylistsPage } from "./pages/PlaylistsPage.jsx"
 import { PlaylistPage } from "./pages/PlaylistPage.jsx"
 import { BrowsePage } from "./pages/BrowsePage.jsx"
 import { MirrorPage } from "./pages/MirrorPage.jsx"
@@ -12,7 +13,18 @@ import { ContributePage } from "./pages/ContributePage.jsx"
 import { PlayerOverlay } from "./components/Player.jsx"
 import { NavBar } from "./components/NavBar.jsx"
 import { Toaster } from "./components/Toaster.jsx"
+import { usePlayerStore } from "./store/player.js"
 import { useUserStore } from "./store/user.js"
+
+const PopWatcher = () => {
+    const location = useLocation()
+    const navType = useNavigationType()
+    const close = usePlayerStore((s) => s.close)
+    useEffect(() => {
+        if (navType === "POP") close()
+    }, [location, navType, close])
+    return null
+}
 
 export const App = () => {
     const load = useUserStore((s) => s.load)
@@ -32,10 +44,12 @@ export const App = () => {
 
     return (
         <BrowserRouter>
+            <PopWatcher />
             <Container maxWidth="lg" sx={{ pt: 2, pb: 6 }}>
                 <NavBar />
                 <Routes>
                     <Route path="/" element={<HomePage />} />
+                    <Route path="/playlists" element={<PlaylistsPage />} />
                     <Route path="/browse" element={<BrowsePage />} />
                     <Route path="/p/:owner/:slug" element={<PlaylistPage />} />
                     <Route path="/m/:code" element={<MirrorPage />} />
