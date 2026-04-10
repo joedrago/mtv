@@ -1,0 +1,15 @@
+@font-face {
+    font-family: "Kabel Black";
+    src: url("/fonts/Kabel-Black.otf") format("opentype");
+    font-display: swap;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+}
