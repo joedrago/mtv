@@ -1,7 +1,6 @@
 import { Link as RouterLink, useLocation } from "react-router-dom"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
-import Chip from "@mui/material/Chip"
 import Stack from "@mui/material/Stack"
 import Typography from "@mui/material/Typography"
 import { useUserStore } from "../store/user.js"
@@ -29,7 +28,6 @@ const NavLink = ({ to, label }) => {
 
 export const NavBar = () => {
     const user = useUserStore((s) => s.user)
-    const signOut = useUserStore((s) => s.signOut)
 
     return (
         <Stack direction="row" alignItems="center" sx={{ mb: 3, gap: 2, flexWrap: "wrap", rowGap: 1 }}>
@@ -53,16 +51,21 @@ export const NavBar = () => {
             </Stack>
             <Box sx={{ flexGrow: 1 }} />
             {user ? (
-                <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
+                    hello,{" "}
+                    <Box
+                        component={RouterLink}
+                        to="/me"
+                        sx={{
+                            color: "primary.main",
+                            textDecoration: "none",
+                            fontWeight: 600,
+                            "&:hover": { textDecoration: "underline" }
+                        }}
+                    >
                         {user.display_name}
-                    </Typography>
-                    {user.is_administrator && <Chip size="small" color="primary" label="admin" />}
-                    {user.is_contributor && <Chip size="small" color="secondary" label="contributor" />}
-                    <Button size="small" onClick={signOut} sx={{ textTransform: "none" }}>
-                        sign out
-                    </Button>
-                </Stack>
+                    </Box>
+                </Typography>
             ) : (
                 <Button size="small" variant="contained" href="/auth/discord" sx={{ textTransform: "none" }}>
                     sign in with discord

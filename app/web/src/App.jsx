@@ -5,6 +5,8 @@ import { HomePage } from "./pages/HomePage.jsx"
 import { PlaylistPage } from "./pages/PlaylistPage.jsx"
 import { BrowsePage } from "./pages/BrowsePage.jsx"
 import { MirrorPage } from "./pages/MirrorPage.jsx"
+import { AccountPage } from "./pages/AccountPage.jsx"
+import { AdminPage } from "./pages/AdminPage.jsx"
 import { PlayerOverlay } from "./components/Player.jsx"
 import { NavBar } from "./components/NavBar.jsx"
 import { Toaster } from "./components/Toaster.jsx"
@@ -25,6 +27,8 @@ export const App = () => {
                     <Route path="/browse" element={<BrowsePage />} />
                     <Route path="/p/:owner/:slug" element={<PlaylistPage />} />
                     <Route path="/m/:code" element={<MirrorPage />} />
+                    <Route path="/me" element={<AccountPage />} />
+                    <Route path="/admin" element={<AdminPage />} />
                 </Routes>
             </Container>
             <PlayerOverlay />

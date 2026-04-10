@@ -71,3 +71,11 @@ export const userPublicView = (user) => {
         is_administrator: isAdministrator(user)
     }
 }
+
+const selectAllUsers = db.prepare(
+    `SELECT id, discord_id, discord_handle, display_name, label, is_contributor FROM users ORDER BY display_name COLLATE NOCASE ASC`
+)
+export const listAllUsers = () => selectAllUsers.all()
+
+const updateContributor = db.prepare(`UPDATE users SET is_contributor = ? WHERE id = ?`)
+export const setUserContributor = (id, flag) => updateContributor.run(flag ? 1 : 0, id)

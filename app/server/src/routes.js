@@ -1,7 +1,7 @@
 import express from "express"
 import { db } from "./db.js"
 import { AUTH_COOKIE } from "./auth.js"
-import { getUserById, userPublicView } from "./users.js"
+import { getUserById, isAdministrator, listAllUsers, setUserContributor, userPublicView } from "./users.js"
 
 const router = express.Router()
 
@@ -28,12 +28,98 @@ const requireUser = (req, res) => {
     return me
 }
 
+const requireAdmin = (req, res) => {
+    const me = requireUser(req, res)
+    if (!me) return null
+    if (!isAdministrator(me)) {
+        res.status(403).json({ error: "administrator only" })
+        return null
+    }
+    return me
+}
+
 router.get("/health", (_req, res) => {
     res.json({ ok: true })
 })
 
 router.get("/me", (req, res) => {
     res.json({ user: userPublicView(currentUser(req)) })
+})
+
+const DISPLAY_NAME_RE = /^[A-Za-z0-9_]{2,32}$/
+const updateUser = db.prepare(`UPDATE users SET display_name = ?, label = ? WHERE id = ?`)
+const displayNameTaken = db.prepare(`SELECT id FROM users WHERE LOWER(display_name) = LOWER(?) AND id != ?`)
+
+router.patch("/me", (req, res) => {
+    const me = requireUser(req, res)
+    if (!me) return
+
+    let displayName = me.display_name
+    let label = me.label
+
+    if (req.body?.display_name != null) {
+        const name = String(req.body.display_name).trim()
+        if (!DISPLAY_NAME_RE.test(name)) {
+            res.status(400).json({ error: "display name must be 2-32 letters, digits, or underscores" })
+            return
+        }
+        if (displayNameTaken.get(name, me.id)) {
+            res.status(409).json({ error: "that display name is already in use" })
+            return
+        }
+        displayName = name
+    }
+
+    if (req.body?.label !== undefined) {
+        const raw = req.body.label
+        if (raw == null || String(raw).trim() === "") {
+            label = null
+        } else {
+            label = String(raw).trim().slice(0, 128)
+        }
+    }
+
+    updateUser.run(displayName, label, me.id)
+    res.json({ user: userPublicView(getUserById(me.id)) })
+})
+
+// --- Admin ------------------------------------------------------------------
+
+router.get("/users", (req, res) => {
+    const me = requireAdmin(req, res)
+    if (!me) return
+    const users = listAllUsers().map((u) => ({
+        id: u.id,
+        display_name: u.display_name,
+        discord_handle: u.discord_handle,
+        label: u.label,
+        is_contributor: !!u.is_contributor,
+        is_administrator: isAdministrator(u)
+    }))
+    res.json({ users })
+})
+
+router.patch("/users/:id", (req, res) => {
+    const me = requireAdmin(req, res)
+    if (!me) return
+    const id = Number(req.params.id)
+    if (!Number.isFinite(id)) {
+        res.status(400).json({ error: "bad id" })
+        return
+    }
+    if (req.body?.is_contributor != null) {
+        setUserContributor(id, !!req.body.is_contributor)
+    }
+    res.json({ ok: true })
+})
+
+router.get("/me/stats", (req, res) => {
+    const me = requireUser(req, res)
+    if (!me) return
+    const videos_added = db.prepare(`SELECT COUNT(*) AS c FROM videos WHERE added_by = ?`).get(me.id).c
+    const opinions = db.prepare(`SELECT COUNT(*) AS c FROM opinions WHERE user_id = ?`).get(me.id).c
+    const playlists = db.prepare(`SELECT COUNT(*) AS c FROM playlists WHERE owner_id = ?`).get(me.id).c
+    res.json({ stats: { videos_added, opinions, playlists } })
 })
 
 const listVisiblePlaylists = db.prepare(

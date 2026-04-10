@@ -14,6 +14,8 @@ export const useUserStore = create((set) => ({
         }
     },
 
+    setUser: (user) => set({ user }),
+
     signOut: async () => {
         try {
             await fetch("/auth/logout", { method: "POST", credentials: "same-origin" })

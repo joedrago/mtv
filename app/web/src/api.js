@@ -11,6 +11,14 @@ const jsonOpts = (method, body) => ({
     body: JSON.stringify(body)
 })
 
+export const updateMe = (patch) => fetchJson("/api/me", jsonOpts("PATCH", patch))
+
+export const fetchMyStats = () => fetchJson("/api/me/stats")
+
+export const fetchAllUsers = () => fetchJson("/api/users")
+
+export const updateUserContributor = (id, is_contributor) => fetchJson(`/api/users/${id}`, jsonOpts("PATCH", { is_contributor }))
+
 export const createPlaylist = (name, is_public = true) => fetchJson("/api/playlists", jsonOpts("POST", { name, is_public }))
 
 export const updatePlaylist = (id, patch) => fetchJson(`/api/playlists/${id}`, jsonOpts("PATCH", patch))
