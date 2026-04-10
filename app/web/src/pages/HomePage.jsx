@@ -29,7 +29,6 @@ const ActionCard = ({ Icon, label, description, onClick, loading = false, iconCo
         variant="outlined"
         onClick={loading ? undefined : onClick}
         sx={{
-            width: 200,
             p: 3,
             cursor: loading ? "default" : "pointer",
             display: "flex",
@@ -85,7 +84,7 @@ export const HomePage = () => {
     )
 
     return (
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 200px)", gap: 2, mt: 2, justifyContent: "center" }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(auto-fit, minmax(150px, 1fr))", sm: "repeat(3, 200px)" }, justifyContent: { sm: "center" }, gap: 2, mt: 2 }}>
             <ActionCard
                 Icon={ShuffleIcon}
                 label="shuffle all"
