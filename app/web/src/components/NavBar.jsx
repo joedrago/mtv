@@ -1,9 +1,13 @@
 import { Link as RouterLink, useLocation } from "react-router-dom"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
+import Chip from "@mui/material/Chip"
 import Stack from "@mui/material/Stack"
+import Tooltip from "@mui/material/Tooltip"
 import Typography from "@mui/material/Typography"
+import ScreenShareIcon from "@mui/icons-material/ScreenShare"
 import { useUserStore } from "../store/user.js"
+import { useMirrorStore } from "../store/mirror.js"
 
 const NavLink = ({ to, label }) => {
     const loc = useLocation()
@@ -28,6 +32,8 @@ const NavLink = ({ to, label }) => {
 
 export const NavBar = () => {
     const user = useUserStore((s) => s.user)
+    const djCode = useMirrorStore((s) => s.djCode)
+    const clearDjMode = useMirrorStore((s) => s.clearDjMode)
 
     return (
         <Stack direction="row" alignItems="center" sx={{ mb: 3, gap: 2, flexWrap: "wrap", rowGap: 1 }}>
@@ -51,6 +57,18 @@ export const NavBar = () => {
                 {user?.is_contributor && <NavLink to="/contribute" label="contribute" />}
             </Stack>
             <Box sx={{ flexGrow: 1 }} />
+            {djCode && (
+                <Tooltip title="clear DJ mode">
+                    <Chip
+                        size="small"
+                        icon={<ScreenShareIcon />}
+                        label={djCode}
+                        onDelete={clearDjMode}
+                        color="primary"
+                        sx={{ fontVariantNumeric: "tabular-nums" }}
+                    />
+                </Tooltip>
+            )}
             {user ? (
                 <Typography variant="body2" color="text.secondary">
                     hello,{" "}

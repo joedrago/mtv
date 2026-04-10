@@ -275,9 +275,12 @@ export const PlayerOverlay = () => {
     } = usePlayerStore()
     const signedIn = useUserStore((s) => !!s.user)
     const hostCode = useMirrorStore((s) => s.hostCode)
+    const djCode = useMirrorStore((s) => s.djCode)
     const sessionState = useMirrorStore((s) => s.sessionState)
     const startHost = useMirrorStore((s) => s.startHost)
     const stopHost = useMirrorStore((s) => s.stopHost)
+    const setDjCode = useMirrorStore((s) => s.setDjCode)
+    const clearDjMode = useMirrorStore((s) => s.clearDjMode)
     const sendVideo = useMirrorStore((s) => s.sendVideo)
     const sendPlaying = useMirrorStore((s) => s.sendPlaying)
     const sendNext = useMirrorStore((s) => s.sendNext)
@@ -418,17 +421,6 @@ export const PlayerOverlay = () => {
     }, [paused, hostCode, isMirror, sendPlaying, setPaused])
 
     const mirrorViewerUrl = (code) => `${window.location.origin}/m/${code}`
-    const setHostParam = (code) => {
-        const p = new URLSearchParams(window.location.search)
-        p.set("h", code)
-        history.replaceState(null, "", `?${p}`)
-    }
-    const clearHostParam = () => {
-        const p = new URLSearchParams(window.location.search)
-        p.delete("h")
-        const s = p.toString()
-        history.replaceState(null, "", s ? `?${s}` : window.location.pathname)
-    }
 
     const copyMirrorUrl = async (code) => {
         try {
@@ -441,16 +433,14 @@ export const PlayerOverlay = () => {
     }
 
     const handleStartMirror = async () => {
-        const requestedCode = new URLSearchParams(window.location.search).get("h") ?? undefined
-        const code = await startHost(requestedCode)
+        const code = await startHost(djCode || undefined)
         if (!code) return
-        setHostParam(code)
+        setDjCode(code)
         copyMirrorUrl(code)
     }
 
     const handleStopMirror = () => {
-        stopHost()
-        clearHostParam()
+        clearDjMode()
         setMirrorMenuAnchor(null)
     }
 
@@ -459,15 +449,16 @@ export const PlayerOverlay = () => {
         else handleStartMirror()
     }
 
-    // Auto-start hosting if ?h= is in the URL when the player opens
+    // Auto-start hosting when the player opens if a DJ code is stored
     useEffect(() => {
         if (!isOpen || hostCode) return
-        const requested = new URLSearchParams(window.location.search).get("h")
-        if (requested) startHost(requested)
+        if (djCode) startHost(djCode)
     }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const closeOverlay = () => {
-        if (hostCode) stopHost()
+        // Intentionally don't stop hosting — closing the player to pick a new
+        // playlist should leave the mirror session alive. The NavBar chip lets
+        // the host explicitly end DJ mode.
         close()
     }
 

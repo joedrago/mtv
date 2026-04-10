@@ -6,6 +6,18 @@ export const useMirrorStore = create((set, get) => ({
     hostCode: null,
     viewerCode: null,
     sessionState: null, // { video, pos, playing, receivedAt }
+    djCode: sessionStorage.getItem("mtv:djCode") ?? null,
+
+    setDjCode: (code) => {
+        sessionStorage.setItem("mtv:djCode", code)
+        set({ djCode: code })
+    },
+
+    clearDjMode: () => {
+        get().stopHost()
+        sessionStorage.removeItem("mtv:djCode")
+        set({ djCode: null })
+    },
 
     startHost: (requestedCode) =>
         new Promise((resolve) => {

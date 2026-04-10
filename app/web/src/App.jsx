@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import Container from "@mui/material/Container"
+import { useMirrorStore } from "./store/mirror.js"
 import { HomePage } from "./pages/HomePage.jsx"
 import { PlaylistPage } from "./pages/PlaylistPage.jsx"
 import { BrowsePage } from "./pages/BrowsePage.jsx"
@@ -17,6 +18,16 @@ export const App = () => {
     const load = useUserStore((s) => s.load)
     useEffect(() => {
         load()
+        // Absorb ?dj=CODE into DJ mode so the code persists across navigation.
+        // A savvy user can craft mtv.example.com?dj=MYSHOW to start a named session.
+        const p = new URLSearchParams(window.location.search)
+        const h = p.get("dj")
+        if (h) {
+            useMirrorStore.getState().setDjCode(h)
+            p.delete("dj")
+            const qs = p.toString()
+            history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""))
+        }
     }, [load])
 
     return (
