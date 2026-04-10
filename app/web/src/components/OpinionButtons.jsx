@@ -11,8 +11,14 @@ import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt"
 import SentimentNeutralIcon from "@mui/icons-material/SentimentNeutral"
 import ThumbDownIcon from "@mui/icons-material/ThumbDown"
 import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt"
-import HeartBrokenIcon from "@mui/icons-material/HeartBroken"
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule"
+
+const PoopFilledIcon = ({ fontSize }) => (
+    <span style={{ fontSize: fontSize === "small" ? "1.1rem" : "1.5rem", lineHeight: 1, display: "inline-flex", alignItems: "center" }}>💩</span>
+)
+const PoopOutlineIcon = ({ fontSize }) => (
+    <span style={{ fontSize: fontSize === "small" ? "1.1rem" : "1.5rem", lineHeight: 1, display: "inline-flex", alignItems: "center", filter: "grayscale(1) opacity(0.55)" }}>💩</span>
+)
 
 // Sort order: love is "best" (0). Used as the sortValue basis for rating columns.
 export const OPINION_SORT_ORDER = { love: 0, like: 1, meh: 2, bleh: 3, hate: 4 }
@@ -30,7 +36,7 @@ export const OPINIONS = [
         OutlineIcon: SentimentNeutralIcon
     },
     { value: "bleh", label: "bleh (4)", key: "4", color: "#e8a53b", FilledIcon: ThumbDownIcon, OutlineIcon: ThumbDownOffAltIcon },
-    { value: "hate", label: "hate (5)", key: "5", color: "#b13a3a", FilledIcon: HeartBrokenIcon, OutlineIcon: HeartBrokenIcon }
+    { value: "hate", label: "hate (5)", key: "5", color: "#c8956c", FilledIcon: PoopFilledIcon, OutlineIcon: PoopOutlineIcon }
 ]
 
 export const OpinionButtons = ({ current, onSet, disabled = false, idleColor = "rgba(255,255,255,0.55)" }) => (
