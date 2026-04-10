@@ -33,7 +33,7 @@ export const Chyron = ({ video, owner, mode }) => {
                 left: "3%",
                 bottom: "3%",
                 fontFamily: '"Kabel Black"',
-                fontSize: "5vh",
+                fontSize: "clamp(12px, min(5vh, 2.8vw), 48px)",
                 lineHeight: 1,
                 color: "#ffffff",
                 textShadow: "0.1em 0.1em #000000",

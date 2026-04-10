@@ -34,17 +34,27 @@ const YoutubeSurface = ({ video, paused, volume, initialPosition, onEnded, surfa
     const hostRef = useRef(null)
     const ytRef = useRef(null)
     const readyRef = useRef(false)
+    // Refs so callbacks always see current values without stale closures
+    const onEndedRef = useRef(onEnded)
+    const pausedRef = useRef(paused)
+    useEffect(() => { onEndedRef.current = onEnded }, [onEnded])
+    useEffect(() => { pausedRef.current = paused }, [paused])
 
+    // Create the YT player once. It lives for the lifetime of this component.
+    // iOS Safari only allows autoplay in an iframe that was initiated by a user
+    // gesture — recreating the iframe for each track breaks that. By keeping the
+    // same player alive and calling loadVideoById we stay inside the gesture scope.
     useEffect(() => {
         let cancelled = false
         readyRef.current = false
 
         loadYouTubeApi().then((YT) => {
             if (cancelled || !hostRef.current) return
-            const startSeconds = Math.max(video.start_s > 0 ? video.start_s : 0, Math.floor(initialPosition || 0))
+            const v = video
+            const startSeconds = Math.max(v.start_s > 0 ? v.start_s : 0, Math.floor(initialPosition || 0))
             const player = new YT.Player(hostRef.current, {
                 host: "https://www.youtube.com",
-                videoId: video.source_ref,
+                videoId: v.source_ref,
                 width: window.innerWidth,
                 height: window.innerHeight,
                 playerVars: {
@@ -55,22 +65,22 @@ const YoutubeSurface = ({ video, paused, volume, initialPosition, onEnded, surfa
                     iv_load_policy: 3,
                     playsinline: 1,
                     start: startSeconds,
-                    end: video.end_s > 0 ? video.end_s : undefined
+                    end: v.end_s > 0 ? v.end_s : undefined
                 },
                 events: {
                     onReady: (e) => {
                         readyRef.current = true
                         e.target.setVolume(Math.round((volume ?? 1) * 100))
-                        if (paused) e.target.pauseVideo()
+                        if (pausedRef.current) e.target.pauseVideo()
                         else e.target.playVideo()
                         if (initialPosition && Math.abs(initialPosition - startSeconds) > 0.5) {
                             e.target.seekTo(initialPosition, true)
                         }
                     },
                     onStateChange: (e) => {
-                        if (e.data === YT.PlayerState.ENDED) onEnded?.()
+                        if (e.data === YT.PlayerState.ENDED) onEndedRef.current?.()
                     },
-                    onError: () => onEnded?.()
+                    onError: () => onEndedRef.current?.()
                 }
             })
             ytRef.current = player
@@ -92,7 +102,24 @@ const YoutubeSurface = ({ video, paused, volume, initialPosition, onEnded, surfa
             ytRef.current = null
             readyRef.current = false
         }
-    }, [video.source_ref, video.start_s, video.end_s, onEnded])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- intentionally runs once
+
+    // When the track changes, reuse the existing player instead of recreating it.
+    // This is critical for iOS Safari: loadVideoById preserves the user-gesture
+    // context so subsequent tracks autoplay without requiring another tap.
+    // Initialised to the first video's source so the mount run is a no-op
+    // (the player constructor already has this video queued).
+    const prevSourceRef = useRef(video.source_ref)
+    useEffect(() => {
+        if (prevSourceRef.current === video.source_ref) return
+        prevSourceRef.current = video.source_ref
+        if (!readyRef.current || !ytRef.current) return
+        const startSeconds = Math.max(video.start_s > 0 ? video.start_s : 0, 0)
+        const params = { videoId: video.source_ref, startSeconds }
+        if (video.end_s > 0) params.endSeconds = video.end_s
+        if (pausedRef.current) ytRef.current.cueVideoById(params)
+        else ytRef.current.loadVideoById(params)
+    }, [video.source_ref, video.start_s, video.end_s])
 
     useEffect(() => {
         if (!readyRef.current || !ytRef.current) return
@@ -450,7 +477,7 @@ export const PlayerOverlay = () => {
     const surface =
         video.source === "youtube" ? (
             <YoutubeSurface
-                key={video.id}
+                key="youtube"
                 video={video}
                 paused={paused}
                 volume={volume}
