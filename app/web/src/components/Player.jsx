@@ -264,29 +264,26 @@ export const PlayerOverlay = () => {
     // Mobile layout: video pinned top (16:9), info + always-visible controls below
     const isPortraitMobile = useMediaQuery("(orientation: portrait) and (max-width: 900px)")
 
-    // Tap-to-toggle controls for touch devices (desktop still uses hover).
+    // Desktop: hover on the outer container shows/hides controls via onMouseEnter/onMouseLeave.
+    // Touch (non-portrait-mobile): tap on the video surface toggles controls with auto-hide.
     const [controlsVisible, setControlsVisible] = useState(false)
     const hideTimerRef = useRef(null)
-    const scheduleHide = useCallback(() => {
-        if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
-        hideTimerRef.current = setTimeout(() => setControlsVisible(false), 3500)
+    const clearHideTimer = useCallback(() => {
+        if (hideTimerRef.current) {
+            clearTimeout(hideTimerRef.current)
+            hideTimerRef.current = null
+        }
     }, [])
-    const toggleControlsTap = useCallback(() => {
-        setControlsVisible((v) => {
-            if (v) {
-                if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
-                return false
-            }
-            scheduleHide()
-            return true
-        })
-    }, [scheduleHide])
-    useEffect(
-        () => () => {
-            if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
-        },
-        []
-    )
+    const handleVideoTap = useCallback(() => {
+        if (controlsVisible) {
+            clearHideTimer()
+            setControlsVisible(false)
+        } else {
+            setControlsVisible(true)
+            hideTimerRef.current = setTimeout(() => setControlsVisible(false), 3500)
+        }
+    }, [controlsVisible, clearHideTimer])
+    useEffect(() => clearHideTimer, [clearHideTimer])
 
     useEffect(() => {
         const sync = () => setIsFullscreen(!!document.fullscreenElement)
@@ -475,6 +472,8 @@ export const PlayerOverlay = () => {
 
     return (
         <Box
+            onMouseEnter={isPortraitMobile ? undefined : () => { clearHideTimer(); setControlsVisible(true) }}
+            onMouseLeave={isPortraitMobile ? undefined : () => { clearHideTimer(); setControlsVisible(false) }}
             sx={{
                 position: "fixed",
                 inset: 0,
@@ -485,7 +484,7 @@ export const PlayerOverlay = () => {
             }}
         >
             <Box
-                onClick={isPortraitMobile ? undefined : toggleControlsTap}
+                onClick={isPortraitMobile ? undefined : handleVideoTap}
                 sx={
                     isPortraitMobile
                         ? {
@@ -539,9 +538,6 @@ export const PlayerOverlay = () => {
                     pointerEvents: showControlBar ? "auto" : "none",
                     transition: "opacity 200ms",
                     flexShrink: 0,
-                    "@media (hover: hover)": {
-                        "&:hover": { opacity: 1, pointerEvents: "auto" }
-                    }
                 }}
             >
                 <IconButton onClick={handlePrev} sx={iconBtnSx} disabled={!isMirror && index === 0}>
