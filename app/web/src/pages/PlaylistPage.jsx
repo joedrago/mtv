@@ -25,6 +25,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow"
 import SearchIcon from "@mui/icons-material/Search"
 import ShuffleIcon from "@mui/icons-material/Shuffle"
 import { deletePlaylist, fetchJson, removeFromPlaylist, setOpinion, updatePlaylist } from "../api.js"
+import { bucketShuffle } from "../lastWatched.js"
 import { usePlayerStore } from "../store/player.js"
 import { useUserStore } from "../store/user.js"
 import { SortableTable } from "../components/SortableTable.jsx"
@@ -33,15 +34,6 @@ import { DestinationPicker } from "../components/DestinationPicker.jsx"
 import { EditVideoDialog } from "../components/EditVideoDialog.jsx"
 import { FilterButton } from "../components/FilterButton.jsx"
 import { LIMITS } from "../limits.js"
-
-const shuffled = (arr) => {
-    const out = arr.slice()
-    for (let i = out.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-        ;[out[i], out[j]] = [out[j], out[i]]
-    }
-    return out
-}
 
 export const PlaylistPage = () => {
     const { owner, slug } = useParams()
@@ -174,7 +166,7 @@ export const PlaylistPage = () => {
 
     const playAll = (shuffle = false) => {
         if (!displayItems.length) return
-        const queue = shuffle ? shuffled(displayItems) : displayItems
+        const queue = shuffle ? bucketShuffle(displayItems) : displayItems
         openQueue(queue, { playlistName: playlist?.name, startAt: 0 })
     }
 

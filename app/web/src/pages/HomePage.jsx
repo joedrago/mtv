@@ -11,18 +11,10 @@ import QueueMusicIcon from "@mui/icons-material/QueueMusic"
 import SearchIcon from "@mui/icons-material/Search"
 import ShuffleIcon from "@mui/icons-material/Shuffle"
 import { fetchJson } from "../api.js"
+import { bucketShuffle } from "../lastWatched.js"
 import { usePlayerStore } from "../store/player.js"
 import { useToastStore } from "../store/toast.js"
 import { useUserStore } from "../store/user.js"
-
-const shuffled = (arr) => {
-    const out = arr.slice()
-    for (let i = out.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-        ;[out[i], out[j]] = [out[j], out[i]]
-    }
-    return out
-}
 
 const ActionCard = ({ Icon, label, description, onClick, loading = false, iconColor = "primary.main" }) => (
     <Paper
@@ -73,7 +65,7 @@ export const HomePage = () => {
                     showToast("no videos found")
                     return
                 }
-                openQueue(shuffled(queue), { startAt: 0 })
+                openQueue(bucketShuffle(queue), { startAt: 0 })
             } catch {
                 showToast("failed to load videos")
             } finally {

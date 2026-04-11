@@ -8,6 +8,7 @@ import Stack from "@mui/material/Stack"
 import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
 import { fetchMyStats, updateMe } from "../api.js"
+import { clearWatchHistory } from "../lastWatched.js"
 import { useUserStore } from "../store/user.js"
 import { LIMITS } from "../limits.js"
 
@@ -35,6 +36,13 @@ export const AccountPage = () => {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState(null)
     const [saved, setSaved] = useState(false)
+    const [historyCleared, setHistoryCleared] = useState(false)
+
+    const handleClearHistory = () => {
+        clearWatchHistory()
+        setHistoryCleared(true)
+        setTimeout(() => setHistoryCleared(false), 1500)
+    }
 
     useEffect(() => {
         if (user) {
@@ -148,6 +156,21 @@ export const AccountPage = () => {
                     <StatLine label="videos added" value={stats?.videos_added} />
                     <StatLine label="ratings given" value={stats?.opinions} />
                     <StatLine label="playlists owned" value={stats?.playlists} />
+                    <Box sx={{ pt: 1 }}>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Button size="small" variant="outlined" color="warning" onClick={handleClearHistory}>
+                                clear shuffle history
+                            </Button>
+                            {historyCleared && (
+                                <Typography variant="body2" color="success.main">
+                                    cleared
+                                </Typography>
+                            )}
+                        </Stack>
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                            resets the watch timestamps used to de-prioritise recently-played videos in shuffles
+                        </Typography>
+                    </Box>
                 </Stack>
             </Paper>
 

@@ -26,7 +26,8 @@ import VolumeUpIcon from "@mui/icons-material/VolumeUp"
 import { usePlayerStore } from "../store/player.js"
 import { useMirrorStore } from "../store/mirror.js"
 import { useUserStore } from "../store/user.js"
-import { setOpinion } from "../api.js"
+import { fetchOpinion, setOpinion } from "../api.js"
+import { recordWatched } from "../lastWatched.js"
 import { loadYouTubeApi } from "./youtubeApi.js"
 import { Chyron } from "./Chyron.jsx"
 import { OpinionButtons, OPINIONS } from "./OpinionButtons.jsx"
@@ -338,6 +339,20 @@ export const PlayerOverlay = () => {
         setOpinionForCurrent(nextVal)
         setOpinion(video.id, nextVal)
     }
+
+    // Record this video as watched so future bucket-shuffles de-prioritise it.
+    useEffect(() => {
+        if (video?.id) recordWatched(video.id)
+    }, [video?.id])
+
+    // VIEWER: fetch our own opinion whenever a new mirrored video arrives.
+    // The host's my_opinion is stripped server-side; this fills in the viewer's.
+    useEffect(() => {
+        if (!isMirror || !video?.id || !signedIn) return
+        fetchOpinion(video.id)
+            .then((data) => setOpinionForCurrent(data.value ?? null))
+            .catch(() => {})
+    }, [video?.id, isMirror, signedIn])
 
     // HOST: emit state on video change (includes mid-song mirror start).
     useEffect(() => {

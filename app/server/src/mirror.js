@@ -63,7 +63,9 @@ export const attachMirror = (io) => {
         socket.on("mirror:setVideo", ({ code, video, pos = 0, playing = true }) => {
             const m = mirrors.get(code)
             if (!m || m.hostSocketId !== socket.id) return
-            m.video = video
+            // Strip user-specific fields so viewers never see the host's rating
+            const { my_opinion: _drop, ...videoData } = video ?? {}
+            m.video = videoData
             m.pos = typeof pos === "number" ? pos : 0
             m.updated = Date.now()
             m.playing = !!playing

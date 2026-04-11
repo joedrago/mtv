@@ -212,6 +212,19 @@ router.get("/playlists/:owner/:slug", (req, res) => {
 
 const OPINION_VALUES = ["love", "like", "meh", "bleh", "hate"]
 
+const getOpinion = db.prepare(`SELECT value FROM opinions WHERE user_id = ? AND video_id = ?`)
+
+router.get("/opinions/:videoId", (req, res) => {
+    const me = currentUser(req)
+    if (!me) {
+        res.json({ value: null })
+        return
+    }
+    const videoId = Number(req.params.videoId)
+    const row = getOpinion.get(me.id, videoId)
+    res.json({ value: row?.value ?? null })
+})
+
 const upsertOpinion = db.prepare(
     `INSERT INTO opinions (user_id, video_id, value, updated_at) VALUES (?, ?, ?, ?)
      ON CONFLICT(user_id, video_id) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`

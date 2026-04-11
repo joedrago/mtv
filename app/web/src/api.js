@@ -42,6 +42,8 @@ export const addToPlaylistBulk = (playlistId, videoIds) =>
 export const removeFromPlaylist = (playlistId, videoId) =>
     fetchJson(`/api/playlists/${playlistId}/items/${videoId}`, { method: "DELETE", credentials: "same-origin" })
 
+export const fetchOpinion = (videoId) => fetchJson(`/api/opinions/${videoId}`)
+
 export const setOpinion = async (videoId, value) => {
     try {
         if (value == null) {

@@ -11,6 +11,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow"
 import SearchIcon from "@mui/icons-material/Search"
 import ShuffleIcon from "@mui/icons-material/Shuffle"
 import { fetchJson, setOpinion } from "../api.js"
+import { bucketShuffle } from "../lastWatched.js"
 import { usePlayerStore } from "../store/player.js"
 import { useUserStore } from "../store/user.js"
 import { SortableTable } from "../components/SortableTable.jsx"
@@ -18,15 +19,6 @@ import { buildVideoColumns } from "../components/videoColumns.jsx"
 import { DestinationPicker } from "../components/DestinationPicker.jsx"
 import { EditVideoDialog } from "../components/EditVideoDialog.jsx"
 import { FilterButton } from "../components/FilterButton.jsx"
-
-const shuffled = (arr) => {
-    const out = arr.slice()
-    for (let i = out.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-        ;[out[i], out[j]] = [out[j], out[i]]
-    }
-    return out
-}
 
 export const BrowsePage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -123,7 +115,7 @@ export const BrowsePage = () => {
 
     const playAll = (shuffle = false) => {
         if (!displayVideos.length) return
-        const queue = shuffle ? shuffled(displayVideos) : displayVideos
+        const queue = shuffle ? bucketShuffle(displayVideos) : displayVideos
         openQueue(queue, { startAt: 0 })
     }
 
