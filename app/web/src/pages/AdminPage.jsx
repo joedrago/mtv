@@ -2,11 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link as RouterLink } from "react-router-dom"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
+import Dialog from "@mui/material/Dialog"
+import DialogActions from "@mui/material/DialogActions"
+import DialogContent from "@mui/material/DialogContent"
+import DialogTitle from "@mui/material/DialogTitle"
+import IconButton from "@mui/material/IconButton"
 import Paper from "@mui/material/Paper"
 import Stack from "@mui/material/Stack"
 import Switch from "@mui/material/Switch"
 import Typography from "@mui/material/Typography"
-import { fetchAllUsers, updateUserContributor } from "../api.js"
+import DeleteIcon from "@mui/icons-material/Delete"
+import { fetchAllUsers, updateUserContributor, deleteUserAccount } from "../api.js"
 import { useUserStore } from "../store/user.js"
 import { useToastStore } from "../store/toast.js"
 import { SortableTable } from "../components/SortableTable.jsx"
@@ -18,6 +24,7 @@ export const AdminPage = () => {
     const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [deleteTarget, setDeleteTarget] = useState(null) // user to confirm deletion of
 
     useEffect(() => {
         if (!me?.is_administrator) return
@@ -46,6 +53,22 @@ export const AdminPage = () => {
             }
         },
         [showToast]
+    )
+
+    const confirmDelete = useCallback(
+        async () => {
+            if (!deleteTarget) return
+            const u = deleteTarget
+            setDeleteTarget(null)
+            try {
+                await deleteUserAccount(u.id)
+                setUsers((prev) => prev.filter((x) => x.id !== u.id))
+                showToast(`${u.display_name} has been deleted`)
+            } catch (e) {
+                showToast(`delete failed: ${String(e?.message ?? e)}`)
+            }
+        },
+        [deleteTarget, showToast]
     )
 
     const columns = useMemo(
@@ -95,6 +118,25 @@ export const AdminPage = () => {
                         onClick={(e) => e.stopPropagation()}
                     />
                 )
+            },
+            {
+                key: "delete",
+                label: "",
+                align: "center",
+                width: "48px",
+                render: (r) =>
+                    r.is_administrator ? null : (
+                        <IconButton
+                            size="small"
+                            color="error"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setDeleteTarget(r)
+                            }}
+                        >
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
+                    )
             }
         ],
         [toggleContributor]
@@ -153,6 +195,30 @@ export const AdminPage = () => {
                     <SortableTable columns={columns} rows={users} rowKey={(r) => r.id} />
                 )}
             </Paper>
+
+            <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+                <DialogTitle sx={{ color: "error.main" }}>Delete account</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" gutterBottom>
+                        You are about to permanently delete{" "}
+                        <strong>{deleteTarget?.display_name}</strong> (@{deleteTarget?.discord_handle}).
+                    </Typography>
+                    <Typography variant="body2" gutterBottom sx={{ mt: 1 }}>
+                        This will delete their <strong>account</strong>, all of their{" "}
+                        <strong>playlists</strong>, and all of their <strong>ratings</strong>.
+                        Their contributed videos will be reassigned to Unknown.
+                    </Typography>
+                    <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                        This cannot be undone.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteTarget(null)}>cancel</Button>
+                    <Button color="error" variant="contained" onClick={confirmDelete}>
+                        delete permanently
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Stack>
     )
 }

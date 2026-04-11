@@ -1,4 +1,4 @@
-# AGENTS.md — mtv.example.com codebase guide
+# AGENTS.md — mtv codebase guide
 
 This file is written for AI agents starting a new session on this repo. Read it before touching anything.
 
@@ -6,7 +6,7 @@ This file is written for AI agents starting a new session on this repo. Read it 
 
 ## What this is
 
-**mtv.example.com** — a music video jukebox. A small group of friends curated 3000+ music videos (mostly YouTube, some self-hosted) and wanted to watch them MTV-style with a chyron, shuffle, playlists, and a "mirror" feature so multiple people can watch in sync.
+**mtv** — a music video jukebox. A small group of friends curated 3000+ music videos (mostly YouTube, some self-hosted) and wanted to watch them MTV-style with a chyron, shuffle, playlists, and a "mirror" feature so multiple people can watch in sync.
 
 This is a **completed rewrite** of a much older CoffeeScript/JSON-file-based system. The REWRITE.md file documents the original design goals. The new codebase (everything in `app/`) is the live product. The `old/` directory (if present) is legacy reference — never touch it.
 
@@ -32,11 +32,12 @@ This is a **completed rewrite** of a much older CoffeeScript/JSON-file-based sys
 app/
   server/src/
     index.js        — Express + Socket.io entry point
-    config.js       — loads config/config.json + config/secrets.json
+    config.js       — loads config/config.json (single merged file); exports config, secrets (alias), dbPath, mediaDir
     db.js           — opens better-sqlite3 DB
-    auth.js         — Discord OAuth2 router (/auth/discord, /auth/discord/callback, /auth/logout)
-    users.js        — user CRUD, upsertDiscordUser, isAdministrator, userPublicView
+    auth.js         — Discord OAuth2 router (/auth/discord, /auth/discord/callback, /auth/logout); enforces allowlist if configured
+    users.js        — user CRUD, upsertDiscordUser, isAdministrator, userPublicView, deleteUser, getOrCreateUnknownUser
     routes.js       — all /api/* REST routes
+    mail.js         — optional nodemailer integration; initMail(db) schedules nightly digest if configured
     mirror.js       — Socket.io mirror session logic (in-memory only)
     youtube.js      — YouTube Data API v3 helpers + URL/title parsers
     hosting.js      — self-hosted video download via ffmpeg/ffprobe
@@ -82,9 +83,10 @@ app/
     ids.js          — (legacy id helpers, rarely needed)
     opinions.js     — opinion value constants
 config/
-  config.example.json   — copy to config/config.json; fields: port, publicBaseUrl, administrators (discord_id array), database, mediaDir
-  secrets.example.json  — copy to config/secrets.json; fields: sessionSecret, discord.{clientId, clientSecret, redirectUri}, youtube (API key)
-  handle-remap.json     — legacy import remapping (merges, user overrides, dropOrphanMediaRefs)
+  config.example.json   — copy to config/config.json (gitignored); all fields in one file: port, publicBaseUrl,
+                          administrators[], database, mediaDir, sessionSecret, discord.{clientId, clientSecret, redirectUri},
+                          youtube (API key), mail.{transport, from, to, nightlyDigest, digestEvenIfEmpty},
+                          allowlist.{discordHandles[], discordGuildIds[]}
 scripts/
   import.js         — one-shot migration from backup/*.json → data/mtv.sqlite + data/videos/
   legacy-filters.js — old filter engine used only during import to flatten playlists
@@ -197,6 +199,7 @@ All under `/api/`:
 | GET | /me/stats | user | videos_added, opinions, playlists counts |
 | GET | /users | admin | list all users |
 | PATCH | /users/:id | admin | toggle is_contributor |
+| DELETE | /users/:id | admin | delete account + playlists + opinions; reassigns their videos to Unknown user |
 | GET | /videos | none | all videos (with my_opinion if signed in) |
 | POST | /videos/query-youtube | contributor | fetch YouTube metadata by URL/id |
 | POST | /videos/query-youtube-playlist | contributor | fetch all videos from a YT playlist |
@@ -243,8 +246,7 @@ Server → Client:
 
 ```bash
 # First time setup:
-cp config/config.example.json config/config.json   # fill in port, administrators discord_id
-cp config/secrets.example.json config/secrets.json  # fill in sessionSecret, discord, youtube
+cp config/config.example.json config/config.json   # fill in all fields — port, discord, youtube, etc.
 
 # If you have a backup/ directory from the old system:
 npm run import
@@ -290,5 +292,8 @@ Vite dev server: `http://localhost:5173` (default).
 - `isMirror` in `playerStore` means "I am a passive viewer of someone else's session" — the host is not `isMirror`, the host has `hostCode`.
 - Playlists are addressed by `display_name/slug` in URLs, not by ID. Slugs are auto-generated from the name.
 - Administrator status is read from `config.administrators` (array of Discord user IDs) at runtime — not stored in the DB.
+- `config.allowlist` is opt-in: if both `discordHandles` and `discordGuildIds` are empty/absent, all new users are allowed (default). If either list has entries, new accounts are blocked unless the handle matches or the user is in one of the listed guilds. Pre-existing accounts are never affected.
+- `config.mail` is opt-in: all mail features are disabled unless `transport.auth.user`, `transport.auth.pass`, `from`, and `to` are all filled in. `nightlyDigest: true` enables a daily summary email at midnight.
+- Deleting a user reassigns their contributed videos to a tombstone user (`display_name = "Unknown"`, `discord_id = "__unknown__"`). This user can never be logged into and is created on first deletion.
 - Self-hosted thumbnails are served from `/videos/<ref>.jpg`. YouTube thumbnails use `https://i.ytimg.com/vi/<ref>/mqdefault.jpg`.
 - The `label` field on a user is their "record label" — displayed in the chyron instead of "{Name} Records" if set.

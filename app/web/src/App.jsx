@@ -31,7 +31,7 @@ export const App = () => {
     useEffect(() => {
         load()
         // Absorb ?dj=CODE into DJ mode so the code persists across navigation.
-        // A savvy user can craft mtv.example.com?dj=MYSHOW to start a named session.
+        // A savvy user can craft /?dj=MYSHOW to start a named session.
         const p = new URLSearchParams(window.location.search)
         const h = p.get("dj")
         if (h) {

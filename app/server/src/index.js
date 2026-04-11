@@ -7,6 +7,8 @@ import { config, secrets, mediaDir, webDistDir } from "./config.js"
 import { authRouter } from "./auth.js"
 import { apiRouter } from "./routes.js"
 import { attachMirror } from "./mirror.js"
+import { initMail } from "./mail.js"
+import { db } from "./db.js"
 
 const app = express()
 app.use(express.json())
@@ -32,6 +34,7 @@ const server = http.createServer(app)
 const io = new IOServer(server, { cors: { origin: true, credentials: true } })
 
 attachMirror(io)
+initMail(db)
 
 const port = config.port ?? 3000
 server.listen(port, () => {

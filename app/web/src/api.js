@@ -36,6 +36,8 @@ export const fetchAllUsers = () => fetchJson("/api/users")
 
 export const updateUserContributor = (id, is_contributor) => fetchJson(`/api/users/${id}`, jsonOpts("PATCH", { is_contributor }))
 
+export const deleteUserAccount = (id) => fetchJson(`/api/users/${id}`, { method: "DELETE", credentials: "same-origin" })
+
 export const createPlaylist = (name, is_public = true) => fetchJson("/api/playlists", jsonOpts("POST", { name, is_public }))
 
 export const updatePlaylist = (id, patch) => fetchJson(`/api/playlists/${id}`, jsonOpts("PATCH", patch))

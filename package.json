@@ -3,7 +3,7 @@
     "version": "2.0.0",
     "private": true,
     "type": "module",
-    "description": "mtv.example.com — a modern music video jukebox",
+    "description": "mtv — a modern music video jukebox",
     "engines": {
         "node": ">=24"
     },
@@ -24,6 +24,7 @@
         "better-sqlite3": "^11.5.0",
         "cookie-parser": "^1.4.7",
         "express": "^4.21.1",
+        "nodemailer": "^8.0.5",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-router-dom": "^6.28.0",

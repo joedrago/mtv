@@ -1,7 +1,7 @@
 import express from "express"
 import crypto from "node:crypto"
-import { secrets } from "./config.js"
-import { upsertDiscordUser } from "./users.js"
+import { config, secrets } from "./config.js"
+import { upsertDiscordUser, discordUserExists } from "./users.js"
 
 const router = express.Router()
 
@@ -34,13 +34,39 @@ setInterval(() => {
     for (const [s, exp] of pendingStates) if (exp <= now) pendingStates.delete(s)
 }, 60_000).unref()
 
+// Returns true if the allowlist feature is active (at least one list is non-empty)
+const allowlistActive = () => {
+    const al = config.allowlist
+    if (!al) return false
+    return (al.discordHandles?.length ?? 0) > 0 || (al.discordGuildIds?.length ?? 0) > 0
+}
+
+// Returns true if the given Discord user passes the allowlist check.
+// Requires the user's access_token if guild IDs are configured (guilds scope).
+const passesAllowlist = async (handle, accessToken) => {
+    const al = config.allowlist
+    if (al?.discordHandles?.includes(handle)) return true
+    if (!al?.discordGuildIds?.length) return false
+    // Check guild membership via the user's own token
+    const res = await fetch("https://discord.com/api/users/@me/guilds", {
+        headers: { authorization: `Bearer ${accessToken}` }
+    })
+    if (!res.ok) return false
+    const guilds = await res.json()
+    const memberIds = guilds.map((g) => g.id)
+    return al.discordGuildIds.some((id) => memberIds.includes(String(id)))
+}
+
 router.get("/discord", (req, res) => {
     const state = newState()
+    const scopes = ["identify"]
+    // Request guilds scope only if guild allowlist is configured
+    if (config.allowlist?.discordGuildIds?.length) scopes.push("guilds")
     const params = new URLSearchParams({
         client_id: secrets.discord.clientId,
         response_type: "code",
         redirect_uri: secrets.discord.redirectUri,
-        scope: "identify",
+        scope: scopes.join(" "),
         state
     })
     res.redirect(`https://discord.com/api/oauth2/authorize?${params}`)
@@ -81,6 +107,23 @@ router.get("/discord/callback", async (req, res) => {
             return
         }
         const me = await meRes.json()
+
+        // Allowlist check — only applies to users who don't already have an account
+        if (allowlistActive() && !discordUserExists(String(me.id), me.username)) {
+            const allowed = await passesAllowlist(me.username, token.access_token)
+            if (!allowed) {
+                res.status(403).send(
+                    "<!doctype html><html><body style='font-family:sans-serif;padding:2em'>" +
+                        "<h2>Access denied</h2>" +
+                        "<p>Your Discord account (<strong>@" +
+                        me.username +
+                        "</strong>) is not recognized on this instance.</p>" +
+                        "<p>Please contact the administrator if you believe this is an error.</p>" +
+                        "</body></html>"
+                )
+                return
+            }
+        }
 
         const user = upsertDiscordUser(me)
         res.cookie(AUTH_COOKIE, String(user.id), COOKIE_OPTS)

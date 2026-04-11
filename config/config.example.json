@@ -3,5 +3,26 @@
     "publicBaseUrl": "http://localhost:3000",
     "administrators": [],
     "database": "./data/mtv.sqlite",
-    "mediaDir": "./data/videos"
+    "mediaDir": "./data/videos",
+    "sessionSecret": "change-me-to-a-long-random-string",
+    "discord": {
+        "clientId": "",
+        "clientSecret": "",
+        "redirectUri": "http://localhost:3000/auth/discord/callback"
+    },
+    "youtube": "",
+    "mail": {
+        "transport": {
+            "service": "gmail",
+            "auth": { "user": "", "pass": "" }
+        },
+        "from": "",
+        "to": "",
+        "nightlyDigest": false,
+        "digestEvenIfEmpty": false
+    },
+    "allowlist": {
+        "discordHandles": [],
+        "discordGuildIds": []
+    }
 }

@@ -1,7 +1,7 @@
 import express from "express"
 import { db } from "./db.js"
 import { AUTH_COOKIE } from "./auth.js"
-import { getUserById, isAdministrator, listAllUsers, setUserContributor, userPublicView } from "./users.js"
+import { deleteUser, getUserById, isAdministrator, listAllUsers, setUserContributor, userPublicView } from "./users.js"
 import { downloadSelfHostedVideo } from "./hosting.js"
 import {
     fetchYoutubeMetadata,
@@ -147,6 +147,22 @@ router.patch("/users/:id", (req, res) => {
     if (req.body?.is_contributor != null) {
         setUserContributor(id, !!req.body.is_contributor)
     }
+    res.json({ ok: true })
+})
+
+router.delete("/users/:id", (req, res) => {
+    const me = requireAdmin(req, res)
+    if (!me) return
+    const id = Number(req.params.id)
+    if (!Number.isFinite(id)) {
+        res.status(400).json({ error: "bad id" })
+        return
+    }
+    if (isAdministrator(getUserById(id))) {
+        res.status(400).json({ error: "cannot delete an administrator account" })
+        return
+    }
+    deleteUser(id)
     res.json({ ok: true })
 })
 

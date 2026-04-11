@@ -20,6 +20,15 @@ const uniqueDisplayName = (proposed) => {
     return `${base}${i}`
 }
 
+// Returns true if a user row already exists for this Discord identity (either
+// by discord_id or as a migrated row claimable by handle). Used by the
+// allowlist check so pre-existing accounts are never blocked.
+export const discordUserExists = (discordId, handle) => {
+    if (selectByDiscordId.get(discordId)) return true
+    if (selectByHandle.get(handle)) return true
+    return false
+}
+
 // Given a Discord OAuth @me payload, return the local user row (creating or
 // claiming the row for a migrated user on first login).
 export const upsertDiscordUser = (discordMe) => {
@@ -79,3 +88,29 @@ export const listAllUsers = () => selectAllUsers.all()
 
 const updateContributor = db.prepare(`UPDATE users SET is_contributor = ? WHERE id = ?`)
 export const setUserContributor = (id, flag) => updateContributor.run(flag ? 1 : 0, id)
+
+// Returns (creating if needed) the special "Unknown" tombstone user that
+// receives ownership of videos when their original contributor is deleted.
+// Uses discord_id '__unknown__' which can never match a real Discord login.
+export const getOrCreateUnknownUser = () => {
+    const existing = selectByDiscordId.get("__unknown__")
+    if (existing) return existing
+    const info = insertUser.run("__unknown__", "unknown", "Unknown", Math.floor(Date.now() / 1000))
+    return selectById.get(info.lastInsertRowid)
+}
+
+export const deleteUser = (id) => {
+    const unknown = getOrCreateUnknownUser()
+    db.transaction(() => {
+        // Reassign their videos to Unknown rather than orphaning them
+        db.prepare(`UPDATE videos SET added_by = ? WHERE added_by = ?`).run(unknown.id, id)
+        // Delete their playlist contents, then playlists, opinions, and finally the user
+        const playlists = db.prepare(`SELECT id FROM playlists WHERE owner_id = ?`).all(id)
+        for (const pl of playlists) {
+            db.prepare(`DELETE FROM playlist_items WHERE playlist_id = ?`).run(pl.id)
+        }
+        db.prepare(`DELETE FROM playlists WHERE owner_id = ?`).run(id)
+        db.prepare(`DELETE FROM opinions WHERE user_id = ?`).run(id)
+        db.prepare(`DELETE FROM users WHERE id = ?`).run(id)
+    })()
+}

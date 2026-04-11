@@ -3,10 +3,12 @@ node_modules/
 /backup/
 /backups/
 /data/
+/config/config.json
 /config/secrets.json
 .DS_Store
 .env
 .env.*
+package-lock.json
 !.env.example
 dist/
 *.log
