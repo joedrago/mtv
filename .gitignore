@@ -5,6 +5,8 @@ node_modules/
 /data/
 /config/config.json
 /config/secrets.json
+/config/handle-remap.json
+/handles.txt
 .DS_Store
 .env
 .env.*
