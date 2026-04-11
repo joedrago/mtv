@@ -17,6 +17,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow"
 import ContentCopyIcon from "@mui/icons-material/ContentCopy"
 import ScreenShareIcon from "@mui/icons-material/ScreenShare"
 import StopScreenShareIcon from "@mui/icons-material/StopScreenShare"
+import QueueMusicIcon from "@mui/icons-material/QueueMusic"
 import SkipNextIcon from "@mui/icons-material/SkipNext"
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious"
 import VolumeDownIcon from "@mui/icons-material/VolumeDown"
@@ -29,6 +30,7 @@ import { setOpinion } from "../api.js"
 import { loadYouTubeApi } from "./youtubeApi.js"
 import { Chyron } from "./Chyron.jsx"
 import { OpinionButtons, OPINIONS } from "./OpinionButtons.jsx"
+import { QueuePanel } from "./QueuePanel.jsx"
 
 const HEARTBEAT_MS = 5000
 const DRIFT_THRESHOLD_S = 0.75
@@ -266,12 +268,15 @@ export const PlayerOverlay = () => {
         close,
         next,
         prev,
+        jumpTo,
         setPaused,
         setOpinionForCurrent,
         isMirror,
         paused,
         volume,
-        initialPosition
+        initialPosition,
+        showQueue,
+        toggleShowQueue
     } = usePlayerStore()
     const signedIn = useUserStore((s) => !!s.user)
     const hostCode = useMirrorStore((s) => s.hostCode)
@@ -582,18 +587,47 @@ export const PlayerOverlay = () => {
             </Box>
 
             {isPortraitMobile && (
-                <Stack spacing={0.5} sx={{ p: 2, color: "#fff", flexGrow: 1, minHeight: 0, overflow: "hidden" }}>
-                    <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                <Stack spacing={0.5} sx={{ p: 2, pb: 0, color: "#fff", flexGrow: 1, minHeight: 0, overflow: "hidden" }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2, flexShrink: 0 }}>
                         {video.artist}
                     </Typography>
-                    <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.2 }}>
+                    <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.2, flexShrink: 0 }}>
                         {video.title}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.5)", mt: 0.5 }}>
+                    <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.5)", mt: 0.5, flexShrink: 0 }}>
                         {isMirror ? "mirroring" : `${index + 1} / ${queue.length}`}
                         {hostCode && ` · mirror ${hostCode}${copied ? " (copied)" : ""}`}
                     </Typography>
+                    {showQueue && queue.length > 1 && (
+                        <QueuePanel
+                            queue={queue}
+                            index={index}
+                            onJump={jumpTo}
+                            sx={{ flex: 1, minHeight: 0, mt: 1, mx: -2, borderTop: "1px solid rgba(255,255,255,0.12)" }}
+                        />
+                    )}
                 </Stack>
+            )}
+
+            {!isPortraitMobile && showQueue && queue.length > 1 && (
+                <QueuePanel
+                    queue={queue}
+                    index={index}
+                    onJump={jumpTo}
+                    sx={{
+                        position: "absolute",
+                        top: 0,
+                        right: 0,
+                        bottom: 96,
+                        width: 320,
+                        background: "rgba(0,0,0,0.72)",
+                        backdropFilter: "blur(4px)",
+                        py: 1,
+                        opacity: showControlBar ? 1 : 0,
+                        pointerEvents: showControlBar ? "auto" : "none",
+                        transition: "opacity 200ms"
+                    }}
+                />
             )}
 
             <Box
@@ -656,6 +690,16 @@ export const PlayerOverlay = () => {
                     />
                 )}
                 {signedIn && <OpinionButtons current={video.my_opinion ?? null} onSet={applyOpinion} />}
+                {queue.length > 1 && (
+                    <Tooltip title={showQueue ? "hide queue" : "show queue"}>
+                        <IconButton
+                            onClick={toggleShowQueue}
+                            sx={{ ...iconBtnSx, color: showQueue ? "primary.main" : "#fff" }}
+                        >
+                            <QueueMusicIcon />
+                        </IconButton>
+                    </Tooltip>
+                )}
                 {!isMirror && (
                     <Tooltip title={hostCode ? "mirroring" : "start mirroring"}>
                         <IconButton onClick={handleMirrorButton} sx={{ ...iconBtnSx, color: hostCode ? "primary.main" : "#fff" }}>

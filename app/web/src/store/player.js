@@ -1,6 +1,7 @@
 import { create } from "zustand"
 
 const VOLUME_KEY = "mtv_volume"
+const SHOW_QUEUE_KEY = "mtv_show_queue"
 
 const loadInitialVolume = () => {
     try {
@@ -12,6 +13,14 @@ const loadInitialVolume = () => {
     return 1.0
 }
 
+const loadInitialShowQueue = () => {
+    try {
+        return localStorage.getItem(SHOW_QUEUE_KEY) === "1"
+    } catch (_e) {
+        return false
+    }
+}
+
 export const usePlayerStore = create((set, get) => ({
     queue: [], // array of video objects
     index: 0,
@@ -21,6 +30,19 @@ export const usePlayerStore = create((set, get) => ({
     isMirror: false, // true = we're watching someone else's mirror
     initialPosition: 0, // seconds to seek to when the current surface becomes ready
     volume: loadInitialVolume(), // 0..1
+    showQueue: loadInitialShowQueue(), // right-stripe queue panel toggle (persisted)
+
+    toggleShowQueue: () => {
+        set((s) => {
+            const next = !s.showQueue
+            try {
+                localStorage.setItem(SHOW_QUEUE_KEY, next ? "1" : "0")
+            } catch (_e) {
+                /* ignore */
+            }
+            return { showQueue: next }
+        })
+    },
 
     setVolume: (v) => {
         const clamped = Math.max(0, Math.min(1, v))
@@ -70,6 +92,14 @@ export const usePlayerStore = create((set, get) => ({
         const { index } = get()
         if (index <= 0) return
         set({ index: index - 1, paused: false, initialPosition: 0 })
+    },
+
+    jumpTo: (i) => {
+        const { queue, index } = get()
+        if (!queue.length) return
+        const target = Math.max(0, Math.min(i, queue.length - 1))
+        if (target === index) return
+        set({ index: target, paused: false, initialPosition: 0 })
     },
 
     togglePause: () => set((s) => ({ paused: !s.paused })),
