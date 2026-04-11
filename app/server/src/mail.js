@@ -20,6 +20,16 @@ export const sendMail = async (subject, text) => {
     await transporter.sendMail({ from: config.mail.from, to: config.mail.to, subject, text })
 }
 
+const section = (title, items) => {
+    if (!items.length) return `${title}: (none)`
+    return `${title}:\n${items.map((s) => `  ${s}`).join("\n")}`
+}
+
+const videoUrl = (v) => {
+    if (v.source === "youtube") return `https://www.youtube.com/watch?v=${v.source_ref}`
+    return `/videos/${v.source_ref}`
+}
+
 const runNightlyDigest = (db) => {
     const today = new Date().toISOString().slice(0, 10)
     if (lastDigestDate === today) return
@@ -27,19 +37,42 @@ const runNightlyDigest = (db) => {
 
     const since = Math.floor(Date.now() / 1000) - 86400
 
-    const newUsers = db.prepare(`SELECT COUNT(*) AS c FROM users WHERE created_at > ?`).get(since).c
-    const newVideos = db.prepare(`SELECT COUNT(*) AS c FROM videos WHERE added_at > ?`).get(since).c
-    const newPlaylists = db.prepare(`SELECT COUNT(*) AS c FROM playlists WHERE created_at > ?`).get(since).c
+    const newUsers = db
+        .prepare(`SELECT display_name, discord_handle FROM users WHERE created_at > ? ORDER BY display_name COLLATE NOCASE`)
+        .all(since)
 
-    const hasActivity = newUsers > 0 || newVideos > 0 || newPlaylists > 0
+    const newVideos = db
+        .prepare(`SELECT source, source_ref, artist, title FROM videos WHERE added_at > ? ORDER BY artist COLLATE NOCASE, title COLLATE NOCASE`)
+        .all(since)
+
+    const newPlaylists = db
+        .prepare(
+            `SELECT p.name, u.display_name AS owner FROM playlists p
+             JOIN users u ON u.id = p.owner_id
+             WHERE p.created_at > ? ORDER BY p.name COLLATE NOCASE`
+        )
+        .all(since)
+
+    const hasActivity = newUsers.length > 0 || newVideos.length > 0 || newPlaylists.length > 0
     if (!hasActivity && !config.mail.digestEvenIfEmpty) return
 
     const lines = [
         `mtv nightly digest — ${today}`,
         "",
-        `New accounts:  ${newUsers}`,
-        `New videos:    ${newVideos}`,
-        `New playlists: ${newPlaylists}`
+        section(
+            `New accounts (${newUsers.length})`,
+            newUsers.map((u) => `${u.display_name} (@${u.discord_handle})`)
+        ),
+        "",
+        section(
+            `New videos (${newVideos.length})`,
+            newVideos.map((v) => `${v.artist} — ${v.title}  ${videoUrl(v)}`)
+        ),
+        "",
+        section(
+            `New playlists (${newPlaylists.length})`,
+            newPlaylists.map((p) => `${p.name} (by ${p.owner})`)
+        )
     ]
 
     sendMail(`mtv digest ${today}`, lines.join("\n")).catch((e) => {
