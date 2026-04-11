@@ -3,7 +3,14 @@ import { db } from "./db.js"
 import { AUTH_COOKIE } from "./auth.js"
 import { getUserById, isAdministrator, listAllUsers, setUserContributor, userPublicView } from "./users.js"
 import { downloadSelfHostedVideo } from "./hosting.js"
-import { fetchYoutubeMetadata, parseYoutubeInput, splitArtistTitle } from "./youtube.js"
+import {
+    fetchYoutubeMetadata,
+    fetchYoutubePlaylistItems,
+    fetchYoutubeVideos,
+    parseYoutubeInput,
+    parseYoutubePlaylistInput,
+    splitArtistTitle
+} from "./youtube.js"
 import { secrets } from "./config.js"
 
 const router = express.Router()
@@ -471,6 +478,60 @@ router.post("/videos/query-youtube", async (req, res) => {
             artist,
             title
         })
+    } catch (e) {
+        res.status(502).json({ error: String(e?.message ?? e) })
+    }
+})
+
+// Pull a YouTube / YouTube Music playlist, bulk-fetch the videos, strip out
+// audio-only "- Topic" tracks and anything already in the library, and return
+// an ordered list of pre-filled rows for the contribute page. Contributors
+// only. No persistence happens here — the UI calls POST /api/videos per row.
+router.post("/videos/query-youtube-playlist", async (req, res) => {
+    const me = requireContributor(req, res)
+    if (!me) return
+    const listId = parseYoutubePlaylistInput(req.body?.input)
+    if (!listId) {
+        res.status(400).json({ error: "couldn't parse a YouTube playlist URL or id" })
+        return
+    }
+    try {
+        const entries = await fetchYoutubePlaylistItems(listId, secrets?.youtube)
+        if (entries.length === 0) {
+            res.json({ playlist_id: listId, items: [], skipped: { audio_only: 0, unavailable: 0, already_in_library: 0 } })
+            return
+        }
+        const ids = entries.map((e) => e.videoId)
+        const videos = await fetchYoutubeVideos(ids, secrets?.youtube)
+
+        const items = []
+        const skipped = { audio_only: 0, unavailable: 0, already_in_library: 0 }
+        for (const { videoId } of entries) {
+            const v = videos.get(videoId)
+            if (!v) {
+                skipped.unavailable++
+                continue
+            }
+            if (/-\s*Topic$/i.test(v.channelTitle ?? "")) {
+                skipped.audio_only++
+                continue
+            }
+            if (existingVideoBySource.get("youtube", videoId)) {
+                skipped.already_in_library++
+                continue
+            }
+            const { artist, title } = splitArtistTitle(v.title)
+            items.push({
+                source_ref: videoId,
+                raw_title: v.title,
+                channel: v.channelTitle,
+                artist,
+                title,
+                duration_s: v.duration_s,
+                thumb: v.thumb
+            })
+        }
+        res.json({ playlist_id: listId, items, skipped })
     } catch (e) {
         res.status(502).json({ error: String(e?.message ?? e) })
     }

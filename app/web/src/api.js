@@ -15,6 +15,8 @@ export const createVideo = (video) => fetchJson("/api/videos", jsonOpts("POST", 
 
 export const queryYoutube = (input) => fetchJson("/api/videos/query-youtube", jsonOpts("POST", { input }))
 
+export const queryYoutubePlaylist = (input) => fetchJson("/api/videos/query-youtube-playlist", jsonOpts("POST", { input }))
+
 export const updateVideo = (id, patch) => fetchJson(`/api/videos/${id}`, jsonOpts("PATCH", patch))
 
 export const updateMe = (patch) => fetchJson("/api/me", jsonOpts("PATCH", patch))

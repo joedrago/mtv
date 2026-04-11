@@ -94,9 +94,9 @@ export const splitArtistTitle = (rawTitle) => {
     if ((m = title.match(/^(.+)\s[–-]\s(.+)$/))) {
         artist = m[1]
         title = m[2]
-    } else if ((m = title.match(/^([^"]+)\s"([^"]+)"/))) {
+    } else if ((m = title.match(/^([^"]+)\s"([^"]+)"(.*)$/))) {
         artist = m[1]
-        title = m[2]
+        title = `${m[2]} ${m[3]}`.trim()
     }
 
     title = title.replace(/[([](Official)?\s?(HD)?\s?(Music)?\sVideo[)\]]/i, "")
@@ -118,6 +118,31 @@ export const splitArtistTitle = (rawTitle) => {
     }
 
     return { artist: artist.trim(), title: title.trim() }
+}
+
+// Accepts a playlist id or any YouTube / YouTube Music URL that carries a
+// ?list= param. Returns the playlist id or null.
+export const parseYoutubePlaylistInput = (input) => {
+    const raw = String(input ?? "").trim()
+    if (!raw) return null
+
+    if (/^[A-Za-z0-9_-]{10,}$/.test(raw) && !/^[A-Za-z0-9_-]{11}$/.test(raw)) {
+        return raw
+    }
+
+    let url
+    try {
+        url = new URL(raw)
+    } catch (_e) {
+        return null
+    }
+    const host = url.hostname
+    const isYoutube =
+        host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com") || host.endsWith("youtu.be") || host === "music.youtube.com"
+    if (!isYoutube) return null
+    const list = url.searchParams.get("list")
+    if (!list) return null
+    return list
 }
 
 // -- iso8601 duration (PT#H#M#S) -----------------------------------
@@ -144,4 +169,62 @@ export const fetchYoutubeMetadata = async (videoId, apiKey) => {
     const thumbs = item.snippet?.thumbnails ?? {}
     const thumb = thumbs.medium?.url ?? thumbs.default?.url ?? thumbs.high?.url ?? null
     return { duration_s, title, thumb }
+}
+
+// Walks playlistItems.list, paginating by nextPageToken, and returns an
+// ordered array of { videoId, position }. We don't read titles/channels from
+// here — fetchYoutubeVideos() is the source of truth for that.
+export const fetchYoutubePlaylistItems = async (playlistId, apiKey) => {
+    if (!apiKey) throw new Error("no youtube api key configured")
+    const items = []
+    let pageToken = ""
+    for (;;) {
+        const url =
+            `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50` +
+            `&playlistId=${encodeURIComponent(playlistId)}&key=${encodeURIComponent(apiKey)}` +
+            (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "")
+        const res = await fetch(url)
+        if (!res.ok) {
+            const body = await res.text().catch(() => "")
+            throw new Error(`youtube playlistItems: HTTP ${res.status} ${body.slice(0, 200)}`)
+        }
+        const data = await res.json()
+        for (const it of data.items ?? []) {
+            const vid = it.contentDetails?.videoId
+            if (vid) items.push({ videoId: vid })
+        }
+        pageToken = data.nextPageToken
+        if (!pageToken) break
+    }
+    return items
+}
+
+// Batched videos.list — takes up to N ids, calls the API in groups of 50,
+// returns a Map keyed by video id. Missing ids (deleted/private) are simply
+// absent from the result.
+export const fetchYoutubeVideos = async (videoIds, apiKey) => {
+    if (!apiKey) throw new Error("no youtube api key configured")
+    const out = new Map()
+    for (let i = 0; i < videoIds.length; i += 50) {
+        const batch = videoIds.slice(i, i + 50)
+        const url =
+            `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails` +
+            `&id=${batch.map(encodeURIComponent).join(",")}&key=${encodeURIComponent(apiKey)}`
+        const res = await fetch(url)
+        if (!res.ok) {
+            const body = await res.text().catch(() => "")
+            throw new Error(`youtube videos.list: HTTP ${res.status} ${body.slice(0, 200)}`)
+        }
+        const data = await res.json()
+        for (const item of data.items ?? []) {
+            const thumbs = item.snippet?.thumbnails ?? {}
+            out.set(item.id, {
+                title: item.snippet?.title ?? "",
+                channelTitle: item.snippet?.channelTitle ?? "",
+                duration_s: parseIsoSeconds(item.contentDetails?.duration),
+                thumb: thumbs.medium?.url ?? thumbs.default?.url ?? thumbs.high?.url ?? null
+            })
+        }
+    }
+    return out
 }
