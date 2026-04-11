@@ -1,6 +1,7 @@
 import { useState } from "react"
 import Button from "@mui/material/Button"
 import Checkbox from "@mui/material/Checkbox"
+import Chip from "@mui/material/Chip"
 import Divider from "@mui/material/Divider"
 import FormControlLabel from "@mui/material/FormControlLabel"
 import IconButton from "@mui/material/IconButton"
@@ -72,7 +73,7 @@ export const FilterButton = ({
                 onClose={() => setAnchor(null)}
                 anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 transformOrigin={{ vertical: "top", horizontal: "right" }}
-                slotProps={{ paper: { sx: { background: "#1a1e26", p: 1.5, minWidth: 180 } } }}
+                slotProps={{ paper: { sx: { background: "#1a1e26", p: 1.5, minWidth: 180, maxWidth: 260 } } }}
             >
                 <Stack spacing={0.25}>
                     <Typography variant="caption" color="text.secondary" sx={{ px: 0.5, pb: 0.5 }}>
@@ -122,21 +123,27 @@ export const FilterButton = ({
                             <Typography variant="caption" color="text.secondary" sx={{ px: 0.5, pb: 0.5 }}>
                                 filter by contributor
                             </Typography>
-                            {contributors.map((name) => (
-                                <FormControlLabel
-                                    key={name}
-                                    control={
-                                        <Checkbox
+                            <Stack direction="row" flexWrap="wrap" gap={0.5} sx={{ px: 0.5, width: "100%" }}>
+                                {contributors.map((name) => {
+                                    const selected = activeContributors.includes(name)
+                                    return (
+                                        <Chip
+                                            key={name}
+                                            label={name}
                                             size="small"
-                                            checked={activeContributors.includes(name)}
-                                            onChange={() => toggleContributor(name)}
-                                            sx={{ color: "text.secondary", "&.Mui-checked": { color: "primary.main" } }}
+                                            onClick={() => toggleContributor(name)}
+                                            variant={selected ? "filled" : "outlined"}
+                                            sx={{
+                                                fontSize: "0.75rem",
+                                                height: 24,
+                                                ...(selected
+                                                    ? { color: "primary.main", borderColor: "primary.main", backgroundColor: "rgba(232,72,85,0.15)" }
+                                                    : { color: "text.secondary", borderColor: "rgba(255,255,255,0.15)" }),
+                                            }}
                                         />
-                                    }
-                                    label={<Typography variant="body2">{name}</Typography>}
-                                    sx={{ mx: 0 }}
-                                />
-                            ))}
+                                    )
+                                })}
+                            </Stack>
                         </>
                     )}
 
