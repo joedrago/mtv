@@ -13,6 +13,7 @@ import ShuffleIcon from "@mui/icons-material/Shuffle"
 import { fetchJson, setOpinion } from "../api.js"
 import { bucketShuffle } from "../lastWatched.js"
 import { usePlayerStore } from "../store/player.js"
+import { useSettingsStore } from "../store/settings.js"
 import { useUserStore } from "../store/user.js"
 import { SortableTable } from "../components/SortableTable.jsx"
 import { buildVideoColumns } from "../components/videoColumns.jsx"
@@ -20,21 +21,32 @@ import { DestinationPicker } from "../components/DestinationPicker.jsx"
 import { EditVideoDialog } from "../components/EditVideoDialog.jsx"
 import { FilterButton } from "../components/FilterButton.jsx"
 
+const AGE_CUTOFF_S = {
+    week: 7 * 86400,
+    month: 30 * 86400,
+    year: 365 * 86400,
+}
+
 export const BrowsePage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const initialQ = searchParams.get("q") ?? ""
     const initialR = useMemo(() => searchParams.get("r")?.split(",").filter(Boolean) ?? [], [])
+    const initialBy = useMemo(() => searchParams.get("by")?.split(",").filter(Boolean) ?? [], [])
+    const initialAge = searchParams.get("age") ?? null
     const [videos, setVideos] = useState([])
     const [displayVideos, setDisplayVideos] = useState([])
     const [queryInput, setQueryInput] = useState(initialQ)
     const [query, setQuery] = useState(initialQ)
     const [opinions, setOpinions] = useState(initialR)
+    const [activeContributors, setActiveContributors] = useState(initialBy)
+    const [activeAge, setActiveAge] = useState(initialAge)
     const [loading, setLoading] = useState(true)
+
+    const quickRating = useSettingsStore((s) => s.quickRating)
 
     useEffect(() => {
         const t = setTimeout(() => {
             setQuery(queryInput)
-            // mirror into the URL so refresh/back preserves the search
             setSearchParams(
                 (prev) => {
                     const next = new URLSearchParams(prev)
@@ -48,7 +60,7 @@ export const BrowsePage = () => {
         return () => clearTimeout(t)
     }, [queryInput, setSearchParams])
 
-    const handleOpinionFilterChange = useCallback(
+    const handleOpinionsChange = useCallback(
         (newOpinions) => {
             setOpinions(newOpinions)
             setSearchParams(
@@ -63,6 +75,39 @@ export const BrowsePage = () => {
         },
         [setSearchParams]
     )
+
+    const handleContributorsChange = useCallback(
+        (names) => {
+            setActiveContributors(names)
+            setSearchParams(
+                (prev) => {
+                    const next = new URLSearchParams(prev)
+                    if (names.length) next.set("by", names.join(","))
+                    else next.delete("by")
+                    return next
+                },
+                { replace: true }
+            )
+        },
+        [setSearchParams]
+    )
+
+    const handleAgeChange = useCallback(
+        (age) => {
+            setActiveAge(age)
+            setSearchParams(
+                (prev) => {
+                    const next = new URLSearchParams(prev)
+                    if (age) next.set("age", age)
+                    else next.delete("age")
+                    return next
+                },
+                { replace: true }
+            )
+        },
+        [setSearchParams]
+    )
+
     const user = useUserStore((s) => s.user)
     const openQueue = usePlayerStore((s) => s.openQueue)
 
@@ -86,9 +131,14 @@ export const BrowsePage = () => {
         setVideos((prev) => prev.map((v) => (v.id === updated.id ? { ...v, ...updated } : v)))
     }, [])
 
+    const contributors = useMemo(() => {
+        const names = new Set(videos.map((v) => v.owner_display_name).filter(Boolean))
+        return [...names].sort((a, b) => a.localeCompare(b))
+    }, [videos])
+
     const columns = useMemo(
-        () => buildVideoColumns({ signedIn: !!user, onRate: handleRate, canEdit: !!user?.is_contributor, onEdit: handleEdit }),
-        [user, handleRate, handleEdit]
+        () => buildVideoColumns({ signedIn: !!user, onRate: handleRate, canEdit: !!user?.is_contributor, onEdit: handleEdit, quickRating }),
+        [user, handleRate, handleEdit, quickRating]
     )
 
     const filtered = useMemo(() => {
@@ -110,8 +160,20 @@ export const BrowsePage = () => {
         if (opinions.length) {
             result = result.filter((v) => (v.my_opinion ? opinions.includes(v.my_opinion) : opinions.includes("none")))
         }
+        if (activeContributors.length) {
+            result = result.filter((v) => activeContributors.includes(v.owner_display_name))
+        }
+        if (activeAge) {
+            const nowS = Date.now() / 1000
+            if (activeAge === "older") {
+                result = result.filter((v) => v.added_at != null && v.added_at < nowS - AGE_CUTOFF_S.year)
+            } else {
+                const cutoff = nowS - AGE_CUTOFF_S[activeAge]
+                result = result.filter((v) => v.added_at != null && v.added_at >= cutoff)
+            }
+        }
         return result
-    }, [videos, query, opinions])
+    }, [videos, query, opinions, activeContributors, activeAge])
 
     const playAll = (shuffle = false) => {
         if (!displayVideos.length) return
@@ -147,7 +209,17 @@ export const BrowsePage = () => {
                         )
                     }}
                 />
-                {user && <FilterButton activeOpinions={opinions} onChange={handleOpinionFilterChange} />}
+                {user && (
+                    <FilterButton
+                        activeOpinions={opinions}
+                        onOpinionsChange={handleOpinionsChange}
+                        contributors={contributors}
+                        activeContributors={activeContributors}
+                        onContributorsChange={handleContributorsChange}
+                        activeAge={activeAge}
+                        onAgeChange={handleAgeChange}
+                    />
+                )}
             </Stack>
 
             <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" rowGap={1.5}>

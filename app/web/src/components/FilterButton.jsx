@@ -1,25 +1,57 @@
 import { useState } from "react"
 import Button from "@mui/material/Button"
 import Checkbox from "@mui/material/Checkbox"
+import Divider from "@mui/material/Divider"
 import FormControlLabel from "@mui/material/FormControlLabel"
 import IconButton from "@mui/material/IconButton"
 import Popover from "@mui/material/Popover"
 import Stack from "@mui/material/Stack"
+import ToggleButton from "@mui/material/ToggleButton"
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup"
 import Typography from "@mui/material/Typography"
 import FilterAltIcon from "@mui/icons-material/FilterAlt"
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule"
 import { OPINIONS } from "./OpinionButtons.jsx"
 
-export const FilterButton = ({ activeOpinions, onChange }) => {
-    const [anchor, setAnchor] = useState(null)
-    const isActive = activeOpinions.length > 0
+export const AGE_OPTIONS = [
+    { value: "week", label: "last 7 days" },
+    { value: "month", label: "last 30 days" },
+    { value: "year", label: "last year" },
+    { value: "older", label: "older" },
+]
 
-    const toggle = (value) => {
-        onChange(
+export const FilterButton = ({
+    activeOpinions,
+    onOpinionsChange,
+    contributors = [],
+    activeContributors = [],
+    onContributorsChange,
+    activeAge = null,
+    onAgeChange,
+}) => {
+    const [anchor, setAnchor] = useState(null)
+    const isActive = activeOpinions.length > 0 || activeContributors.length > 0 || activeAge != null
+
+    const toggleOpinion = (value) => {
+        onOpinionsChange(
             activeOpinions.includes(value)
                 ? activeOpinions.filter((v) => v !== value)
                 : [...activeOpinions, value]
         )
+    }
+
+    const toggleContributor = (name) => {
+        onContributorsChange(
+            activeContributors.includes(name)
+                ? activeContributors.filter((v) => v !== name)
+                : [...activeContributors, name]
+        )
+    }
+
+    const clearAll = () => {
+        onOpinionsChange([])
+        onContributorsChange([])
+        onAgeChange(null)
     }
 
     return (
@@ -40,7 +72,7 @@ export const FilterButton = ({ activeOpinions, onChange }) => {
                 onClose={() => setAnchor(null)}
                 anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 transformOrigin={{ vertical: "top", horizontal: "right" }}
-                slotProps={{ paper: { sx: { background: "#1a1e26", p: 1.5, minWidth: 160 } } }}
+                slotProps={{ paper: { sx: { background: "#1a1e26", p: 1.5, minWidth: 180 } } }}
             >
                 <Stack spacing={0.25}>
                     <Typography variant="caption" color="text.secondary" sx={{ px: 0.5, pb: 0.5 }}>
@@ -53,7 +85,7 @@ export const FilterButton = ({ activeOpinions, onChange }) => {
                                 <Checkbox
                                     size="small"
                                     checked={activeOpinions.includes(o.value)}
-                                    onChange={() => toggle(o.value)}
+                                    onChange={() => toggleOpinion(o.value)}
                                     sx={{ color: o.color, "&.Mui-checked": { color: o.color } }}
                                 />
                             }
@@ -71,7 +103,7 @@ export const FilterButton = ({ activeOpinions, onChange }) => {
                             <Checkbox
                                 size="small"
                                 checked={activeOpinions.includes("none")}
-                                onChange={() => toggle("none")}
+                                onChange={() => toggleOpinion("none")}
                                 sx={{ color: "text.disabled", "&.Mui-checked": { color: "text.secondary" } }}
                             />
                         }
@@ -83,8 +115,64 @@ export const FilterButton = ({ activeOpinions, onChange }) => {
                         }
                         sx={{ mx: 0 }}
                     />
+
+                    {contributors.length > 0 && (
+                        <>
+                            <Divider sx={{ my: 0.75 }} />
+                            <Typography variant="caption" color="text.secondary" sx={{ px: 0.5, pb: 0.5 }}>
+                                filter by contributor
+                            </Typography>
+                            {contributors.map((name) => (
+                                <FormControlLabel
+                                    key={name}
+                                    control={
+                                        <Checkbox
+                                            size="small"
+                                            checked={activeContributors.includes(name)}
+                                            onChange={() => toggleContributor(name)}
+                                            sx={{ color: "text.secondary", "&.Mui-checked": { color: "primary.main" } }}
+                                        />
+                                    }
+                                    label={<Typography variant="body2">{name}</Typography>}
+                                    sx={{ mx: 0 }}
+                                />
+                            ))}
+                        </>
+                    )}
+
+                    <Divider sx={{ my: 0.75 }} />
+                    <Typography variant="caption" color="text.secondary" sx={{ px: 0.5, pb: 0.75 }}>
+                        filter by age
+                    </Typography>
+                    <ToggleButtonGroup
+                        value={activeAge}
+                        exclusive
+                        onChange={(_e, val) => onAgeChange(val)}
+                        size="small"
+                        orientation="vertical"
+                        sx={{ alignSelf: "stretch" }}
+                    >
+                        {AGE_OPTIONS.map((opt) => (
+                            <ToggleButton
+                                key={opt.value}
+                                value={opt.value}
+                                sx={{
+                                    justifyContent: "flex-start",
+                                    px: 1.5,
+                                    py: 0.4,
+                                    textTransform: "none",
+                                    fontSize: "0.8125rem",
+                                    border: "1px solid rgba(255,255,255,0.1) !important",
+                                    "&.Mui-selected": { color: "primary.main", background: "rgba(232,72,85,0.1)" },
+                                }}
+                            >
+                                {opt.label}
+                            </ToggleButton>
+                        ))}
+                    </ToggleButtonGroup>
+
                     {isActive && (
-                        <Button size="small" onClick={() => onChange([])} sx={{ mt: 0.5, alignSelf: "flex-start" }}>
+                        <Button size="small" onClick={clearAll} sx={{ mt: 0.75, alignSelf: "flex-start" }}>
                             clear filters
                         </Button>
                     )}

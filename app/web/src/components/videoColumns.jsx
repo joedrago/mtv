@@ -4,7 +4,7 @@ import Typography from "@mui/material/Typography"
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import EditIcon from "@mui/icons-material/Edit"
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd"
-import { RatingCell, opinionSortValue } from "./OpinionButtons.jsx"
+import { OpinionButtons, RatingCell, opinionSortValue } from "./OpinionButtons.jsx"
 import { addToPlaylist } from "../api.js"
 import { useDestinationStore } from "../store/destination.js"
 import { useToastStore } from "../store/toast.js"
@@ -69,7 +69,7 @@ export const fmtDuration = (s) => {
 // onRemove   - called with (videoId)
 // canEdit    - true when the current user can edit video metadata (contributor)
 // onEdit     - called with (video) when the edit pencil is clicked
-export const buildVideoColumns = ({ signedIn, onRate, canRemove = false, onRemove = null, canEdit = false, onEdit = null }) => {
+export const buildVideoColumns = ({ signedIn, onRate, canRemove = false, onRemove = null, canEdit = false, onEdit = null, quickRating = false }) => {
     const cols = [
         {
             key: "artist",
@@ -118,9 +118,23 @@ export const buildVideoColumns = ({ signedIn, onRate, canRemove = false, onRemov
             label: "rating",
             sortWith: "artist",
             sortValue: (r) => opinionSortValue(r.my_opinion),
-            align: "center",
-            width: "60px",
-            render: (r) => <RatingCell current={r.my_opinion ?? null} onChange={(v) => onRate(r.id, v)} />
+            align: quickRating ? "left" : "center",
+            width: quickRating ? "210px" : "60px",
+            render: quickRating
+                ? (r) => (
+                    <span
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        style={{ display: "inline-flex" }}
+                    >
+                        <OpinionButtons
+                            current={r.my_opinion ?? null}
+                            onSet={(v) => onRate(r.id, v)}
+                            idleColor="rgba(255,255,255,0.3)"
+                        />
+                    </span>
+                )
+                : (r) => <RatingCell current={r.my_opinion ?? null} onChange={(v) => onRate(r.id, v)} />
         })
         cols.push({
             key: "add",

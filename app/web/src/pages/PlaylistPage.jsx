@@ -27,6 +27,7 @@ import ShuffleIcon from "@mui/icons-material/Shuffle"
 import { deletePlaylist, fetchJson, removeFromPlaylist, setOpinion, updatePlaylist } from "../api.js"
 import { bucketShuffle } from "../lastWatched.js"
 import { usePlayerStore } from "../store/player.js"
+import { useSettingsStore } from "../store/settings.js"
 import { useUserStore } from "../store/user.js"
 import { SortableTable } from "../components/SortableTable.jsx"
 import { buildVideoColumns } from "../components/videoColumns.jsx"
@@ -49,6 +50,7 @@ export const PlaylistPage = () => {
     const [opinions, setOpinions] = useState(initialR)
     const [error, setError] = useState(null)
     const user = useUserStore((s) => s.user)
+    const quickRating = useSettingsStore((s) => s.quickRating)
     const openQueue = usePlayerStore((s) => s.openQueue)
 
     useEffect(() => {
@@ -137,9 +139,10 @@ export const PlaylistPage = () => {
                 canRemove: !!isOwner,
                 onRemove: handleRemoveItem,
                 canEdit: !!user?.is_contributor,
-                onEdit: handleEdit
+                onEdit: handleEdit,
+                quickRating
             }),
-        [user, isOwner, handleRate, handleRemoveItem, handleEdit]
+        [user, isOwner, handleRate, handleRemoveItem, handleEdit, quickRating]
     )
 
     const filtered = useMemo(() => {
@@ -260,7 +263,7 @@ export const PlaylistPage = () => {
                             )
                         }}
                     />
-                    {user && <FilterButton activeOpinions={opinions} onChange={handleOpinionFilterChange} />}
+                    {user && <FilterButton activeOpinions={opinions} onOpinionsChange={handleOpinionFilterChange} onContributorsChange={() => {}} onAgeChange={() => {}} />}
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
                     <Chip size="small" label={`by ${playlist.owner}`} />

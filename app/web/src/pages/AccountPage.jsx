@@ -3,12 +3,15 @@ import { Link as RouterLink, useNavigate } from "react-router-dom"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
 import Chip from "@mui/material/Chip"
+import FormControlLabel from "@mui/material/FormControlLabel"
 import Paper from "@mui/material/Paper"
 import Stack from "@mui/material/Stack"
+import Switch from "@mui/material/Switch"
 import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
 import { fetchMyStats, updateMe } from "../api.js"
 import { clearWatchHistory } from "../lastWatched.js"
+import { useSettingsStore } from "../store/settings.js"
 import { useUserStore } from "../store/user.js"
 import { LIMITS } from "../limits.js"
 
@@ -28,6 +31,8 @@ export const AccountPage = () => {
     const loaded = useUserStore((s) => s.loaded)
     const setUser = useUserStore((s) => s.setUser)
     const signOut = useUserStore((s) => s.signOut)
+    const quickRating = useSettingsStore((s) => s.quickRating)
+    const setQuickRating = useSettingsStore((s) => s.setQuickRating)
     const navigate = useNavigate()
 
     const [displayName, setDisplayName] = useState("")
@@ -169,6 +174,29 @@ export const AccountPage = () => {
                         </Stack>
                         <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
                             resets the watch timestamps used to de-prioritise recently-played videos in shuffles
+                        </Typography>
+                    </Box>
+                </Stack>
+            </Paper>
+
+            <Paper variant="outlined" sx={{ p: 3 }}>
+                <Stack spacing={1.5}>
+                    <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: "0.08em" }}>
+                        preferences
+                    </Typography>
+                    <Box>
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={quickRating}
+                                    onChange={(e) => setQuickRating(e.target.checked)}
+                                    size="small"
+                                />
+                            }
+                            label={<Typography variant="body2">quick rating mode</Typography>}
+                        />
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", ml: 4 }}>
+                            shows all 5 rating buttons inline in the browse &amp; playlist tables
                         </Typography>
                     </Box>
                 </Stack>

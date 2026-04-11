@@ -445,6 +445,7 @@ router.delete("/playlists/:id/items/:videoId", (req, res) => {
 
 const listAllVideos = db.prepare(
     `SELECT v.id, v.source, v.source_ref, v.title, v.artist, v.duration_s, v.start_s, v.end_s, v.thumb,
+            v.added_at,
             u.display_name AS owner_display_name, u.label AS owner_label,
             o.value AS my_opinion
      FROM videos v
