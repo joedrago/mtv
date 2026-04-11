@@ -1,6 +1,13 @@
 export const fetchJson = async (url, opts) => {
     const res = await fetch(url, { credentials: "same-origin", ...opts })
-    if (!res.ok) throw new Error(`${url}: ${res.status}`)
+    if (!res.ok) {
+        let msg = `${res.status}`
+        try {
+            const body = await res.json()
+            if (body?.error) msg = body.error
+        } catch (_) {}
+        throw new Error(msg)
+    }
     return res.json()
 }
 
@@ -18,6 +25,8 @@ export const queryYoutube = (input) => fetchJson("/api/videos/query-youtube", js
 export const queryYoutubePlaylist = (input) => fetchJson("/api/videos/query-youtube-playlist", jsonOpts("POST", { input }))
 
 export const updateVideo = (id, patch) => fetchJson(`/api/videos/${id}`, jsonOpts("PATCH", patch))
+
+export const deleteVideo = (id) => fetchJson(`/api/videos/${id}`, { method: "DELETE", credentials: "same-origin" })
 
 export const updateMe = (patch) => fetchJson("/api/me", jsonOpts("PATCH", patch))
 

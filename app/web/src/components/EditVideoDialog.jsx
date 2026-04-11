@@ -7,7 +7,7 @@ import DialogTitle from "@mui/material/DialogTitle"
 import Stack from "@mui/material/Stack"
 import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
-import { updateVideo } from "../api.js"
+import { deleteVideo, updateVideo } from "../api.js"
 import { fmtDuration } from "./videoColumns.jsx"
 import { LIMITS } from "../limits.js"
 
@@ -25,13 +25,14 @@ const computeEffective = (rawDuration, startS, endS) => {
     return Math.max(0, end - start)
 }
 
-export const EditVideoDialog = ({ video, open, onClose, onSaved }) => {
+export const EditVideoDialog = ({ video, open, onClose, onSaved, canDelete, onDeleted }) => {
     const [artist, setArtist] = useState("")
     const [title, setTitle] = useState("")
     const [startS, setStartS] = useState("")
     const [endS, setEndS] = useState("")
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState(null)
+    const [confirmDelete, setConfirmDelete] = useState(false)
 
     useEffect(() => {
         if (!video) return
@@ -40,7 +41,26 @@ export const EditVideoDialog = ({ video, open, onClose, onSaved }) => {
         setStartS(video.start_s > 0 ? String(video.start_s) : "")
         setEndS(video.end_s > 0 ? String(video.end_s) : "")
         setError(null)
+        setConfirmDelete(false)
     }, [video])
+
+    const handleDelete = async () => {
+        if (!confirmDelete) {
+            setConfirmDelete(true)
+            return
+        }
+        setBusy(true)
+        setError(null)
+        try {
+            await deleteVideo(video.id)
+            onDeleted?.(video.id)
+            onClose()
+        } catch (e) {
+            setError(String(e?.message ?? e))
+            setBusy(false)
+            setConfirmDelete(false)
+        }
+    }
 
     const save = async () => {
         if (!video) return
@@ -133,6 +153,11 @@ export const EditVideoDialog = ({ video, open, onClose, onSaved }) => {
                 </Stack>
             </DialogContent>
             <DialogActions>
+                {canDelete && (
+                    <Button color="error" onClick={handleDelete} disabled={busy} sx={{ mr: "auto" }}>
+                        {confirmDelete ? "confirm delete?" : "delete"}
+                    </Button>
+                )}
                 <Button onClick={onClose} disabled={busy}>
                     cancel
                 </Button>

@@ -650,6 +650,27 @@ router.patch("/videos/:id", (req, res) => {
     res.json({ ok: true })
 })
 
+router.delete("/videos/:id", (req, res) => {
+    const me = requireContributor(req, res)
+    if (!me) return
+    const id = Number(req.params.id)
+    const video = db.prepare(`SELECT * FROM videos WHERE id = ?`).get(id)
+    if (!video) {
+        res.status(404).json({ error: "not found" })
+        return
+    }
+    if (!isAdministrator(me) && video.added_by !== me.id) {
+        res.status(403).json({ error: "not your video" })
+        return
+    }
+    db.transaction(() => {
+        db.prepare(`DELETE FROM playlist_items WHERE video_id = ?`).run(id)
+        db.prepare(`DELETE FROM opinions WHERE video_id = ?`).run(id)
+        db.prepare(`DELETE FROM videos WHERE id = ?`).run(id)
+    })()
+    res.json({ ok: true })
+})
+
 router.delete("/opinions/:videoId", (req, res) => {
     const me = currentUser(req)
     if (!me) {

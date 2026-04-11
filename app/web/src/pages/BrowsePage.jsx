@@ -130,6 +130,9 @@ export const BrowsePage = () => {
     const handleSaved = useCallback((updated) => {
         setVideos((prev) => prev.map((v) => (v.id === updated.id ? { ...v, ...updated } : v)))
     }, [])
+    const handleDeleted = useCallback((id) => {
+        setVideos((prev) => prev.filter((v) => v.id !== id))
+    }, [])
 
     const contributors = useMemo(() => {
         const names = new Set(videos.map((v) => v.owner_display_name).filter(Boolean))
@@ -236,7 +239,14 @@ export const BrowsePage = () => {
                 <DestinationPicker visibleVideos={displayVideos} />
             </Stack>
 
-            <EditVideoDialog video={editVideo} open={!!editVideo} onClose={() => setEditVideo(null)} onSaved={handleSaved} />
+            <EditVideoDialog
+                video={editVideo}
+                open={!!editVideo}
+                onClose={() => setEditVideo(null)}
+                onSaved={handleSaved}
+                canDelete={!!(user?.is_administrator || (user?.is_contributor && editVideo?.owner_display_name === user?.display_name))}
+                onDeleted={handleDeleted}
+            />
 
             <Paper variant="outlined" sx={{ overflow: "hidden" }}>
                 {loading ? (
