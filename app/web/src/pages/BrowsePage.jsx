@@ -151,11 +151,11 @@ export const BrowsePage = () => {
             </Stack>
 
             <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" rowGap={1.5}>
-                <Button variant="contained" startIcon={<PlayArrowIcon />} onClick={() => playAll(false)}>
-                    play all
-                </Button>
-                <Button variant="outlined" startIcon={<ShuffleIcon />} onClick={() => playAll(true)}>
+                <Button variant="contained" startIcon={<ShuffleIcon />} onClick={() => playAll(true)}>
                     shuffle
+                </Button>
+                <Button variant="outlined" startIcon={<PlayArrowIcon />} onClick={() => playAll(false)}>
+                    play
                 </Button>
                 <Typography variant="body2" color="text.secondary">
                     {filtered.length} of {videos.length}
