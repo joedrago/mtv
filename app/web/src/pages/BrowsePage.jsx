@@ -153,10 +153,33 @@ export const BrowsePage = () => {
                 .map((t) => t.trim())
                 .filter(Boolean)
             if (terms.length) {
+                const matchers = terms.map((term) => {
+                    const quoted = /^"(.+)"$/.exec(term)
+                    if (quoted) {
+                        const s = quoted[1]
+                        return (f) => f === s
+                    }
+                    const wb0 = term.startsWith("\\b")
+                    const wb1 = term.endsWith("\\b")
+                    if (wb0 || wb1) {
+                        let s = term
+                        if (wb0) s = s.slice(2)
+                        if (wb1) s = s.slice(0, -2)
+                        const esc = s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+                        const re = new RegExp((wb0 ? "\\b" : "") + esc + (wb1 ? "\\b" : ""))
+                        return (f) => re.test(f)
+                    }
+                    const anchored = /^(\^?)(.+?)(\$?)$/.exec(term)
+                    const [, start, s, end] = anchored
+                    if (start && end) return (f) => f === s
+                    if (start) return (f) => f.startsWith(s)
+                    if (end) return (f) => f.endsWith(s)
+                    return (f) => f.includes(s)
+                })
                 result = result.filter((v) => {
                     const a = v.artist.toLowerCase()
                     const t = v.title.toLowerCase()
-                    return terms.some((term) => a.includes(term) || t.includes(term))
+                    return matchers.some((match) => match(a) || match(t))
                 })
             }
         }
