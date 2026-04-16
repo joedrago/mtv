@@ -2,6 +2,8 @@ import { useState } from "react"
 import { Link as RouterLink, useNavigate } from "react-router-dom"
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
+import Checkbox from "@mui/material/Checkbox"
+import FormControlLabel from "@mui/material/FormControlLabel"
 import IconButton from "@mui/material/IconButton"
 import Link from "@mui/material/Link"
 import Paper from "@mui/material/Paper"
@@ -12,7 +14,7 @@ import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
 import DeleteIcon from "@mui/icons-material/Delete"
 import OpenInNewIcon from "@mui/icons-material/OpenInNew"
-import { createVideo, queryYoutube, queryYoutubePlaylist } from "../api.js"
+import { createPlaylist, addToPlaylistBulk, createVideo, queryYoutube, queryYoutubePlaylist } from "../api.js"
 import { useToastStore } from "../store/toast.js"
 import { useUserStore } from "../store/user.js"
 import { fmtDuration } from "../components/videoColumns.jsx"
@@ -326,12 +328,15 @@ const SelfHostedTab = () => {
 
 const PlaylistTab = () => {
     const showToast = useToastStore((s) => s.show)
+    const navigate = useNavigate()
     const [input, setInput] = useState("")
     const [querying, setQuerying] = useState(false)
     const [adding, setAdding] = useState(false)
     const [error, setError] = useState(null)
     const [rows, setRows] = useState([])
     const [skipped, setSkipped] = useState(null)
+    const [existingVideoIds, setExistingVideoIds] = useState([])
+    const [importPlaylist, setImportPlaylist] = useState(false)
 
     const runQuery = async () => {
         if (!input.trim() || querying) return
@@ -339,9 +344,12 @@ const PlaylistTab = () => {
         setError(null)
         setRows([])
         setSkipped(null)
+        setExistingVideoIds([])
+        setImportPlaylist(false)
         try {
             const r = await queryYoutubePlaylist(input.trim())
             setSkipped(r.skipped)
+            setExistingVideoIds(r.existing_video_ids ?? [])
             setRows(
                 r.items.map((it, i) => ({
                     key: `${it.source_ref}-${i}`,
@@ -373,8 +381,7 @@ const PlaylistTab = () => {
         setError(null)
         let ok = 0
         let fail = 0
-        // Walk rows sequentially so we don't hammer the server; also lets the
-        // user watch progress fill in row by row.
+        const newVideoIds = []
         for (const row of rows) {
             if (row.status === "done") continue
             if (!row.artist.trim() || !row.title.trim()) {
@@ -384,7 +391,7 @@ const PlaylistTab = () => {
             }
             patchRow(row.key, { status: "adding", error: null })
             try {
-                await createVideo({
+                const result = await createVideo({
                     source: "youtube",
                     source_ref: row.source_ref,
                     artist: row.artist.trim(),
@@ -394,17 +401,42 @@ const PlaylistTab = () => {
                     duration_s: row.duration_s
                 })
                 patchRow(row.key, { status: "done" })
+                newVideoIds.push(result.id)
                 ok++
             } catch (e) {
                 patchRow(row.key, { status: "error", error: String(e?.message ?? e) })
                 fail++
             }
         }
+        if (importPlaylist) {
+            const allIds = [...existingVideoIds, ...newVideoIds]
+            try {
+                const ts = new Date().toLocaleString()
+                const { playlist } = await createPlaylist(`Imported - ${ts}`, false)
+                if (allIds.length > 0) {
+                    await addToPlaylistBulk(playlist.id, allIds)
+                }
+                const libPart = ok > 0 ? `added ${ok}${fail ? `, failed ${fail}` : ""} · ` : fail > 0 ? `failed ${fail} · ` : ""
+                showToast(`${libPart}playlist created (${allIds.length} songs)`)
+                navigate(`/p/${playlist.owner}/${playlist.slug}`)
+            } catch (e) {
+                const libPart = ok > 0 ? `added ${ok}${fail ? `, failed ${fail}` : ""} · ` : ""
+                showToast(`${libPart}playlist error: ${String(e?.message ?? e)}`)
+            }
+        } else {
+            showToast(`added ${ok}${fail ? `, failed ${fail}` : ""}`)
+        }
         setAdding(false)
-        showToast(`added ${ok}${fail ? `, failed ${fail}` : ""}`)
     }
 
     const pendingCount = rows.filter((r) => r.status !== "done").length
+    const totalForPlaylist = existingVideoIds.length + rows.filter((r) => r.status !== "error").length
+    const actionButtonLabel = (() => {
+        if (pendingCount > 0 && importPlaylist) return `add ${pendingCount} to library + create playlist`
+        if (pendingCount > 0) return `add ${pendingCount} to library`
+        if (importPlaylist) return "create playlist"
+        return null
+    })()
 
     return (
         <Stack spacing={2} sx={{ p: 3 }}>
@@ -533,13 +565,36 @@ const PlaylistTab = () => {
                             </Paper>
                         )
                     })}
-
-                    <Box sx={{ position: "sticky", bottom: 0, pt: 1, bgcolor: "background.default" }}>
-                        <Button variant="contained" onClick={addAll} disabled={adding || pendingCount === 0}>
-                            {adding ? "adding…" : `add ${pendingCount} to library`}
-                        </Button>
-                    </Box>
                 </Stack>
+            )}
+
+            {skipped !== null && (
+                <Paper variant="outlined" sx={{ p: 2 }}>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={importPlaylist}
+                                onChange={(e) => setImportPlaylist(e.target.checked)}
+                                disabled={adding}
+                                size="small"
+                            />
+                        }
+                        label={`create personal playlist (${totalForPlaylist} song${totalForPlaylist !== 1 ? "s" : ""})`}
+                    />
+                    {importPlaylist && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", ml: 4 }}>
+                            will be named "Imported - {new Date().toLocaleString()}"
+                        </Typography>
+                    )}
+                </Paper>
+            )}
+
+            {actionButtonLabel && (
+                <Box sx={{ position: "sticky", bottom: 0, pt: 1, bgcolor: "background.default" }}>
+                    <Button variant="contained" onClick={addAll} disabled={adding}>
+                        {adding ? "working…" : actionButtonLabel}
+                    </Button>
+                </Box>
             )}
         </Stack>
     )

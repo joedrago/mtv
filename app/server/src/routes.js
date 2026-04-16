@@ -535,6 +535,7 @@ router.post("/videos/query-youtube-playlist", async (req, res) => {
         const videos = await fetchYoutubeVideos(ids, secrets?.youtube)
 
         const items = []
+        const existingVideoIds = []
         const skipped = { audio_only: 0, unavailable: 0, already_in_library: 0 }
         for (const { videoId } of entries) {
             const v = videos.get(videoId)
@@ -546,8 +547,10 @@ router.post("/videos/query-youtube-playlist", async (req, res) => {
                 skipped.audio_only++
                 continue
             }
-            if (existingVideoBySource.get("youtube", videoId)) {
+            const existing = existingVideoBySource.get("youtube", videoId)
+            if (existing) {
                 skipped.already_in_library++
+                existingVideoIds.push(existing.id)
                 continue
             }
             const { artist, title } = splitArtistTitle(v.title)
@@ -561,7 +564,7 @@ router.post("/videos/query-youtube-playlist", async (req, res) => {
                 thumb: v.thumb
             })
         }
-        res.json({ playlist_id: listId, items, skipped })
+        res.json({ playlist_id: listId, items, skipped, existing_video_ids: existingVideoIds })
     } catch (e) {
         res.status(502).json({ error: String(e?.message ?? e) })
     }
