@@ -304,26 +304,39 @@ export const PlayerOverlay = () => {
     // Mobile layout: video pinned top (16:9), info + always-visible controls below
     const isPortraitMobile = useMediaQuery("(orientation: portrait) and (max-width: 900px)")
 
-    // Desktop: hover on the outer container shows/hides controls via onMouseEnter/onMouseLeave.
+    // Desktop: mouse activity shows controls + resets idle timer; after 3s idle, hides both controls and cursor.
     // Touch (non-portrait-mobile): tap on the video surface toggles controls with auto-hide.
     const [controlsVisible, setControlsVisible] = useState(false)
-    const hideTimerRef = useRef(null)
-    const clearHideTimer = useCallback(() => {
-        if (hideTimerRef.current) {
-            clearTimeout(hideTimerRef.current)
-            hideTimerRef.current = null
+    const [cursorHidden, setCursorHidden] = useState(false)
+    const idleTimerRef = useRef(null)
+
+    const clearIdleTimer = useCallback(() => {
+        if (idleTimerRef.current) {
+            clearTimeout(idleTimerRef.current)
+            idleTimerRef.current = null
         }
     }, [])
+
+    const resetIdleTimer = useCallback(() => {
+        clearIdleTimer()
+        setCursorHidden(false)
+        setControlsVisible(true)
+        idleTimerRef.current = setTimeout(() => {
+            setControlsVisible(false)
+            setCursorHidden(true)
+        }, 3000)
+    }, [clearIdleTimer])
+
     const handleVideoTap = useCallback(() => {
         if (controlsVisible) {
-            clearHideTimer()
+            clearIdleTimer()
             setControlsVisible(false)
         } else {
-            setControlsVisible(true)
-            hideTimerRef.current = setTimeout(() => setControlsVisible(false), 3500)
+            resetIdleTimer()
         }
-    }, [controlsVisible, clearHideTimer])
-    useEffect(() => clearHideTimer, [clearHideTimer])
+    }, [controlsVisible, clearIdleTimer, resetIdleTimer])
+
+    useEffect(() => clearIdleTimer, [clearIdleTimer])
 
     useEffect(() => {
         const sync = () => setIsFullscreen(!!document.fullscreenElement)
@@ -546,15 +559,17 @@ export const PlayerOverlay = () => {
 
     return (
         <Box
-            onMouseEnter={isPortraitMobile ? undefined : () => { clearHideTimer(); setControlsVisible(true) }}
-            onMouseLeave={isPortraitMobile ? undefined : () => { clearHideTimer(); setControlsVisible(false) }}
+            onMouseEnter={isPortraitMobile ? undefined : resetIdleTimer}
+            onMouseLeave={isPortraitMobile ? undefined : () => { clearIdleTimer(); setCursorHidden(false); setControlsVisible(false) }}
+            onMouseMove={isPortraitMobile ? undefined : resetIdleTimer}
             sx={{
                 position: "fixed",
                 inset: 0,
                 zIndex: 1300,
                 background: "#000",
                 display: "flex",
-                flexDirection: "column"
+                flexDirection: "column",
+                cursor: cursorHidden ? "none" : undefined
             }}
         >
             <Box
@@ -568,7 +583,7 @@ export const PlayerOverlay = () => {
                               background: "#000",
                               flexShrink: 0
                           }
-                        : { position: "absolute", inset: 0, cursor: "pointer" }
+                        : { position: "absolute", inset: 0, cursor: cursorHidden ? "none" : "pointer" }
                 }
             >
                 {surface}
