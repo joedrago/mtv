@@ -28,11 +28,11 @@ export const Chyron = ({ video, owner, mode }) => {
 
     return (
         <Box
+            style={{ fontFamily: "Kabel Black" }}
             sx={{
                 position: "absolute",
                 left: "3%",
                 bottom: "3%",
-                fontFamily: '"Kabel Black"',
                 fontSize: "clamp(12px, min(5vh, 2.8vw), 48px)",
                 lineHeight: 1,
                 color: "#ffffff",

@@ -1,7 +1,7 @@
 @font-face {
     font-family: "Kabel Black";
-    src: url("/fonts/Kabel-Black.otf") format("opentype");
-    font-display: swap;
+    src: url("/fonts/Kabel-Black-opentype.otf") format("opentype");
+    font-display: block;
 }
 
 html,

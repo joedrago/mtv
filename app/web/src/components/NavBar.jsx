@@ -40,8 +40,8 @@ export const NavBar = () => {
             <Box
                 component={RouterLink}
                 to="/"
+                style={{ fontFamily: "Kabel Black" }}
                 sx={{
-                    fontFamily: '"Kabel Black"',
                     fontSize: "40px",
                     color: "primary.main",
                     textDecoration: "none",
