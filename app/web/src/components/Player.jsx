@@ -69,6 +69,7 @@ const YoutubeSurface = ({ video, paused, volume, initialPosition, onEnded, surfa
                     modestbranding: 1,
                     rel: 0,
                     iv_load_policy: 3,
+                    cc_load_policy: 0,
                     playsinline: 1,
                     start: startSeconds,
                     end: v.end_s > 0 ? v.end_s : undefined
@@ -76,6 +77,7 @@ const YoutubeSurface = ({ video, paused, volume, initialPosition, onEnded, surfa
                 events: {
                     onReady: (e) => {
                         readyRef.current = true
+                        e.target.unloadModule("captions")
                         e.target.setVolume(Math.round((volume ?? 1) * 100))
                         if (pausedRef.current) e.target.pauseVideo()
                         else e.target.playVideo()
@@ -84,6 +86,11 @@ const YoutubeSurface = ({ video, paused, volume, initialPosition, onEnded, surfa
                         }
                     },
                     onStateChange: (e) => {
+                        // cc_load_policy only affects the video the player was constructed
+                        // with; loadVideoById/cueVideoById can silently re-enable captions
+                        // (e.g. account-level caption preference), so force them off again
+                        // on every state transition of a (re)used player.
+                        e.target.unloadModule("captions")
                         if (e.data === YT.PlayerState.ENDED) onEndedRef.current?.()
                     },
                     onError: () => onEndedRef.current?.()
@@ -125,6 +132,7 @@ const YoutubeSurface = ({ video, paused, volume, initialPosition, onEnded, surfa
         if (video.end_s > 0) params.endSeconds = video.end_s
         if (pausedRef.current) ytRef.current.cueVideoById(params)
         else ytRef.current.loadVideoById(params)
+        ytRef.current.unloadModule("captions")
     }, [video.source_ref, video.start_s, video.end_s])
 
     useEffect(() => {
