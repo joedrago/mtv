@@ -91,12 +91,15 @@ const YoutubeSurface = ({ video, paused, volume, initialPosition, onEnded, surfa
                         // (e.g. account-level caption preference), so force them off again
                         // on every state transition of a (re)used player.
                         e.target.unloadModule("captions")
+                        // YT keeps its chrome (title bar, buttons) visible while the iframe has focus
+                        if (document.activeElement === e.target.getIframe()) document.activeElement.blur()
                         if (e.data === YT.PlayerState.ENDED) onEndedRef.current?.()
                     },
                     onError: () => onEndedRef.current?.()
                 }
             })
             ytRef.current = player
+            player.getIframe()?.setAttribute("tabindex", "-1")
             if (surfaceRef) {
                 surfaceRef.current = {
                     isReady: () => readyRef.current,
